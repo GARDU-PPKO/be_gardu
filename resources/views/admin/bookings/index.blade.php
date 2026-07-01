@@ -3,11 +3,57 @@
 
 @section('content')
 <div class="space-y-6">
+    {{-- Header --}}
     <div class="flex items-center justify-between">
         <h2 class="text-2xl font-bold text-gray-800">Bookings</h2>
-        <a href="{{ route('admin.bookings.parse') }}" class="px-4 py-2 bg-emerald-700 text-white rounded-lg text-sm hover:bg-emerald-800 transition">+ Parse Text WA</a>
+        <div class="flex items-center gap-2">
+            {{-- Tombol Export Excel (tanda spidol merah) --}}
+            <a href="{{ route('admin.bookings.export', array_filter(request()->only(['status','tanggal_dari','tanggal_sampai']))) }}"
+               class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
+                </svg>
+                Export Excel
+            </a>
+            <a href="{{ route('admin.bookings.parse') }}" class="px-4 py-2 bg-emerald-700 text-white rounded-lg text-sm hover:bg-emerald-800 transition">
+                + Parse Text WA
+            </a>
+        </div>
     </div>
 
+    {{-- Filter --}}
+    <form method="GET" action="{{ route('admin.bookings.index') }}"
+          class="bg-white rounded-xl shadow-sm p-4 flex flex-wrap items-end gap-3">
+        <div>
+            <label class="block text-xs text-gray-500 mb-1">Status</label>
+            <select name="status" class="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+                <option value="">Semua</option>
+                <option value="pending"   @selected(request('status') === 'pending')>Pending</option>
+                <option value="confirmed" @selected(request('status') === 'confirmed')>Confirmed</option>
+                <option value="cancelled" @selected(request('status') === 'cancelled')>Cancelled</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs text-gray-500 mb-1">Tanggal Dari</label>
+            <input type="date" name="tanggal_dari" value="{{ request('tanggal_dari') }}"
+                   class="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+        </div>
+        <div>
+            <label class="block text-xs text-gray-500 mb-1">Tanggal Sampai</label>
+            <input type="date" name="tanggal_sampai" value="{{ request('tanggal_sampai') }}"
+                   class="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400">
+        </div>
+        <button type="submit"
+                class="px-4 py-2 bg-emerald-700 text-white rounded-lg text-sm hover:bg-emerald-800 transition">
+            Filter
+        </button>
+        @if(request()->hasAny(['status','tanggal_dari','tanggal_sampai']))
+        <a href="{{ route('admin.bookings.index') }}"
+           class="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 transition">Reset</a>
+        @endif
+    </form>
+
+    {{-- Tabel --}}
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
         <table class="w-full text-sm">
             <thead>
@@ -29,7 +75,7 @@
                     <td class="p-4">{{ $booking->nama_pemesan }}</td>
                     <td class="p-4 font-mono text-xs">{{ $booking->no_wa_pemesan }}</td>
                     <td class="p-4">{{ $booking->package->nama ?? '-' }}</td>
-                    <td class="p-4">{{ $booking->tanggal }}</td>
+                    <td class="p-4">{{ $booking->tanggal?->format('d/m/Y') }}</td>
                     <td class="p-4">Rp {{ number_format($booking->total_harga, 0, ',', '.') }}</td>
                     <td class="p-4">
                         <span class="px-2 py-1 text-xs rounded-full
@@ -59,7 +105,7 @@
             </tbody>
         </table>
         <div class="p-4 border-t">
-            {{ $bookings->links() }}
+            {{ $bookings->appends(request()->query())->links() }}
         </div>
     </div>
 </div>

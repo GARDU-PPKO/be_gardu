@@ -9,13 +9,32 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminBookingController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $request->validate([
+            'status'         => ['nullable', 'string', 'in:pending,confirmed,cancelled'],
+            'tanggal_dari'   => ['nullable', 'date'],
+            'tanggal_sampai' => ['nullable', 'date', 'after_or_equal:tanggal_dari'],
+        ]);
+
+        $query = Booking::with('package:id,nama')->orderBy('created_at', 'desc');
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('tanggal_dari')) {
+            $query->whereDate('tanggal', '>=', $request->tanggal_dari);
+        }
+        if ($request->filled('tanggal_sampai')) {
+            $query->whereDate('tanggal', '<=', $request->tanggal_sampai);
+        }
+
         return view('admin.bookings.index', [
-            'bookings' => Booking::with('package:id,nama')->orderBy('created_at', 'desc')->paginate(15),
+            'bookings' => $query->paginate(15),
         ]);
     }
 
@@ -90,6 +109,69 @@ class AdminBookingController extends Controller
     {
         Booking::findOrFail($id)->delete();
         return redirect()->route('admin.bookings.index')->with('success', 'Booking dihapus');
+    }
+
+    /**
+     * Export semua booking ke file CSV (dibuka di Excel).
+     * Menggunakan streaming agar hemat memori di VPS.
+     */
+    public function exportExcel(Request $request): StreamedResponse
+    {
+        $request->validate([
+            'status'         => ['nullable', 'string', 'in:pending,confirmed,cancelled'],
+            'tanggal_dari'   => ['nullable', 'date'],
+            'tanggal_sampai' => ['nullable', 'date', 'after_or_equal:tanggal_dari'],
+        ]);
+
+        $query = Booking::with('package:id,nama')->orderBy('tanggal', 'desc');
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('tanggal_dari')) {
+            $query->whereDate('tanggal', '>=', $request->tanggal_dari);
+        }
+        if ($request->filled('tanggal_sampai')) {
+            $query->whereDate('tanggal', '<=', $request->tanggal_sampai);
+        }
+
+        $bookings = $query->get();
+        $filename = 'laporan-booking-' . now()->format('Y-m-d') . '.csv';
+
+        return response()->streamDownload(function () use ($bookings) {
+            $handle = fopen('php://output', 'w');
+
+            // BOM UTF-8 agar Excel membaca karakter Indonesia dengan benar
+            fputs($handle, "\xEF\xBB\xBF");
+
+            fputcsv($handle, [
+                'Kode Booking', 'Nama Pemesan', 'No. WhatsApp', 'Email',
+                'Kota Asal', 'Paket Wisata', 'Tanggal', 'Sesi',
+                'Jumlah Peserta', 'Total Harga (Rp)', 'Status', 'Catatan', 'Dibuat Pada',
+            ]);
+
+            foreach ($bookings as $booking) {
+                fputcsv($handle, [
+                    $booking->kode_booking,
+                    $booking->nama_pemesan,
+                    $booking->no_wa_pemesan,
+                    $booking->email ?? '',
+                    $booking->kota_asal,
+                    $booking->package->nama ?? '-',
+                    $booking->tanggal?->format('d/m/Y') ?? '',
+                    $booking->sesi,
+                    $booking->jumlah_peserta,
+                    $booking->total_harga,
+                    $booking->status,
+                    $booking->catatan ?? '',
+                    $booking->created_at->format('d/m/Y H:i'),
+                ]);
+            }
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 
     private function extractBookingData(string $text): array
