@@ -8,7 +8,6 @@
         <a href="{{ route('admin.dusun.index') }}" class="text-sm text-emerald-700 hover:text-emerald-800">← Kembali</a>
     </div>
 
-    {{-- Main Form untuk data dusun --}}
     <form method="POST" action="{{ $dusun ? route('admin.dusun.update', $dusun->id) : route('admin.dusun.store') }}" class="bg-white rounded-xl shadow-sm p-6 space-y-4">
         @csrf
         @if($dusun) @method('PUT') @endif
@@ -73,7 +72,6 @@
         </div>
     </form>
 
-    {{-- Galeri --}}
     @if($dusun)
     <div class="bg-white rounded-xl shadow-sm p-6 space-y-4">
         <h3 class="font-bold text-gray-800">Galeri</h3>
@@ -101,7 +99,6 @@
         </form>
     </div>
 
-    {{-- Keunggulan --}}
     <div class="bg-white rounded-xl shadow-sm p-6 space-y-4">
         <h3 class="font-bold text-gray-800">Keunggulan</h3>
 
