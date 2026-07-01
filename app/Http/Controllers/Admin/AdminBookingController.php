@@ -229,20 +229,19 @@ class AdminBookingController extends Controller
         $options->setColumnWidth(25, 3);  
         $options->setColumnWidth(16, 4);  
         $options->setColumnWidth(22, 5); 
-        $options->setColumnWidth(12, 6);  // F: Tanggal
-        $options->setColumnWidth(10, 7);  // G: Sesi
-        $options->setColumnWidth(9,  8);  // H: Peserta
-        $options->setColumnWidth(16, 9);  // I: Total Harga
-        $options->setColumnWidth(15, 10); // J: Kota Asal
-        $options->setColumnWidth(25, 11); // K: Catatan
-        $options->setColumnWidth(12, 12); // L: Status
-        $options->setColumnWidth(18, 13); // M: Dibuat Pada
+        $options->setColumnWidth(12, 6);
+        $options->setColumnWidth(10, 7);
+        $options->setColumnWidth(9,  8);
+        $options->setColumnWidth(16, 9);
+        $options->setColumnWidth(15, 10);
+        $options->setColumnWidth(25, 11);
+        $options->setColumnWidth(12, 12);
+        $options->setColumnWidth(18, 13);
 
-        // Merge cells — 1-based, kolom A s.d. M (1 s.d. 13), baris 1 & 2
         $options->mergeCells(0, 1, 12, 1);
         $options->mergeCells(0, 2, 12, 2);
-        $options->mergeCells(0, 4, 2, 4);   // A4:C4 (label "Tanggal Cetak: ...")
-        $options->mergeCells(4, 4, 12, 4);  // E4:M4 (label "Filter: ...")
+        $options->mergeCells(0, 4, 2, 4);
+        $options->mergeCells(4, 4, 12, 4);
 
         $tmpFile = tempnam(sys_get_temp_dir(), 'booking_') . '.xlsx';
         $writer  = new \OpenSpout\Writer\XLSX\Writer($options);
@@ -251,9 +250,6 @@ class AdminBookingController extends Controller
         return [$writer, $styles, $tmpFile];
     }
 
-    /**
-     * Build a row, optionally padded with blanks to a fixed column count (for merged title rows).
-     */
     private function row(array $vals, ?\OpenSpout\Common\Entity\Style\Style $style = null, ?int $padTo = null): \OpenSpout\Common\Entity\Row
     {
         if ($padTo && count($vals) < $padTo) {
@@ -265,9 +261,6 @@ class AdminBookingController extends Controller
             : \OpenSpout\Common\Entity\Row::fromValues($vals);
     }
 
-    /**
-     * Write a summary row: label + live formula.
-     */
     private function summaryRow(\OpenSpout\Writer\XLSX\Writer $writer, array $styles, string $label, string $formula): void
     {
         $cells = [];
