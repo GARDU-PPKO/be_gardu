@@ -4,10 +4,10 @@
 @section('content')
 <div class="space-y-6">
     <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-bold text-gray-800">Pengaturan</h2>
+        <h2 class="text-2xl font-bold tracking-tight text-gray-900">Pengaturan</h2>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="bg-white border border-gray-200/80 rounded-xl overflow-hidden">
         <table class="w-full text-sm">
             <thead>
                 <tr class="text-left text-gray-500 border-b bg-gray-50">
@@ -24,7 +24,9 @@
                     <td class="p-4 max-w-xs truncate">{{ $setting->value }}</td>
                     <td class="p-4">{{ $setting->deskripsi ?? '-' }}</td>
                     <td class="p-4">
-                        <a href="{{ route('admin.settings.edit', $setting->id) }}" class="text-blue-600 hover:text-blue-800 text-xs">Edit</a>
+                        <a href="{{ route('admin.settings.edit', $setting->id) }}" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-colors" title="Edit">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        </a>
                     </td>
                 </tr>
                 @empty
@@ -58,7 +60,7 @@
             </div>
 
             <div class="flex gap-3 pt-2">
-                <button type="submit" class="px-6 py-2 bg-emerald-700 text-white rounded-lg text-sm hover:bg-emerald-800 transition">Simpan</button>
+                <button type="submit" class="px-6 py-2 bg-[#0d3b2e] text-white hover:bg-[#092b21] rounded-lg text-sm hover:bg-emerald-800 transition">Simpan</button>
                 <a href="{{ route('admin.settings.index') }}" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition">Batal</a>
             </div>
         </form>
