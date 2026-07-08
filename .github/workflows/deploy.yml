@@ -20,32 +20,28 @@ jobs:
           port: ${{ secrets.VPS_PORT }}
           script_stop: true
           script: |
-            echo "=============================="
-            echo "START DEPLOY $(date)"
-            echo "=============================="
+            echo "=================================="
+            echo "Deploy started: $(date)"
+            echo "=================================="
 
             cd /home/ilhama/be_gardu
-
-            echo "Current branch:"
-            git branch
 
             echo "Pull latest code..."
             git fetch origin
             git reset --hard origin/main
 
-            echo "Build container..."
-            docker compose up -d --build
-
-            echo "Wait container ready..."
-            sleep 10
-
             echo "Run migration..."
             docker exec gardu-api php artisan migrate --force
-
+            
+            echo "Run seeder..."
+            docker exec gardu-api php artisan db:seed --force
+            
             echo "Clear cache..."
             docker exec gardu-api php artisan optimize:clear
 
-            echo "Optimize..."
+            echo "Optimize application..."
             docker exec gardu-api php artisan optimize
 
-            echo "Deployment finished!"
+            echo "=================================="
+            echo "Deploy success!"
+            echo "=================================="
