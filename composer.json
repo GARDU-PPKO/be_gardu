@@ -11,7 +11,7 @@
         "laravel/framework": "^13.8",
         "laravel/sanctum": "^4.3",
         "laravel/tinker": "^3.0",
-        "openspout/openspout": "^5.7"
+        "openspout/openspout": "^4.32"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
