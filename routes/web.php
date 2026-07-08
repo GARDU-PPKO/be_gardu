@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\AdminVillageProfileController;
 use App\Http\Controllers\Admin\AdminVillageStatsController;
 use App\Http\Controllers\Admin\AdminSettingController;
 use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\FonnteController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->group(function () {
@@ -68,5 +69,8 @@ Route::prefix('admin')->group(function () {
         Route::get('settings', [AdminSettingController::class, 'index'])->name('admin.settings.index');
         Route::get('settings/{id}/edit', [AdminSettingController::class, 'edit'])->name('admin.settings.edit');
         Route::put('settings/{id}', [AdminSettingController::class, 'update'])->name('admin.settings.update');
+
+        // Fonnte Device Info
+        Route::get('fonnte-device', [FonnteController::class, 'device'])->name('admin.fonnte.device');
     });
 });
