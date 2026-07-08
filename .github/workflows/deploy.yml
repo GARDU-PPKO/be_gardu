@@ -33,9 +33,6 @@ jobs:
             echo "Run migration..."
             docker exec gardu-api php artisan migrate --force
             
-            echo "Run seeder..."
-            docker exec gardu-api php artisan db:seed --force
-            
             echo "Clear cache..."
             docker exec gardu-api php artisan optimize:clear
 
