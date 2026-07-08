@@ -45,6 +45,9 @@
                 <a href="{{ route('admin.settings.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.settings.*') ? 'bg-emerald-800' : '' }}">
                     <span>⚙️</span> Pengaturan
                 </a>
+                <a href="{{ route('admin.fonnte.device') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.fonnte.*') ? 'bg-emerald-800' : '' }}">
+                    <span>📱</span> Status Fonnte
+                </a>
                 @if(auth()->user()->role === 'superadmin')
                 <hr class="border-emerald-700 my-2">
                 <a href="{{ route('admin.users.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.users.*') ? 'bg-emerald-800' : '' }}">
@@ -72,5 +75,6 @@
             @yield('content')
         </main>
     </div>
+    @stack('scripts')
 </body>
 </html>

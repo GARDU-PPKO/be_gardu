@@ -3,7 +3,10 @@
 
 @section('content')
 <div class="max-w-2xl mx-auto space-y-6">
-    <h2 class="text-2xl font-bold text-gray-800">{{ $user ? 'Edit Admin' : 'Tambah Admin' }}</h2>
+    <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-gray-800">{{ $user ? 'Edit Admin' : 'Tambah Admin' }}</h2>
+        <a href="{{ route('admin.users.index') }}" class="text-sm text-emerald-700 hover:text-emerald-800">← Kembali</a>
+    </div>
 
     <form method="POST" action="{{ $user ? route('admin.users.update', $user->id) : route('admin.users.store') }}" class="bg-white rounded-xl shadow-sm p-6 space-y-4">
         @csrf

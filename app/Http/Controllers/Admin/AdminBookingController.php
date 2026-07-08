@@ -5,10 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\TourPackage;
+use App\Services\FonnteService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Intervention\Image\Laravel\Facades\Image;
+use OpenSpout\Writer\XLSX\Writer;
+use OpenSpout\Common\Entity\Row;
 
 class AdminBookingController extends Controller
 {
@@ -35,7 +39,7 @@ class AdminBookingController extends Controller
     {
         $request->validate([
             'raw_text' => 'required|string',
-            'bukti_bayar' => 'nullable|string|max:255',
+            'bukti_bayar' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
         $text = $request->raw_text;
@@ -50,6 +54,19 @@ class AdminBookingController extends Controller
 
         $kodeBooking = 'GB-' . strtoupper(Str::random(8));
 
+        $buktiBayar = null;
+        if ($request->hasFile('bukti_bayar')) {
+            $tanggal = $data['tanggal'] ?: now()->format('Y-m-d');
+            $filename = $tanggal . '_' . $kodeBooking . '.jpg';
+
+            $image = Image::decode($request->file('bukti_bayar'));
+            $image->scaleDown(width: 1200);
+
+            $image->save(storage_path('app/public/buktibayar/' . $filename));
+
+            $buktiBayar = '/storage/buktibayar/' . $filename;
+        }
+
         $booking = Booking::create([
             'kode_booking' => $kodeBooking,
             'nama_pemesan' => $data['nama'],
@@ -62,8 +79,8 @@ class AdminBookingController extends Controller
             'sesi' => $data['sesi'],
             'jumlah_peserta' => $data['jumlah_peserta'],
             'total_harga' => $data['total_harga'],
-            'status' => 'pending',
-            'bukti_bayar' => $request->bukti_bayar,
+            'status' => 'confirmed',
+            'bukti_bayar' => $buktiBayar,
             'raw_wa_text' => $text,
             'created_by' => auth()->id(),
         ]);
@@ -72,18 +89,24 @@ class AdminBookingController extends Controller
             ->with('success', 'Booking berhasil dibuat! Kode: ' . $kodeBooking);
     }
 
-    public function confirm($id): RedirectResponse
+    public function confirm($id, FonnteService $fonnte): RedirectResponse
     {
         $booking = Booking::findOrFail($id);
         $booking->update(['status' => 'confirmed']);
-        return back()->with('success', 'Booking dikonfirmasi');
-    }
 
-    public function cancel($id): RedirectResponse
-    {
-        $booking = Booking::findOrFail($id);
-        $booking->update(['status' => 'cancelled']);
-        return back()->with('success', 'Booking dibatalkan');
+        $message = "✅ *Booking Terkonfirmasi!*\n\n"
+            . "Kode Booking: *{$booking->kode_booking}*\n"
+            . "Paket: {$booking->package->nama}\n"
+            . "Tanggal: {$booking->tanggal}\n"
+            . "Sesi: {$booking->sesi}\n"
+            . "Jumlah: {$booking->jumlah_peserta} orang\n"
+            . "Total: Rp " . number_format($booking->total_harga, 0, ',', '.') . "\n\n"
+            . "Terima kasih, reservasi Anda telah dikonfirmasi. 🎉\n"
+            . "Harap datang 15 menit sebelum jadwal.";
+
+        $fonnte->sendMessage($booking->no_wa_pemesan, $message);
+
+        return back()->with('success', 'Booking dikonfirmasi, notifikasi terkirim ke WA pelanggan');
     }
 
     public function destroy($id): RedirectResponse
@@ -107,30 +130,91 @@ class AdminBookingController extends Controller
             'total_harga' => 0,
         ];
 
-        foreach (explode("\n", $text) as $line) {
-            $line = trim($line);
-            if (preg_match('/📦\s*Paket:\s*(.+)/i', $line, $m))
+        // Normalize line endings and split
+        foreach (explode("\n", $text) as $raw) {
+            // Strip leading non-word characters (emojis, bullets, etc.) and normalize spaces
+            $line = trim(preg_replace('/[^\p{L}\p{N}:.@\s\/-]+/u', ' ', $raw));
+            $line = trim(preg_replace('/\s+/', ' ', $line));
+            if (!$line) continue;
+
+            // Paket
+            if (preg_match('/^(?:Paket|Nama\s*Paket|Package|Pack)\s*:\s*(.+)$/iu', $line, $m))
                 $data['package_name'] = trim($m[1]);
-            elseif (preg_match('/📅\s*Tanggal:\s*(.+)/i', $line, $m))
+
+            // Tanggal
+            elseif (preg_match('/^(?:Tanggal|Tgl|Date|Tangeal)\s*:\s*(.+)$/iu', $line, $m))
                 $data['tanggal'] = trim($m[1]);
-            elseif (preg_match('/⏰\s*Sesi:\s*(.+)/i', $line, $m))
+
+            // Sesi
+            elseif (preg_match('/^(?:Sesi|Session|Jam|Waktu)\s*:\s*(.+)$/iu', $line, $m))
                 $data['sesi'] = trim($m[1]);
-            elseif (preg_match('/👥\s*Peserta:\s*(\d+)/i', $line, $m))
+
+            // Jumlah Peserta
+            elseif (preg_match('/^(?:Peserta|Jumlah\s*Peserta|Pax|Orang|Peseta)\s*:\s*(\d+)/iu', $line, $m))
                 $data['jumlah_peserta'] = (int) $m[1];
-            elseif (preg_match('/💰\s*Total:\s*(?:Rp|Rp\.)?\s*([\d.,]+)/i', $line, $m))
+
+            // Total Harga
+            elseif (preg_match('/^(?:Total|Total\s*Harga|Harga|Price|Biaya)\s*:\s*(?:Rp\.?\s*)?([\d.,]+)/iu', $line, $m))
                 $data['total_harga'] = (int) str_replace(['.', ','], '', $m[1]);
-            elseif (preg_match('/👤\s*Nama:\s*(.+)/i', $line, $m))
+
+            // Nama
+            elseif (preg_match('/^(?:Nama|Name|Nama\s*Pemesan)\s*:\s*(.+)$/iu', $line, $m))
                 $data['nama'] = trim($m[1]);
-            elseif (preg_match('/📱\s*WhatsApp:\s*(.+)/i', $line, $m))
+
+            // No WA
+            elseif (preg_match('/^(?:WhatsApp|No\.?\s*WA|WA|Phone|Telepon|No\.?\s*HP|HP)\s*:\s*(.+)$/iu', $line, $m))
                 $data['no_wa'] = trim($m[1]);
-            elseif (preg_match('/✉️\s*Email:\s*(.+)/i', $line, $m))
+
+            // Email
+            elseif (preg_match('/^(?:Email|E-mail|Mail|Surel)\s*:\s*(.+)$/iu', $line, $m))
                 $data['email'] = trim($m[1]);
-            elseif (preg_match('/🏙️\s*Kota:\s*(.+)/i', $line, $m))
+
+            // Kota
+            elseif (preg_match('/^(?:Kota|City|Asal|Kota\s*Asal|Domisili)\s*:\s*(.+)$/iu', $line, $m))
                 $data['kota'] = trim($m[1]);
-            elseif (preg_match('/📝\s*Catatan:\s*(.+)/i', $line, $m))
+
+            // Catatan
+            elseif (preg_match('/^(?:Catatan|Note|Pesan|Keterangan)\s*:\s*(.+)$/iu', $line, $m))
                 $data['catatan'] = trim($m[1]);
         }
 
         return $data;
+    }
+
+    public function export()
+    {
+        $bookings = Booking::with('package:id,nama')->orderBy('created_at', 'desc')->get();
+
+        $path = tempnam(sys_get_temp_dir(), 'bookings') . '.xlsx';
+        $writer = new Writer;
+        $writer->openToFile($path);
+
+        $writer->addRow(Row::fromValues([
+            'Kode Booking', 'Nama Pemesan', 'No. WA', 'Email', 'Kota Asal',
+            'Paket', 'Tanggal', 'Sesi', 'Jumlah Peserta', 'Total Harga',
+            'Status', 'Catatan', 'Tanggal Booking',
+        ]));
+
+        foreach ($bookings as $b) {
+            $writer->addRow(Row::fromValues([
+                $b->kode_booking,
+                $b->nama_pemesan,
+                $b->no_wa_pemesan,
+                $b->email ?? '',
+                $b->kota_asal ?? '',
+                $b->package?->nama ?? '',
+                $b->tanggal,
+                $b->sesi,
+                $b->jumlah_peserta,
+                $b->total_harga,
+                $b->status,
+                $b->catatan ?? '',
+                $b->created_at->format('Y-m-d H:i'),
+            ]));
+        }
+
+        $writer->close();
+
+        return response()->download($path, 'bookings-export-' . now()->format('Y-m-d') . '.xlsx')->deleteFileAfterSend(true);
     }
 }

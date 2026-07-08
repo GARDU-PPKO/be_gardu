@@ -12,11 +12,12 @@ use App\Http\Controllers\Admin\AdminVillageProfileController;
 use App\Http\Controllers\Admin\AdminVillageStatsController;
 use App\Http\Controllers\Admin\AdminSettingController;
 use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\FonnteController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('admin')->group(function () {
-    Route::get('login', [AuthController::class, 'showLoginForm'])->name('admin.login');
-    Route::post('login', [AuthController::class, 'login'])->name('admin.login.post');
+    Route::get('login', [AuthController::class, 'showLoginForm'])->name('admin.login')->middleware('guest');
+    Route::post('login', [AuthController::class, 'login'])->name('admin.login.post')->middleware('guest');
 
     Route::middleware('auth')->group(function () {
         Route::post('logout', [AuthController::class, 'logout'])->name('admin.logout');
@@ -38,15 +39,20 @@ Route::prefix('admin')->group(function () {
         Route::delete('tour-packages/{id}/includes/{includeId}', [AdminTourPackageController::class, 'destroyInclude'])->name('admin.tour-packages.includes.destroy');
 
         // Booking Sessions
-        Route::resource('booking-sessions', AdminBookingSessionController::class)->except(['show'])->names('admin.booking-sessions');
+        Route::get('booking-sessions', [AdminBookingSessionController::class, 'index'])->name('admin.booking-sessions.index');
+        Route::get('booking-sessions/create', [AdminBookingSessionController::class, 'create'])->name('admin.booking-sessions.create');
+        Route::post('booking-sessions', [AdminBookingSessionController::class, 'store'])->name('admin.booking-sessions.store');
+        Route::get('booking-sessions/{id}/edit', [AdminBookingSessionController::class, 'edit'])->name('admin.booking-sessions.edit');
+        Route::put('booking-sessions/{id}', [AdminBookingSessionController::class, 'update'])->name('admin.booking-sessions.update');
+        Route::delete('booking-sessions/{id}', [AdminBookingSessionController::class, 'destroy'])->name('admin.booking-sessions.destroy');
 
         // Bookings
         Route::get('bookings', [AdminBookingController::class, 'index'])->name('admin.bookings.index');
+        Route::get('bookings/export', [AdminBookingController::class, 'export'])->name('admin.bookings.export');
         Route::get('bookings/parse', [AdminBookingController::class, 'parse'])->name('admin.bookings.parse');
         Route::post('bookings/parse-text', [AdminBookingController::class, 'parseText'])->name('admin.bookings.parse-text');
         Route::get('bookings/{id}', [AdminBookingController::class, 'show'])->name('admin.bookings.show');
         Route::post('bookings/{id}/confirm', [AdminBookingController::class, 'confirm'])->name('admin.bookings.confirm');
-        Route::post('bookings/{id}/cancel', [AdminBookingController::class, 'cancel'])->name('admin.bookings.cancel');
         Route::delete('bookings/{id}', [AdminBookingController::class, 'destroy'])->name('admin.bookings.destroy');
 
         // UMKM Products
@@ -67,5 +73,8 @@ Route::prefix('admin')->group(function () {
         Route::get('settings', [AdminSettingController::class, 'index'])->name('admin.settings.index');
         Route::get('settings/{id}/edit', [AdminSettingController::class, 'edit'])->name('admin.settings.edit');
         Route::put('settings/{id}', [AdminSettingController::class, 'update'])->name('admin.settings.update');
+
+        // Fonnte Device Info
+        Route::get('fonnte-device', [FonnteController::class, 'device'])->name('admin.fonnte.device');
     });
 });

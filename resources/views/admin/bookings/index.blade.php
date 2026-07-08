@@ -5,7 +5,10 @@
 <div class="space-y-6">
     <div class="flex items-center justify-between">
         <h2 class="text-2xl font-bold text-gray-800">Bookings</h2>
-        <a href="{{ route('admin.bookings.parse') }}" class="px-4 py-2 bg-emerald-700 text-white rounded-lg text-sm hover:bg-emerald-800 transition">+ Parse Text WA</a>
+        <div class="flex gap-2">
+            <a href="{{ route('admin.bookings.export') }}" class="px-4 py-2 bg-white border border-emerald-700 text-emerald-700 rounded-lg text-sm hover:bg-emerald-50 transition">Export Excel</a>
+            <a href="{{ route('admin.bookings.parse') }}" class="px-4 py-2 bg-emerald-700 text-white rounded-lg text-sm hover:bg-emerald-800 transition">+ Parse Text WA</a>
+        </div>
     </div>
 
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -40,17 +43,17 @@
                         </span>
                     </td>
                     <td class="p-4 flex gap-2">
-                        <a href="{{ route('admin.bookings.show', $booking->id) }}" class="text-blue-600 hover:text-blue-800 text-xs">Detail</a>
+                        <a href="{{ route('admin.bookings.show', $booking->id) }}" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700 transition">Detail</a>
                         @if($booking->status === 'pending')
-                        <form method="POST" action="{{ route('admin.bookings.confirm', $booking->id) }}" class="inline">
+                        <form method="POST" action="{{ route('admin.bookings.confirm', $booking->id) }}" class="inline" onsubmit="return confirm('Konfirmasi booking ini?')">
                             @csrf
-                            <button type="submit" class="text-green-600 hover:text-green-800 text-xs">Confirm</button>
-                        </form>
-                        <form method="POST" action="{{ route('admin.bookings.cancel', $booking->id) }}" class="inline" onsubmit="return confirm('Yakin cancel?')">
-                            @csrf
-                            <button type="submit" class="text-red-600 hover:text-red-800 text-xs">Cancel</button>
+                            <button type="submit" class="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs hover:bg-green-700 transition">Konfirmasi</button>
                         </form>
                         @endif
+                        <form method="POST" action="{{ route('admin.bookings.destroy', $booking->id) }}" onsubmit="return confirm('Yakin hapus booking ini?')">
+                            @csrf @method('DELETE')
+                            <button type="submit" class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs hover:bg-red-700 transition">Hapus</button>
+                        </form>
                     </td>
                 </tr>
                 @empty

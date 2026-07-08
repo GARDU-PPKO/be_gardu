@@ -118,23 +118,6 @@ class DatabaseSeeder extends Seeder
             TourPackageInclude::create(['package_id' => $pkg4->id, 'item' => $item, 'urutan' => $i]);
         }
 
-        // Booking Sessions
-        $sessions = ['Pagi', 'Siang', 'Sore'];
-        foreach ([$pkg1, $pkg2] as $pkg) {
-            for ($d = 1; $d <= 30; $d++) {
-                foreach ($sessions as $sesi) {
-                    BookingSession::create([
-                        'package_id' => $pkg->id,
-                        'tanggal' => now()->addDays($d)->toDateString(),
-                        'sesi' => $sesi,
-                        'kuota' => 20,
-                        'terisi' => rand(0, 5),
-                        'created_by' => $superadmin->id,
-                    ]);
-                }
-            }
-        }
-
         // UMKM Products
         $umkmItems = [
             ['nama' => 'Tempe Besem Bu Kartini', 'kategori' => 'Makanan', 'harga' => 5000, 'deskripsi' => 'Tempe besem khas Getas, fermentasi sempurna.', 'gambar' => 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345001'],
@@ -190,9 +173,37 @@ class DatabaseSeeder extends Seeder
             VillageStat::create($s);
         }
 
+        // Bookings
+        $bookingData = [
+            ['kode_booking' => 'GB-A1B2C3D4', 'nama_pemesan' => 'Budi Santoso', 'no_wa_pemesan' => '62812345678', 'email' => 'budi@email.com', 'kota_asal' => 'Semarang', 'package_id' => $pkg1->id, 'tanggal' => now()->subDays(5)->toDateString(), 'sesi' => 'Pagi', 'jumlah_peserta' => 3, 'total_harga' => 225000, 'status' => 'confirmed', 'created_by' => $superadmin->id],
+            ['kode_booking' => 'GB-E5F6G7H8', 'nama_pemesan' => 'Siti Nurhaliza', 'no_wa_pemesan' => '62821234567', 'email' => 'siti@email.com', 'kota_asal' => 'Kendal', 'package_id' => $pkg1->id, 'tanggal' => now()->subDays(3)->toDateString(), 'sesi' => 'Siang', 'jumlah_peserta' => 2, 'total_harga' => 150000, 'status' => 'confirmed', 'created_by' => $superadmin->id],
+            ['kode_booking' => 'GB-I9J0K1L2', 'nama_pemesan' => 'Ahmad Rizki', 'no_wa_pemesan' => '62856473829', 'email' => 'ahmad@email.com', 'kota_asal' => 'Pekalongan', 'package_id' => $pkg2->id, 'tanggal' => now()->subDays(1)->toDateString(), 'sesi' => 'Pagi', 'jumlah_peserta' => 4, 'total_harga' => 380000, 'status' => 'confirmed', 'created_by' => $superadmin->id],
+            ['kode_booking' => 'GB-M3N4O5P6', 'nama_pemesan' => 'Dewi Sartika', 'no_wa_pemesan' => '62895123456', 'email' => null, 'kota_asal' => 'Jakarta', 'package_id' => $pkg3->id, 'tanggal' => now()->addDays(2)->toDateString(), 'sesi' => 'Sore', 'jumlah_peserta' => 4, 'total_harga' => 250000, 'status' => 'confirmed', 'created_by' => $superadmin->id],
+            ['kode_booking' => 'GB-Q7R8S9T0', 'nama_pemesan' => 'Rudi Hartono', 'no_wa_pemesan' => '62812345679', 'email' => 'rudi@email.com', 'kota_asal' => 'Bandung', 'package_id' => $pkg2->id, 'tanggal' => now()->addDays(3)->toDateString(), 'sesi' => 'Siang', 'jumlah_peserta' => 6, 'total_harga' => 570000, 'status' => 'confirmed', 'created_by' => $superadmin->id],
+            ['kode_booking' => 'GB-U1V2W3X4', 'nama_pemesan' => 'Ani Rahmawati', 'no_wa_pemesan' => '62877778888', 'email' => 'ani@email.com', 'kota_asal' => 'Yogyakarta', 'package_id' => $pkg1->id, 'tanggal' => now()->addDays(5)->toDateString(), 'sesi' => 'Pagi', 'jumlah_peserta' => 5, 'total_harga' => 375000, 'status' => 'confirmed', 'created_by' => $superadmin->id],
+            ['kode_booking' => 'GB-Y5Z6A7B8', 'nama_pemesan' => 'Tono Wijaya', 'no_wa_pemesan' => '62899887766', 'email' => 'tono@email.com', 'kota_asal' => 'Surabaya', 'package_id' => $pkg4->id, 'tanggal' => now()->addDays(7)->toDateString(), 'sesi' => 'Pagi', 'jumlah_peserta' => 25, 'total_harga' => 1625000, 'status' => 'confirmed', 'created_by' => $superadmin->id],
+            ['kode_booking' => 'GB-C9D0E1F2', 'nama_pemesan' => 'Lina Marlina', 'no_wa_pemesan' => '62811122233', 'email' => null, 'kota_asal' => 'Cirebon', 'package_id' => $pkg3->id, 'tanggal' => now()->addDays(10)->toDateString(), 'sesi' => 'Siang', 'jumlah_peserta' => 3, 'total_harga' => 250000, 'status' => 'confirmed', 'created_by' => $superadmin->id],
+            ['kode_booking' => 'GB-K7L8M9N0', 'nama_pemesan' => 'Rina Susanti', 'no_wa_pemesan' => '62866778899', 'email' => 'rina@email.com', 'kota_asal' => 'Magelang', 'package_id' => $pkg2->id, 'tanggal' => now()->addDays(14)->toDateString(), 'sesi' => 'Pagi', 'jumlah_peserta' => 3, 'total_harga' => 285000, 'status' => 'confirmed', 'created_by' => $superadmin->id],
+            // Pending bookings (from Fonnte webhook, waiting payment confirmation)
+            ['kode_booking' => 'GB-P1N2D3M4', 'nama_pemesan' => 'Fajar Prasetyo', 'no_wa_pemesan' => '628555777888', 'email' => 'fajar@email.com', 'kota_asal' => 'Salatiga', 'package_id' => $pkg1->id, 'tanggal' => now()->addDays(3)->toDateString(), 'sesi' => 'Pagi', 'jumlah_peserta' => 2, 'total_harga' => 150000, 'status' => 'pending', 'created_by' => $superadmin->id],
+            ['kode_booking' => 'GB-X9Y8Z7W6', 'nama_pemesan' => 'Mega Sari', 'no_wa_pemesan' => '628222333444', 'email' => null, 'kota_asal' => 'Purwokerto', 'package_id' => $pkg2->id, 'tanggal' => now()->addDays(5)->toDateString(), 'sesi' => 'Siang', 'jumlah_peserta' => 3, 'total_harga' => 285000, 'status' => 'pending', 'created_by' => $superadmin->id],
+        ];
+        foreach ($bookingData as $b) {
+            Booking::create($b);
+        }
+
         // Settings
         Setting::create(['key' => 'wa_admin', 'value' => '6281234567890', 'deskripsi' => 'Nomor WhatsApp admin']);
         Setting::create(['key' => 'nama_desa', 'value' => 'Desa Getas', 'deskripsi' => 'Nama desa']);
         Setting::create(['key' => 'alamat_desa', 'value' => 'Jl. Raya Getas No. 1, Kec. Singorojo, Kab. Kendal 51382', 'deskripsi' => 'Alamat desa']);
+        Setting::create(['key' => 'fonnte_token', 'value' => '-', 'deskripsi' => 'Token API Fonnte']);
+        Setting::create(['key' => 'rekening_bank', 'value' => 'BNI 123456789 a.n. Desa Getas', 'deskripsi' => 'Informasi rekening untuk pembayaran']);
+
+        // Booking Sessions
+        BookingSession::insert([
+            ['nama' => 'Pagi', 'jam_mulai' => '08:00', 'jam_selesai' => '10:00', 'is_active' => true],
+            ['nama' => 'Siang', 'jam_mulai' => '10:30', 'jam_selesai' => '12:30', 'is_active' => true],
+            ['nama' => 'Sore', 'jam_mulai' => '13:00', 'jam_selesai' => '15:00', 'is_active' => true],
+        ]);
     }
 }
