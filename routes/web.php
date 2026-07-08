@@ -42,6 +42,7 @@ Route::prefix('admin')->group(function () {
 
         // Bookings
         Route::get('bookings', [AdminBookingController::class, 'index'])->name('admin.bookings.index');
+        Route::get('bookings/export', [AdminBookingController::class, 'exportExcel'])->name('admin.bookings.export');
         Route::get('bookings/parse', [AdminBookingController::class, 'parse'])->name('admin.bookings.parse');
         Route::post('bookings/parse-text', [AdminBookingController::class, 'parseText'])->name('admin.bookings.parse-text');
         Route::get('bookings/{id}', [AdminBookingController::class, 'show'])->name('admin.bookings.show');
