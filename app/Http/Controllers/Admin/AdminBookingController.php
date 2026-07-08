@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Intervention\Image\Laravel\Facades\Image;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminBookingController extends Controller
@@ -54,7 +55,7 @@ class AdminBookingController extends Controller
     {
         $request->validate([
             'raw_text' => 'required|string',
-            'bukti_bayar' => 'nullable|string|max:255',
+            'bukti_bayar' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
         $text = $request->raw_text;
@@ -69,6 +70,19 @@ class AdminBookingController extends Controller
 
         $kodeBooking = 'GB-' . strtoupper(Str::random(8));
 
+        $buktiBayar = null;
+        if ($request->hasFile('bukti_bayar')) {
+            $tanggal = $data['tanggal'] ?: now()->format('Y-m-d');
+            $filename = $tanggal . '_' . $kodeBooking . '.jpg';
+
+            $image = Image::decode($request->file('bukti_bayar'));
+            $image->scaleDown(width: 1200);
+
+            $image->save(storage_path('app/public/buktibayar/' . $filename));
+
+            $buktiBayar = '/storage/buktibayar/' . $filename;
+        }
+
         $booking = Booking::create([
             'kode_booking' => $kodeBooking,
             'nama_pemesan' => $data['nama'],
@@ -82,7 +96,7 @@ class AdminBookingController extends Controller
             'jumlah_peserta' => $data['jumlah_peserta'],
             'total_harga' => $data['total_harga'],
             'status' => 'pending',
-            'bukti_bayar' => $request->bukti_bayar,
+            'bukti_bayar' => $buktiBayar,
             'raw_wa_text' => $text,
             'created_by' => auth()->id(),
         ]);
