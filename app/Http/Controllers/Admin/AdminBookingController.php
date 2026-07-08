@@ -5,37 +5,21 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\TourPackage;
+use App\Services\FonnteService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Intervention\Image\Laravel\Facades\Image;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use OpenSpout\Writer\XLSX\Writer;
+use OpenSpout\Common\Entity\Row;
 
 class AdminBookingController extends Controller
 {
-    public function index(Request $request): View
+    public function index(): View
     {
-        $request->validate([
-            'status'         => ['nullable', 'string', 'in:pending,confirmed,cancelled'],
-            'tanggal_dari'   => ['nullable', 'date'],
-            'tanggal_sampai' => ['nullable', 'date', 'after_or_equal:tanggal_dari'],
-        ]);
-
-        $query = Booking::with('package:id,nama')->orderBy('created_at', 'desc');
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-        if ($request->filled('tanggal_dari')) {
-            $query->whereDate('tanggal', '>=', $request->tanggal_dari);
-        }
-        if ($request->filled('tanggal_sampai')) {
-            $query->whereDate('tanggal', '<=', $request->tanggal_sampai);
-        }
-
         return view('admin.bookings.index', [
-            'bookings' => $query->paginate(15),
+            'bookings' => Booking::with('package:id,nama')->orderBy('created_at', 'desc')->paginate(15),
         ]);
     }
 
@@ -95,7 +79,7 @@ class AdminBookingController extends Controller
             'sesi' => $data['sesi'],
             'jumlah_peserta' => $data['jumlah_peserta'],
             'total_harga' => $data['total_harga'],
-            'status' => 'pending',
+            'status' => 'confirmed',
             'bukti_bayar' => $buktiBayar,
             'raw_wa_text' => $text,
             'created_by' => auth()->id(),
@@ -105,18 +89,24 @@ class AdminBookingController extends Controller
             ->with('success', 'Booking berhasil dibuat! Kode: ' . $kodeBooking);
     }
 
-    public function confirm($id): RedirectResponse
+    public function confirm($id, FonnteService $fonnte): RedirectResponse
     {
         $booking = Booking::findOrFail($id);
         $booking->update(['status' => 'confirmed']);
-        return back()->with('success', 'Booking dikonfirmasi');
-    }
 
-    public function cancel($id): RedirectResponse
-    {
-        $booking = Booking::findOrFail($id);
-        $booking->update(['status' => 'cancelled']);
-        return back()->with('success', 'Booking dibatalkan');
+        $message = "✅ *Booking Terkonfirmasi!*\n\n"
+            . "Kode Booking: *{$booking->kode_booking}*\n"
+            . "Paket: {$booking->package->nama}\n"
+            . "Tanggal: {$booking->tanggal}\n"
+            . "Sesi: {$booking->sesi}\n"
+            . "Jumlah: {$booking->jumlah_peserta} orang\n"
+            . "Total: Rp " . number_format($booking->total_harga, 0, ',', '.') . "\n\n"
+            . "Terima kasih, reservasi Anda telah dikonfirmasi. 🎉\n"
+            . "Harap datang 15 menit sebelum jadwal.";
+
+        $fonnte->sendMessage($booking->no_wa_pemesan, $message);
+
+        return back()->with('success', 'Booking dikonfirmasi, notifikasi terkirim ke WA pelanggan');
     }
 
     public function destroy($id): RedirectResponse
@@ -125,167 +115,106 @@ class AdminBookingController extends Controller
         return redirect()->route('admin.bookings.index')->with('success', 'Booking dihapus');
     }
 
-    public function exportExcel(Request $request)
+    private function extractBookingData(string $text): array
     {
-        $request->validate([
-            'status'         => ['nullable', 'string', 'in:pending,confirmed,cancelled'],
-            'tanggal_dari'   => ['nullable', 'date'],
-            'tanggal_sampai' => ['nullable', 'date', 'after_or_equal:tanggal_dari'],
-        ]);
+        $data = [
+            'nama' => '',
+            'no_wa' => '',
+            'email' => null,
+            'kota' => '',
+            'catatan' => null,
+            'package_name' => '',
+            'tanggal' => '',
+            'sesi' => '',
+            'jumlah_peserta' => 1,
+            'total_harga' => 0,
+        ];
 
-        $query = Booking::with('package:id,nama')->orderBy('tanggal', 'desc');
-        if ($request->filled('status'))         $query->where('status', $request->status);
-        if ($request->filled('tanggal_dari'))   $query->whereDate('tanggal', '>=', $request->tanggal_dari);
-        if ($request->filled('tanggal_sampai')) $query->whereDate('tanggal', '<=', $request->tanggal_sampai);
+        // Normalize line endings and split
+        foreach (explode("\n", $text) as $raw) {
+            // Strip leading non-word characters (emojis, bullets, etc.) and normalize spaces
+            $line = trim(preg_replace('/[^\p{L}\p{N}:.@\s\/-]+/u', ' ', $raw));
+            $line = trim(preg_replace('/\s+/', ' ', $line));
+            if (!$line) continue;
 
-        $bookings = $query->get();
+            // Paket
+            if (preg_match('/^(?:Paket|Nama\s*Paket|Package|Pack)\s*:\s*(.+)$/iu', $line, $m))
+                $data['package_name'] = trim($m[1]);
 
-        $parts = [];
-        if ($request->filled('status'))         $parts[] = 'Status: ' . ucfirst($request->status);
-        if ($request->filled('tanggal_dari'))   $parts[] = 'Dari: ' . \Carbon\Carbon::parse($request->tanggal_dari)->format('d/m/Y');
-        if ($request->filled('tanggal_sampai')) $parts[] = 'Sampai: ' . \Carbon\Carbon::parse($request->tanggal_sampai)->format('d/m/Y');
-        $filterLabel = $parts ? implode(' | ', $parts) : 'Semua Data';
+            // Tanggal
+            elseif (preg_match('/^(?:Tanggal|Tgl|Date|Tangeal)\s*:\s*(.+)$/iu', $line, $m))
+                $data['tanggal'] = trim($m[1]);
 
-        [$writer, $styles, $tmpFile] = $this->buildBookingWriter();
+            // Sesi
+            elseif (preg_match('/^(?:Sesi|Session|Jam|Waktu)\s*:\s*(.+)$/iu', $line, $m))
+                $data['sesi'] = trim($m[1]);
 
-        $writer->addRow($this->row(['LAPORAN DATA BOOKING — DESA GETAS'], $styles['title'], 13));
-        $writer->addRow($this->row(['Kec. Singorojo, Kab. Kendal'], $styles['sub'], 13));
-        $writer->addRow($this->row(['']));
-        $writer->addRow($this->row(['']));
-        $writer->addRow($this->row(['Tanggal Cetak: ' . now()->format('d/m/Y H:i') . ' WIB', '', '', '', 'Filter: ' . $filterLabel]));        
+            // Jumlah Peserta
+            elseif (preg_match('/^(?:Peserta|Jumlah\s*Peserta|Pax|Orang|Peseta)\s*:\s*(\d+)/iu', $line, $m))
+                $data['jumlah_peserta'] = (int) $m[1];
 
-        $headerRow = 6;
-        $writer->addRow($this->row([
-            'No.', 'Kode Booking', 'Nama Pemesan', 'No. WhatsApp',
-            'Paket Wisata', 'Tanggal', 'Sesi', 'Peserta', 'Total Harga (Rp)',
-            'Kota Asal', 'Catatan', 'Status', 'Dibuat Pada',
-        ], $styles['head']));
+            // Total Harga
+            elseif (preg_match('/^(?:Total|Total\s*Harga|Harga|Price|Biaya)\s*:\s*(?:Rp\.?\s*)?([\d.,]+)/iu', $line, $m))
+                $data['total_harga'] = (int) str_replace(['.', ','], '', $m[1]);
 
-        foreach ($bookings as $i => $b) {
-            $writer->addRow($this->row([
-                $i + 1,
+            // Nama
+            elseif (preg_match('/^(?:Nama|Name|Nama\s*Pemesan)\s*:\s*(.+)$/iu', $line, $m))
+                $data['nama'] = trim($m[1]);
+
+            // No WA
+            elseif (preg_match('/^(?:WhatsApp|No\.?\s*WA|WA|Phone|Telepon|No\.?\s*HP|HP)\s*:\s*(.+)$/iu', $line, $m))
+                $data['no_wa'] = trim($m[1]);
+
+            // Email
+            elseif (preg_match('/^(?:Email|E-mail|Mail|Surel)\s*:\s*(.+)$/iu', $line, $m))
+                $data['email'] = trim($m[1]);
+
+            // Kota
+            elseif (preg_match('/^(?:Kota|City|Asal|Kota\s*Asal|Domisili)\s*:\s*(.+)$/iu', $line, $m))
+                $data['kota'] = trim($m[1]);
+
+            // Catatan
+            elseif (preg_match('/^(?:Catatan|Note|Pesan|Keterangan)\s*:\s*(.+)$/iu', $line, $m))
+                $data['catatan'] = trim($m[1]);
+        }
+
+        return $data;
+    }
+
+    public function export()
+    {
+        $bookings = Booking::with('package:id,nama')->orderBy('created_at', 'desc')->get();
+
+        $path = tempnam(sys_get_temp_dir(), 'bookings') . '.xlsx';
+        $writer = new Writer;
+        $writer->openToFile($path);
+
+        $writer->addRow(Row::fromValues([
+            'Kode Booking', 'Nama Pemesan', 'No. WA', 'Email', 'Kota Asal',
+            'Paket', 'Tanggal', 'Sesi', 'Jumlah Peserta', 'Total Harga',
+            'Status', 'Catatan', 'Tanggal Booking',
+        ]));
+
+        foreach ($bookings as $b) {
+            $writer->addRow(Row::fromValues([
                 $b->kode_booking,
                 $b->nama_pemesan,
                 $b->no_wa_pemesan,
-                $b->package->nama ?? '-',
-                $b->tanggal?->format('d/m/Y') ?? '',
+                $b->email ?? '',
+                $b->kota_asal ?? '',
+                $b->package?->nama ?? '',
+                $b->tanggal,
                 $b->sesi,
                 $b->jumlah_peserta,
                 $b->total_harga,
-                $b->kota_asal ?? '',
+                $b->status,
                 $b->catatan ?? '',
-                ucfirst($b->status),
-                $b->created_at->format('d/m/Y H:i'),
-            ], $styles['data']));
+                $b->created_at->format('Y-m-d H:i'),
+            ]));
         }
-
-        $firstDataRow = $headerRow + 1;
-        $lastDataRow  = $headerRow + max($bookings->count(), 1);
-        $statusRange  = "L{$firstDataRow}:L{$lastDataRow}";
-        $totalRange   = "I{$firstDataRow}:I{$lastDataRow}";
-        $kodeRange    = "B{$firstDataRow}:B{$lastDataRow}";
-
-        $writer->addRow($this->row(['']));
-
-        $this->summaryRow($writer, $styles, 'Total Booking', "=COUNTA({$kodeRange})&\" transaksi\"");
-        $this->summaryRow($writer, $styles, 'Booking Confirmed', "=COUNTIF({$statusRange},\"Confirmed\")&\" transaksi\"");
-        $this->summaryRow($writer, $styles, 'Booking Pending', "=COUNTIF({$statusRange},\"Pending\")&\" transaksi\"");
-        $this->summaryRow($writer, $styles, 'Booking Cancelled', "=COUNTIF({$statusRange},\"Cancelled\")&\" transaksi\"");
-        $this->summaryRow($writer, $styles, 'Total Pendapatan (Confirmed)', "=SUMIF({$statusRange},\"Confirmed\",{$totalRange})");
-
-        $writer->addRow($this->row(['']));
-        $writer->addRow($this->row(
-            ['* Laporan dicetak otomatis dari Sistem Admin Desa Getas — ' . now()->format('d/m/Y H:i') . ' WIB'],
-            $styles['grey']
-        ));
 
         $writer->close();
 
-        $filename = 'Laporan_Booking_' . now()->format('d-m-Y') . '.xlsx';
-
-        return response()->download($tmpFile, $filename, [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ])->deleteFileAfterSend(true);
-    }
-
-    private function buildBookingWriter(): array
-    {
-        $b = fn($name) => "\\OpenSpout\\Common\\Entity\\Style\\{$name}";
-        $Border      = $b('Border');
-        $BorderPart  = $b('BorderPart');
-        $BorderName  = $b('BorderName');
-        $BorderWidth = $b('BorderWidth');
-        $BorderStyle = $b('BorderStyle');
-        $Style       = $b('Style');
-        $Align       = $b('CellAlignment');
-
-        $side = fn($name) => new $BorderPart($name, '000000', $BorderWidth::THIN, $BorderStyle::SOLID);
-        $border = new $Border(
-            $side($BorderName::BOTTOM), $side($BorderName::TOP),
-            $side($BorderName::LEFT), $side($BorderName::RIGHT)
-        );
-
-        $styles = [
-            'title'  => (new $Style())->withFontBold(true)->withCellAlignment($Align::CENTER),
-            'sub'    => (new $Style())->withCellAlignment($Align::CENTER),
-            'head'   => (new $Style())->withFontBold(true)->withFontColor('FFFFFF')
-                            ->withBackgroundColor('374151')->withShouldWrapText(false)->withBorder($border),
-            'data'   => (new $Style())->withBorder($border),
-            'sumLbl' => (new $Style())->withFontBold(true)->withBackgroundColor('FFFF00')->withBorder($border),
-            'sumVal' => (new $Style())->withFontBold(true)->withBackgroundColor('FFFF00')->withBorder($border)->withFormat('#,##0'),
-            'grey'   => (new $Style())->withFontColor('6B7280'),
-            'empty'  => (new $Style()),
-        ];
-
-        $options = new \OpenSpout\Writer\XLSX\Options();
-        $options->setColumnWidth(6,  1);  
-        $options->setColumnWidth(18, 2);  
-        $options->setColumnWidth(25, 3);  
-        $options->setColumnWidth(16, 4);  
-        $options->setColumnWidth(22, 5); 
-        $options->setColumnWidth(12, 6);
-        $options->setColumnWidth(10, 7);
-        $options->setColumnWidth(9,  8);
-        $options->setColumnWidth(16, 9);
-        $options->setColumnWidth(15, 10);
-        $options->setColumnWidth(25, 11);
-        $options->setColumnWidth(12, 12);
-        $options->setColumnWidth(18, 13);
-
-        $options->mergeCells(0, 1, 12, 1);
-        $options->mergeCells(0, 2, 12, 2);
-        $options->mergeCells(0, 4, 2, 4);
-        $options->mergeCells(4, 4, 12, 4);
-
-        $tmpFile = tempnam(sys_get_temp_dir(), 'booking_') . '.xlsx';
-        $writer  = new \OpenSpout\Writer\XLSX\Writer($options);
-        $writer->openToFile($tmpFile);
-
-        return [$writer, $styles, $tmpFile];
-    }
-
-    private function row(array $vals, ?\OpenSpout\Common\Entity\Style\Style $style = null, ?int $padTo = null): \OpenSpout\Common\Entity\Row
-    {
-        if ($padTo && count($vals) < $padTo) {
-            $vals = array_merge($vals, array_fill(0, $padTo - count($vals), ''));
-        }
-
-        return $style
-            ? \OpenSpout\Common\Entity\Row::fromValuesWithStyle($vals, $style)
-            : \OpenSpout\Common\Entity\Row::fromValues($vals);
-    }
-
-    private function summaryRow(\OpenSpout\Writer\XLSX\Writer $writer, array $styles, string $label, string $formula): void
-    {
-        $cells = [];
-        for ($i = 0; $i < 10; $i++) {
-            $cells[] = \OpenSpout\Common\Entity\Cell::fromValue('')->withStyle($styles['empty']);
-        }
-
-        $cells[] = \OpenSpout\Common\Entity\Cell::fromValue($label)->withStyle($styles['sumLbl']);
-        $cells[] = new \OpenSpout\Common\Entity\Cell\FormulaCell($formula, null, $styles['sumVal']);
-        $cells[] = \OpenSpout\Common\Entity\Cell::fromValue('')->withStyle($styles['empty']);
-
-        $writer->addRow(new \OpenSpout\Common\Entity\Row($cells));
+        return response()->download($path, 'bookings-export-' . now()->format('Y-m-d') . '.xlsx')->deleteFileAfterSend(true);
     }
 }

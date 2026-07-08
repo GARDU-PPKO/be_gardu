@@ -30,11 +30,6 @@ class TourPackage extends Model
         return $this->hasMany(TourPackageInclude::class, 'package_id');
     }
 
-    public function sessions(): HasMany
-    {
-        return $this->hasMany(BookingSession::class, 'package_id');
-    }
-
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class, 'package_id');

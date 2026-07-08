@@ -42,17 +42,17 @@
         </div>
     </div>
 
-    @if($booking->status === 'pending')
     <div class="flex gap-3">
-        <form method="POST" action="{{ route('admin.bookings.confirm', $booking->id) }}">
+        @if($booking->status === 'pending')
+        <form method="POST" action="{{ route('admin.bookings.confirm', $booking->id) }}" onsubmit="return confirm('Konfirmasi booking ini?')">
             @csrf
-            <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition">Konfirmasi</button>
+            <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition">Konfirmasi Pembayaran</button>
         </form>
-        <form method="POST" action="{{ route('admin.bookings.cancel', $booking->id) }}" onsubmit="return confirm('Yakin cancel?')">
-            @csrf
-            <button type="submit" class="px-6 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition">Batalkan</button>
+        @endif
+        <form method="POST" action="{{ route('admin.bookings.destroy', $booking->id) }}" onsubmit="return confirm('Yakin hapus booking ini?')">
+            @csrf @method('DELETE')
+            <button type="submit" class="px-6 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition">Hapus Booking</button>
         </form>
     </div>
-    @endif
 </div>
 @endsection

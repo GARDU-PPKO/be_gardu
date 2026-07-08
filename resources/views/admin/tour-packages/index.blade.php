@@ -4,11 +4,11 @@
 @section('content')
 <div class="space-y-6">
     <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-bold tracking-tight text-gray-900">Paket Wisata</h2>
-        <a href="{{ route('admin.tour-packages.create') }}" class="px-4 py-2 bg-[#0d3b2e] text-white hover:bg-[#092b21] rounded-lg text-sm hover:bg-emerald-800 transition">+ Tambah Paket</a>
+        <h2 class="text-2xl font-bold text-gray-800">Paket Wisata</h2>
+        <a href="{{ route('admin.tour-packages.create') }}" class="px-4 py-2 bg-emerald-700 text-white rounded-lg text-sm hover:bg-emerald-800 transition">+ Tambah Paket</a>
     </div>
 
-    <div class="bg-white border border-gray-200/80 rounded-xl overflow-hidden">
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
         <table class="w-full text-sm">
             <thead>
                 <tr class="text-left text-gray-500 border-b bg-gray-50">
@@ -34,15 +34,12 @@
                             {{ $package->is_active ? 'Aktif' : 'Nonaktif' }}
                         </span>
                     </td>
-                    <td class="p-4 flex items-center gap-1.5">
-                        <a href="{{ route('admin.tour-packages.edit', $package->id) }}" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-colors" title="Edit">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                        </a>
+                    <td class="p-4 flex gap-2">
+                        <a href="{{ route('admin.tour-packages.show', $package->id) }}" class="px-3 py-1.5 bg-gray-600 text-white rounded-lg text-xs hover:bg-gray-700 transition">Detail</a>
+                        <a href="{{ route('admin.tour-packages.edit', $package->id) }}" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700 transition">Edit</a>
                         <form method="POST" action="{{ route('admin.tour-packages.destroy', $package->id) }}" onsubmit="return confirm('Yakin hapus?')">
                             @csrf @method('DELETE')
-                            <button type="submit" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700 transition-colors" title="Hapus">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                            </button>
+                            <button type="submit" class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs hover:bg-red-700 transition">Hapus</button>
                         </form>
                     </td>
                 </tr>
