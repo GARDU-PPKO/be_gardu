@@ -8,7 +8,10 @@ use App\Http\Controllers\Public\TourPackageController;
 use App\Http\Controllers\Public\UmkmProductController;
 use App\Http\Controllers\Public\VillageProfileController;
 use App\Http\Controllers\Public\VillageStatController;
+use App\Http\Controllers\Api\FonnteWebhookController;
 use Illuminate\Support\Facades\Route;
+
+Route::post('fonnte/webhook', FonnteWebhookController::class);
 
 Route::get('dusun', [DusunController::class, 'index']);
 Route::get('dusun/{id}', [DusunController::class, 'show']);
