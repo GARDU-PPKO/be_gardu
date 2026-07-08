@@ -1,0 +1,51 @@
+name: Deploy Gardu API
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script_stop: true
+          script: |
+            echo "=============================="
+            echo "START DEPLOY $(date)"
+            echo "=============================="
+
+            cd /home/ilhama/be_gardu
+
+            echo "Current branch:"
+            git branch
+
+            echo "Pull latest code..."
+            git fetch origin
+            git reset --hard origin/main
+
+            echo "Build container..."
+            docker compose up -d --build
+
+            echo "Wait container ready..."
+            sleep 10
+
+            echo "Run migration..."
+            docker exec gardu-api php artisan migrate --force
+
+            echo "Clear cache..."
+            docker exec gardu-api php artisan optimize:clear
+
+            echo "Optimize..."
+            docker exec gardu-api php artisan optimize
+
+            echo "Deployment finished!"
