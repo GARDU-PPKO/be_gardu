@@ -3,16 +3,24 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Response\ApiResponse;
 use App\Models\Booking;
 use App\Models\FonnteWebhook;
 use App\Models\TourPackage;
+use App\Models\User;
 use App\Services\FonnteService;
+use Dedoc\Scramble\Attributes\Endpoint;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
+#[Group('Webhook')]
 class FonnteWebhookController extends Controller
 {
+    use ApiResponse;
+
+    #[Endpoint('Webhook Fonnte', description: 'Menerima pesan WhatsApp dari Fonnte dan membuat booking otomatis')]
     public function __invoke(Request $request, FonnteService $fonnte): JsonResponse
     {
         $phone = $request->input('phone');
@@ -29,14 +37,14 @@ class FonnteWebhookController extends Controller
         ]);
 
         if (!$phone || !$message) {
-            return response()->json(['status' => 'ignored']);
+            return $this->success(null, 'Pesan diterima tetapi tidak diproses.');
         }
 
         $data = $this->extractBookingData($message);
 
         if (empty($data['nama']) || empty($data['no_wa']) || empty($data['package_name'])) {
             $fonnte->sendMessage($phone, "Maaf, format data booking tidak lengkap.\n\nPastikan format:\nNama: ...\nNo. WA: ...\nPaket: ...\nTanggal: ...\nSesi: ...\nPeserta: ...\nTotal: ...");
-            return response()->json(['status' => 'invalid_format']);
+            return $this->error('Format data booking tidak lengkap.', 400);
         }
 
         $package = TourPackage::where('is_active', true)
@@ -45,8 +53,10 @@ class FonnteWebhookController extends Controller
 
         if (!$package) {
             $fonnte->sendMessage($phone, "Maaf, paket \"{$data['package_name']}\" tidak ditemukan. Silakan cek daftar paket wisata yang tersedia.");
-            return response()->json(['status' => 'package_not_found']);
+            return $this->error('Paket wisata tidak ditemukan.', 404);
         }
+
+        $admin = User::where('role', 'superadmin')->firstOrFail();
 
         $kodeBooking = 'GB-' . strtoupper(Str::random(8));
 
@@ -65,7 +75,7 @@ class FonnteWebhookController extends Controller
             'status' => 'pending',
             'bukti_bayar' => $attachment,
             'raw_wa_text' => $message,
-            'created_by' => 1,
+            'created_by' => $admin->id,
         ]);
 
         $reply = "✅ *Booking Berhasil!*\n\n"
@@ -81,7 +91,10 @@ class FonnteWebhookController extends Controller
 
         $fonnte->sendMessage($phone, $reply);
 
-        return response()->json(['status' => 'success', 'booking' => $kodeBooking]);
+        return $this->success([
+            'kode_booking' => $kodeBooking,
+            'status' => 'pending',
+        ], 'Booking berhasil dibuat.');
     }
 
     private function extractBookingData(string $text): array

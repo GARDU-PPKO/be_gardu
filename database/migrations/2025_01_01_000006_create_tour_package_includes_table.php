@@ -9,8 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('tour_package_includes', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('package_id')->constrained('tour_packages')->cascadeOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('package_id')->constrained('tour_packages')->cascadeOnDelete();
             $table->string('item', 255);
             $table->integer('urutan')->default(0);
             $table->timestamps();

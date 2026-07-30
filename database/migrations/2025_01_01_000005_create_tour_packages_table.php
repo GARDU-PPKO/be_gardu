@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('tour_packages', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('nama', 200);
             $table->text('deskripsi');
             $table->decimal('harga', 12, 2);
@@ -20,7 +20,7 @@ return new class extends Migration
             $table->integer('max_participants')->nullable();
             $table->string('gambar', 255);
             $table->boolean('is_active')->default(true);
-            $table->foreignId('created_by')->constrained('users');
+            $table->foreignUuid('created_by')->constrained('users');
             $table->timestamps();
         });
     }

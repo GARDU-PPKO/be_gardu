@@ -200,10 +200,12 @@ class DatabaseSeeder extends Seeder
         Setting::create(['key' => 'rekening_bank', 'value' => 'BNI 123456789 a.n. Desa Getas', 'deskripsi' => 'Informasi rekening untuk pembayaran']);
 
         // Booking Sessions
-        BookingSession::insert([
-            ['nama' => 'Pagi', 'jam_mulai' => '08:00', 'jam_selesai' => '10:00', 'is_active' => true],
-            ['nama' => 'Siang', 'jam_mulai' => '10:30', 'jam_selesai' => '12:30', 'is_active' => true],
-            ['nama' => 'Sore', 'jam_mulai' => '13:00', 'jam_selesai' => '15:00', 'is_active' => true],
-        ]);
+        foreach ([
+            ['nama' => 'Pagi', 'jam_mulai' => '08:00', 'jam_selesai' => '10:00'],
+            ['nama' => 'Siang', 'jam_mulai' => '10:30', 'jam_selesai' => '12:30'],
+            ['nama' => 'Sore', 'jam_mulai' => '13:00', 'jam_selesai' => '15:00'],
+        ] as $session) {
+            BookingSession::create($session);
+        }
     }
 }

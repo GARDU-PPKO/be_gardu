@@ -9,14 +9,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('village_profile', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->enum('tipe', ['sejarah', 'visi', 'misi', 'pemerintahan']);
             $table->string('judul', 200);
             $table->longText('konten');
             $table->integer('urutan')->default(0);
             $table->boolean('is_active')->default(true);
-            $table->foreignId('created_by')->constrained('users');
+            $table->foreignUuid('created_by')->constrained('users');
             $table->timestamps();
+            $table->index('tipe');
         });
     }
 
