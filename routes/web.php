@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\AdminVillageProfileController;
 use App\Http\Controllers\Admin\AdminVillageStatsController;
 use App\Http\Controllers\Admin\AdminSettingController;
 use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\AdminPosController;
 use App\Http\Controllers\Admin\FonnteController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,6 +24,16 @@ Route::prefix('admin')->group(function () {
     Route::middleware('auth')->group(function () {
         Route::post('logout', [AuthController::class, 'logout'])->name('admin.logout');
         Route::get('/', [DashboardController::class, 'index'])->name('admin.dashboard');
+
+        // Kasir / POS Module
+        Route::get('pos', [AdminPosController::class, 'index'])->name('admin.pos.index');
+        Route::post('pos/checkout', [AdminPosController::class, 'storeTransaction'])->name('admin.pos.checkout');
+        Route::get('pos/products', [AdminPosController::class, 'products'])->name('admin.pos.products.index');
+        Route::post('pos/products', [AdminPosController::class, 'storeProduct'])->name('admin.pos.products.store');
+        Route::put('pos/products/{id}', [AdminPosController::class, 'updateProduct'])->name('admin.pos.products.update');
+        Route::delete('pos/products/{id}', [AdminPosController::class, 'destroyProduct'])->name('admin.pos.products.destroy');
+        Route::get('pos/transactions', [AdminPosController::class, 'transactions'])->name('admin.pos.transactions.index');
+        Route::get('pos/transactions/{id}/receipt', [AdminPosController::class, 'receipt'])->name('admin.pos.receipt');
 
         // Users (superadmin only)
         Route::resource('users', AdminUserController::class)->except(['show'])->names('admin.users');

@@ -18,6 +18,25 @@
                 <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.dashboard') ? 'bg-emerald-800' : '' }}">
                     <span>📊</span> Dashboard
                 </a>
+
+                <div class="pt-3 pb-1.5 px-3 text-[10px] font-bold uppercase tracking-widest text-emerald-300/80">Kasir / POS Terminal</div>
+                <a href="{{ route('admin.pos.index') }}" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium transition-all duration-200 {{ request()->routeIs('admin.pos.index') ? 'bg-emerald-800 text-white shadow-sm ring-1 ring-emerald-700/50' : 'text-emerald-100 hover:bg-emerald-800/60 hover:text-white' }}">
+                    <div class="flex items-center gap-3">
+                        <svg width="16" height="16" style="width:16px;height:16px;flex-shrink:0;" class="text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                        <span>Kasir POS</span>
+                    </div>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-700/60 text-emerald-200">LIVE</span>
+                </a>
+                <a href="{{ route('admin.pos.products.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium transition-all duration-200 {{ request()->routeIs('admin.pos.products.*') ? 'bg-emerald-800 text-white shadow-sm ring-1 ring-emerald-700/50' : 'text-emerald-100 hover:bg-emerald-800/60 hover:text-white' }}">
+                    <svg width="16" height="16" style="width:16px;height:16px;flex-shrink:0;" class="text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                    <span>Produk POS</span>
+                </a>
+                <a href="{{ route('admin.pos.transactions.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium transition-all duration-200 {{ request()->routeIs('admin.pos.transactions.*') ? 'bg-emerald-800 text-white shadow-sm ring-1 ring-emerald-700/50' : 'text-emerald-100 hover:bg-emerald-800/60 hover:text-white' }}">
+                    <svg width="16" height="16" style="width:16px;height:16px;flex-shrink:0;" class="text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    <span>Riwayat POS</span>
+                </a>
+
+                <div class="pt-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-emerald-400">Pariwisata & Desa</div>
                 <a href="{{ route('admin.bookings.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.bookings.*') ? 'bg-emerald-800' : '' }}">
                     <span>📋</span> Bookings
                 </a>

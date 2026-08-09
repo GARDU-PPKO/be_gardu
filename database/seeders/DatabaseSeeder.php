@@ -207,5 +207,8 @@ class DatabaseSeeder extends Seeder
         ] as $session) {
             BookingSession::create($session);
         }
+
+        // POS Seeder
+        $this->call(PosSeeder::class);
     }
 }
