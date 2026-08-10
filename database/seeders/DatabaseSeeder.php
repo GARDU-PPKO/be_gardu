@@ -11,8 +11,8 @@ use App\Models\Dusun;
 use App\Models\DusunGallery;
 use App\Models\DusunKeunggulan;
 use App\Models\Setting;
-use App\Models\TourPackage;
-use App\Models\TourPackageInclude;
+use App\Models\PaketWisata;
+use App\Models\PaketWisataTier;
 use App\Models\UmkmProduct;
 use App\Models\VillageProfile;
 use App\Models\VillageStat;
@@ -69,71 +69,80 @@ class DatabaseSeeder extends Seeder
             }
         }
 
-        // Tour Packages
-        $pkg1 = TourPackage::create([
-            'nama' => 'Tubing Adventure',
-            'deskripsi' => 'Menyusuri Sungai Blukar sepanjang 1,5 km dengan arus alami.',
-            'harga' => 75000, 'satuan' => 'orang', 'tag' => 'Terpopuler',
-            'durasi' => '±2 jam', 'min_participants' => 1, 'max_participants' => 10,
+        // Paket Wisata (sesuai dokumentasi booking_flow_file_handling.md)
+        $genta = PaketWisata::create([
+            'nama' => 'GENTA Explorer',
+            'kategori' => 'tubing',
+            'tipe_harga' => 'per_orang_tier',
+            'deskripsi' => 'Menyusuri Sungai Blukar dengan arus alami. Harga per orang turun untuk rombongan lebih banyak.',
+            'fasilitas' => ['Pelampung & helm', 'Pemandu lokal', 'Air minum', 'Foto dokumentasi'],
             'gambar' => 'https://images.unsplash.com/photo-1546058914-5000137323f0?w=500&h=320&fit=crop&auto=format',
+            'tag' => 'Terpopuler',
+            'durasi' => '±2 jam',
+            'aktif' => true,
             'created_by' => $superadmin->id,
         ]);
-        foreach (['Pelampung & helm', 'Pemandu lokal', 'Air minum'] as $i => $item) {
-            TourPackageInclude::create(['package_id' => $pkg1->id, 'item' => $item, 'urutan' => $i]);
-        }
+        PaketWisataTier::create(['paket_id' => $genta->id, 'min_peserta' => 10, 'harga_per_orang' => 110000]);
+        PaketWisataTier::create(['paket_id' => $genta->id, 'min_peserta' => 5, 'harga_per_orang' => 125000]);
 
-        $pkg2 = TourPackage::create([
-            'nama' => 'River Exploration',
-            'deskripsi' => 'Eksplorasi sungai bersama guide berpengalaman dan safety equipment lengkap.',
-            'harga' => 95000, 'satuan' => 'orang', 'tag' => null,
-            'durasi' => '±3 jam', 'min_participants' => 1, 'max_participants' => 8,
+        // GEMPI Adventure — angka tier placeholder (dokumen tidak mencantumkan nominal), admin dapat ubah di panel
+        $gempi = PaketWisata::create([
+            'nama' => 'GEMPI Adventure',
+            'kategori' => 'tubing',
+            'tipe_harga' => 'per_orang_tier',
+            'deskripsi' => 'Adventure tubing dengan rute lebih panjang dan safety gear lengkap.',
+            'fasilitas' => ['Full safety gear', 'Pemandu senior', 'Makan ringan', 'Foto dokumentasi'],
             'gambar' => 'https://images.unsplash.com/photo-1561774711-b0fa364863b7?w=500&h=320&fit=crop&auto=format',
+            'tag' => null,
+            'durasi' => '±3 jam',
+            'aktif' => true,
             'created_by' => $superadmin->id,
         ]);
-        foreach (['Full safety gear', 'Pemandu senior', 'Foto dokumentasi', 'Air minum'] as $i => $item) {
-            TourPackageInclude::create(['package_id' => $pkg2->id, 'item' => $item, 'urutan' => $i]);
-        }
+        PaketWisataTier::create(['paket_id' => $gempi->id, 'min_peserta' => 10, 'harga_per_orang' => 95000]);
+        PaketWisataTier::create(['paket_id' => $gempi->id, 'min_peserta' => 5, 'harga_per_orang' => 110000]);
 
-        $pkg3 = TourPackage::create([
-            'nama' => 'Family Package',
-            'deskripsi' => 'Paket keluarga lengkap — tubing, makan siang, foto dokumentasi.',
-            'harga' => 250000, 'satuan' => 'grup', 'tag' => 'Promo',
-            'durasi' => '½ hari', 'min_participants' => 2, 'max_participants' => 6,
-            'gambar' => 'https://images.unsplash.com/photo-1520329612326-d6038d1395a1?w=500&h=320&fit=crop&auto=format',
+        $solo = PaketWisata::create([
+            'nama' => 'Genta Gempi Solo',
+            'kategori' => 'camping',
+            'tipe_harga' => 'per_paket_fixed',
+            'harga_paket' => 80000,
+            'kapasitas_per_unit' => 1,
+            'deskripsi' => 'Camping solo — 1 tenda, 1 peserta.',
+            'fasilitas' => ['1 tenda', 'Tikar & sleeping bag', 'Area api unggun'],
+            'gambar' => 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=500&h=320&fit=crop&auto=format',
+            'durasi' => '1 malam',
+            'aktif' => true,
             'created_by' => $superadmin->id,
         ]);
-        foreach (['Full safety gear', 'Pemandu keluarga', 'Makan siang', 'Foto & video', 'Suvenir'] as $i => $item) {
-            TourPackageInclude::create(['package_id' => $pkg3->id, 'item' => $item, 'urutan' => $i]);
-        }
 
-        $pkg4 = TourPackage::create([
-            'nama' => 'Group Package',
-            'deskripsi' => 'Paket rombongan minimal 20 orang dengan guide dan makan siang.',
-            'harga' => 65000, 'satuan' => 'orang', 'tag' => null,
-            'durasi' => '½ hari', 'min_participants' => 20, 'max_participants' => 100,
-            'gambar' => 'https://images.unsplash.com/photo-1643215721864-cd4c354ac298?w=500&h=320&fit=crop&auto=format',
+        $buddy = PaketWisata::create([
+            'nama' => 'Genta Gempi Buddy',
+            'kategori' => 'camping',
+            'tipe_harga' => 'per_paket_fixed',
+            'harga_paket' => 130000,
+            'kapasitas_per_unit' => 2,
+            'deskripsi' => 'Camping berdua — 1 tenda untuk 2 peserta.',
+            'fasilitas' => ['1 tenda', '2 tikar & sleeping bag', 'Area api unggun', 'Makan malam'],
+            'gambar' => 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=500&h=320&fit=crop&auto=format',
+            'durasi' => '1 malam',
+            'aktif' => true,
             'created_by' => $superadmin->id,
         ]);
-        foreach (['Safety equipment', 'Multiple guide', 'Makan siang', 'Area gathering'] as $i => $item) {
-            TourPackageInclude::create(['package_id' => $pkg4->id, 'item' => $item, 'urutan' => $i]);
-        }
 
-        // Booking Sessions
-        $sessions = ['Pagi', 'Siang', 'Sore'];
-        foreach ([$pkg1, $pkg2] as $pkg) {
-            for ($d = 1; $d <= 30; $d++) {
-                foreach ($sessions as $sesi) {
-                    BookingSession::create([
-                        'package_id' => $pkg->id,
-                        'tanggal' => now()->addDays($d)->toDateString(),
-                        'sesi' => $sesi,
-                        'kuota' => 20,
-                        'terisi' => rand(0, 5),
-                        'created_by' => $superadmin->id,
-                    ]);
-                }
-            }
-        }
+        $family = PaketWisata::create([
+            'nama' => 'Genta Gempi Family',
+            'kategori' => 'camping',
+            'tipe_harga' => 'per_paket_fixed',
+            'harga_paket' => 180000,
+            'kapasitas_per_unit' => 2,
+            'deskripsi' => 'Camping keluarga — 1 tenda per 2 peserta (bisa multi-tenda), termasuk makan malam & api unggun.',
+            'fasilitas' => ['1 tenda per 2 peserta', 'Tikar & sleeping bag', 'Area api unggun', 'Makan malam', 'Sarapan'],
+            'gambar' => 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=500&h=320&fit=crop&auto=format',
+            'tag' => 'Promo',
+            'durasi' => '1 malam',
+            'aktif' => true,
+            'created_by' => $superadmin->id,
+        ]);
 
         // UMKM Products
         $umkmItems = [
