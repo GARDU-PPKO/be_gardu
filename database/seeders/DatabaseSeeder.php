@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use App\Models\Booking;
+use App\Models\BookingLog;
 use App\Models\BookingSession;
 use App\Models\Budaya;
 use App\Models\BudayaSchedule;
@@ -193,9 +194,96 @@ class DatabaseSeeder extends Seeder
             VillageStat::create($s);
         }
 
+        // Village Profile
+        $profiles = [
+            ['tipe' => 'sejarah', 'judul' => 'Sejarah Desa Getas', 'konten' => '<p>Desa Getas berdiri sejak abad ke-17 sebagai pemukiman kecil di lereng pegunungan Kendal. Nama "Getas" diambil dari kata "nggetas" yang berarti membersihkan lahan untuk bercocok tanam.</p>', 'urutan' => 1],
+            ['tipe' => 'visi', 'judul' => 'Visi Desa Getas', 'konten' => '<p>Menjadi desa wisata yang mandiri, sejahtera, dan berbudaya dengan tetap melestarikan alam serta kearifan lokal pada tahun 2030.</p>', 'urutan' => 2],
+            ['tipe' => 'misi', 'judul' => 'Misi Desa Getas', 'konten' => '<p>1. Mengembangkan potensi wisata alam dan budaya secara berkelanjutan.<br>2. Meningkatkan kesejahteraan masyarakat melalui UMKM dan pariwisata.<br>3. Melestarikan lingkungan dan tradisi lokal.<br>4. Membangun tata kelola desa yang transparan dan partisipatif.</p>', 'urutan' => 3],
+            ['tipe' => 'pemerintahan', 'judul' => 'Pemerintahan Desa', 'konten' => '<p>Desa Getas dipimpin oleh Kepala Desa dengan dukungan perangkat desa serta Badan Permusyawaratan Desa (BPD). Pelayanan publik dilayani di Balai Desa pada jam pelayanan resmi.</p>', 'urutan' => 4],
+        ];
+        foreach ($profiles as $p) {
+            VillageProfile::create($p);
+        }
+
+        // Bookings (contoh berbagai status)
+        $bookingData = [
+            ['nama_lengkap' => 'Budi Santoso', 'no_whatsapp' => '62812345678', 'alamat' => 'Semarang', 'kontak_darurat_nama' => 'Siti', 'kontak_darurat_telp' => '62811111111', 'paket' => $genta, 'tanggal' => now()->subDays(5)->toDateString(), 'sesi' => 'Pagi', 'jumlah_peserta' => 8, 'status' => Booking::STATUS_CONFIRMED],
+            ['nama_lengkap' => 'Siti Nurhaliza', 'no_whatsapp' => '62821234567', 'alamat' => 'Kendal', 'kontak_darurat_nama' => 'Ahmad', 'kontak_darurat_telp' => '62822222222', 'paket' => $genta, 'tanggal' => now()->subDays(3)->toDateString(), 'sesi' => 'Siang', 'jumlah_peserta' => 5, 'status' => Booking::STATUS_CONFIRMED],
+            ['nama_lengkap' => 'Ahmad Rizki', 'no_whatsapp' => '62856473829', 'alamat' => 'Pekalongan', 'kontak_darurat_nama' => 'Dewi', 'kontak_darurat_telp' => '62833333333', 'paket' => $gempi, 'tanggal' => now()->subDays(1)->toDateString(), 'sesi' => 'Pagi', 'jumlah_peserta' => 5, 'status' => Booking::STATUS_CONFIRMED],
+            ['nama_lengkap' => 'Dewi Sartika', 'no_whatsapp' => '6282328753061', 'alamat' => 'Jakarta', 'kontak_darurat_nama' => 'Rudi', 'kontak_darurat_telp' => '62844444444', 'paket' => $buddy, 'tanggal' => now()->addDays(2)->toDateString(), 'sesi' => 'Sore', 'jumlah_peserta' => 2, 'status' => Booking::STATUS_PENDING_VERIFY],
+            ['nama_lengkap' => 'Rudi Hartono', 'no_whatsapp' => '62812345679', 'alamat' => 'Bandung', 'kontak_darurat_nama' => 'Ani', 'kontak_darurat_telp' => '62855555555', 'paket' => $gempi, 'tanggal' => now()->addDays(3)->toDateString(), 'sesi' => 'Siang', 'jumlah_peserta' => 6, 'status' => Booking::STATUS_PENDING_VERIFY],
+            ['nama_lengkap' => 'Ani Rahmawati', 'no_whatsapp' => '62877778888', 'alamat' => 'Yogyakarta', 'kontak_darurat_nama' => 'Tono', 'kontak_darurat_telp' => '62866666666', 'paket' => $genta, 'tanggal' => now()->addDays(5)->toDateString(), 'sesi' => 'Pagi', 'jumlah_peserta' => 5, 'status' => Booking::STATUS_PENDING_PAYMENT],
+            ['nama_lengkap' => 'Lina Marlina', 'no_whatsapp' => '62811122233', 'alamat' => 'Cirebon', 'kontak_darurat_nama' => 'Bambang', 'kontak_darurat_telp' => '62877777777', 'paket' => $family, 'tanggal' => now()->addDays(10)->toDateString(), 'sesi' => 'Siang', 'jumlah_peserta' => 4, 'status' => Booking::STATUS_REJECTED],
+            ['nama_lengkap' => 'Rina Susanti', 'no_whatsapp' => '62866778899', 'alamat' => 'Magelang', 'kontak_darurat_nama' => 'Joko', 'kontak_darurat_telp' => '62888888888', 'paket' => $solo, 'tanggal' => now()->addDays(14)->toDateString(), 'sesi' => 'Pagi', 'jumlah_peserta' => 1, 'status' => Booking::STATUS_PENDING_PAYMENT],
+        ];
+        foreach ($bookingData as $b) {
+            $paket = $b['paket'];
+            $total = $paket->hitungTotalHarga($b['jumlah_peserta'])['total'];
+            $booking = Booking::create([
+                'booking_code' => Booking::generateBookingCode(),
+                'nama_lengkap' => $b['nama_lengkap'],
+                'no_whatsapp' => $b['no_whatsapp'],
+                'email' => strtolower(str_replace(' ', '', $b['nama_lengkap'])) . '@example.com',
+                'alamat' => $b['alamat'],
+                'kontak_darurat_nama' => $b['kontak_darurat_nama'],
+                'kontak_darurat_telp' => $b['kontak_darurat_telp'],
+                'jumlah_peserta' => $b['jumlah_peserta'],
+                'tanggal_kunjungan' => $b['tanggal'],
+                'paket_wisata_id' => $paket->id,
+                'sesi' => $b['sesi'],
+                'total_harga' => $total,
+                'status' => $b['status'],
+                'rejected_reason' => $b['status'] === Booking::STATUS_REJECTED ? 'Bukti tidak jelas/buram' : null,
+            ]);
+
+            BookingLog::create([
+                'booking_id' => $booking->id,
+                'admin_id' => $b['status'] === Booking::STATUS_CONFIRMED ? $superadmin->id : null,
+                'action' => strtolower(str_replace('_', ' ', $b['status'])),
+                'detail' => 'Seed data contoh.',
+                'created_at' => now(),
+            ]);
+        }
+
         // Settings
-        Setting::create(['key' => 'wa_admin', 'value' => '6281234567890', 'deskripsi' => 'Nomor WhatsApp admin']);
-        Setting::create(['key' => 'nama_desa', 'value' => 'Desa Getas', 'deskripsi' => 'Nama desa']);
-        Setting::create(['key' => 'alamat_desa', 'value' => 'Jl. Raya Getas No. 1, Kec. Singorojo, Kab. Kendal 51382', 'deskripsi' => 'Alamat desa']);
+        $settings = [
+            ['key' => 'wa_admin', 'value' => '6287825520140', 'deskripsi' => 'Nomor WhatsApp admin'],
+            ['key' => 'nama_desa', 'value' => 'Desa Getas', 'deskripsi' => 'Nama desa'],
+            ['key' => 'alamat_desa', 'value' => 'Jl. Raya Getas No. 1, Kec. Singorojo, Kab. Kendal 51382', 'deskripsi' => 'Alamat desa'],
+            ['key' => 'fonnte_token', 'value' => 'KM65J2AcX5jekDGYqRFG', 'deskripsi' => 'Token API Fonnte'],
+            ['key' => 'rekening_bank', 'value' => 'BNI 123456789 a.n. Desa Getas', 'deskripsi' => 'Informasi rekening untuk pembayaran'],
+            ['key' => 'fe_url', 'value' => 'http://localhost:5713', 'deskripsi' => 'URL frontend untuk link upload bukti di WA'],
+            ['key' => 'email_desa', 'value' => 'desagetas@kendalkab.go.id', 'deskripsi' => 'Email desa'],
+            ['key' => 'jam_pelayanan', 'value' => 'Senin–Jumat: 08.00–15.00 WIB', 'deskripsi' => 'Jam pelayanan'],
+            ['key' => 'sosmed_fb', 'value' => 'https://facebook.com/desagetas', 'deskripsi' => 'URL Facebook desa'],
+            ['key' => 'sosmed_ig', 'value' => 'https://instagram.com/desagetas', 'deskripsi' => 'URL Instagram desa'],
+            ['key' => 'sosmed_yt', 'value' => 'https://youtube.com/@desagetas', 'deskripsi' => 'URL YouTube desa'],
+            ['key' => 'sosmed_web', 'value' => 'https://desagetas.id', 'deskripsi' => 'URL Website desa'],
+        ];
+        foreach ($settings as $s) {
+            Setting::firstOrCreate(['key' => $s['key']], $s);
+        }
+
+        // Booking Sessions — template acuan per paket per sesi (bukan per tanggal)
+        // Slot terisi dihitung dinamis dari tabel bookings
+        $packages = [$genta, $gempi, $solo, $buddy, $family];
+        $sesiTemplate = [
+            ['sesi' => 'Pagi',  'jam_mulai' => '07:00', 'jam_selesai' => '10:00'],
+            ['sesi' => 'Siang', 'jam_mulai' => '10:00', 'jam_selesai' => '13:00'],
+            ['sesi' => 'Sore',  'jam_mulai' => '14:00', 'jam_selesai' => '17:00'],
+        ];
+        foreach ($packages as $pkg) {
+            foreach ($sesiTemplate as $tpl) {
+                BookingSession::create([
+                    'paket_wisata_id' => $pkg->id,
+                    'sesi'        => $tpl['sesi'],
+                    'jam_mulai'   => $tpl['jam_mulai'],
+                    'jam_selesai' => $tpl['jam_selesai'],
+                    'kuota'       => 20,
+                    'is_active'   => true,
+                    'created_by'  => $superadmin->id,
+                ]);
+            }
+        }
     }
 }

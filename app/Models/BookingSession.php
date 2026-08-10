@@ -11,11 +11,11 @@ class BookingSession extends Model
     protected $table = 'booking_sessions';
 
     protected $fillable = [
-        'package_id',
-        'tanggal',
+        'paket_wisata_id',
         'sesi',
+        'jam_mulai',
+        'jam_selesai',
         'kuota',
-        'terisi',
         'is_active',
         'created_by',
     ];
@@ -23,13 +23,32 @@ class BookingSession extends Model
     protected function casts(): array
     {
         return [
-            'tanggal' => 'date',
+            'is_active' => 'boolean',
+            'kuota' => 'integer',
         ];
     }
 
-    public function package(): BelongsTo
+    /**
+     * Hitung jumlah peserta yang sudah booking pada sesi ini untuk tanggal tertentu.
+     * Hanya booking berstatus CONFIRMED yang mengurangi stok hari itu.
+     */
+    public function terisiPadaTanggal(string $tanggal): int
     {
-        return $this->belongsTo(TourPackage::class, 'package_id');
+        return Booking::where('paket_wisata_id', $this->paket_wisata_id)
+            ->where('sesi', $this->sesi)
+            ->where('tanggal_kunjungan', $tanggal)
+            ->where('status', Booking::STATUS_CONFIRMED)
+            ->sum('jumlah_peserta');
+    }
+
+    public function sisaPadaTanggal(string $tanggal): int
+    {
+        return max(0, (int) $this->kuota - $this->terisiPadaTanggal($tanggal));
+    }
+
+    public function paket(): BelongsTo
+    {
+        return $this->belongsTo(PaketWisata::class, 'paket_wisata_id');
     }
 
     public function createdBy(): BelongsTo
