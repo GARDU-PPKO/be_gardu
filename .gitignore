@@ -17,6 +17,10 @@
 /test_api.php
 /gardu
 /auth.json
+/API_EXPECTED_RESPONSES.md
+/SESSION_CONTEXT.md
+/api.json
+/booking_flow_file_handling.md
 /node_modules
 /public/build
 /public/fonts-manifest.dev.json

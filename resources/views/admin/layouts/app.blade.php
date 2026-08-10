@@ -24,7 +24,7 @@
                 <a href="{{ route('admin.dusun.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.dusun.*') ? 'bg-emerald-800' : '' }}">
                     <span>🏘️</span> Dusun
                 </a>
-                <a href="{{ route('admin.tour-packages.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.tour-packages.*') ? 'bg-emerald-800' : '' }}">
+                <a href="{{ route('admin.paket-wisata.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.paket-wisata.*') ? 'bg-emerald-800' : '' }}">
                     <span>🎫</span> Paket Wisata
                 </a>
                 <a href="{{ route('admin.booking-sessions.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.booking-sessions.*') ? 'bg-emerald-800' : '' }}">
@@ -35,9 +35,6 @@
                 </a>
                 <a href="{{ route('admin.budaya.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.budaya.*') ? 'bg-emerald-800' : '' }}">
                     <span>🎭</span> Budaya
-                </a>
-                <a href="{{ route('admin.village-profile.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.village-profile.*') ? 'bg-emerald-800' : '' }}">
-                    <span>📄</span> Profil Desa
                 </a>
                 <a href="{{ route('admin.village-stats.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.village-stats.*') ? 'bg-emerald-800' : '' }}">
                     <span>📊</span> Statistik
