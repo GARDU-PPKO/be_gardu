@@ -61,7 +61,7 @@ class AdminBookingController extends Controller
     {
         return view('admin.bookings.show', [
             'booking' => Booking::withTrashed()
-                ->with(['paketWisata:id,nama', 'logs.admin:id,nama'])
+                ->with(['paketWisata:id,nama', 'logs.admin:id,nama', 'addOns'])
                 ->findOrFail($id),
         ]);
     }
@@ -267,25 +267,21 @@ class AdminBookingController extends Controller
 
     private function buildConfirmMessage(Booking $booking): string
     {
-        return "GARDU - Booking TERKONFIRMASI ✅\n"
-            . "Kode Booking: {$booking->booking_code}\n"
-            . "Nama: {$booking->nama_lengkap}\n"
-            . "Paket: {$booking->paketWisata?->nama}\n"
-            . "Tanggal: " . ($booking->tanggal_kunjungan ? $booking->tanggal_kunjungan->format('d-m-Y') : '-') . " ({$booking->sesi})\n"
-            . "Peserta: {$booking->jumlah_peserta} orang\n\n"
-            . "Simpan pesan ini dan tunjukkan kepada petugas di resepsionis saat tiba di lokasi.\n"
-            . "Sampai jumpa di Desa Getas!";
+        return "Halo {$booking->nama_lengkap},\n\n"
+            . "Kabar baik! Booking dengan kode *{$booking->booking_code}* telah *dikonfirmasi* ✅\n\n"
+            . "📋 Kode Booking: {$booking->booking_code}\n"
+            . "🏕️ Paket: {$booking->paketWisata?->nama}\n"
+            . "📅 Tanggal: {$booking->tanggal_kunjungan->format('d-m-Y')}\n\n"
+            . "Silahkan datang sesuai jadwal booking Anda.\n\n"
+            . "Sampai jumpa di Desa Wisata Getas! 🌿";
     }
 
     private function buildRejectMessage(Booking $booking): string
     {
-        $feUrl = Setting::getValue('fe_url') ?: url('/');
-        $uploadUrl = rtrim($feUrl, '/') . "/booking/upload/{$booking->booking_code}";
-
-        return "GARDU - Bukti Pembayaran DITOLAK\n"
-            . "Kode: {$booking->booking_code}\n"
+        return "Halo {$booking->nama_lengkap},\n\n"
+            . "Mohon maaf, bukti pembayaran untuk booking dengan kode *{$booking->booking_code}* *tidak dapat kami verifikasi* ❌\n\n"
             . "Alasan: {$booking->rejected_reason}\n\n"
-            . "Silakan unggah ulang bukti yang benar melalui link berikut:\n{$uploadUrl}";
+            . "Mohon maaf atas ketidaknyamanannya 🙏";
     }
 
     public function export()

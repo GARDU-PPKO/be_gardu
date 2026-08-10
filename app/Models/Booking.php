@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
@@ -41,6 +42,7 @@ class Booking extends Model
         'nominal_transfer',
         'metode_pembayaran',
         'status',
+        'expired_at',
         'rejected_reason',
         'verified_by',
         'verified_at',
@@ -54,6 +56,7 @@ class Booking extends Model
             'tanggal_kunjungan' => 'date',
             'total_harga' => 'decimal:2',
             'nominal_transfer' => 'decimal:2',
+            'expired_at' => 'datetime',
             'verified_at' => 'datetime',
         ];
     }
@@ -75,6 +78,13 @@ class Booking extends Model
     public function package(): BelongsTo
     {
         return $this->paketWisata();
+    }
+
+    public function addOns(): BelongsToMany
+    {
+        return $this->belongsToMany(AddOn::class, 'booking_add_on')
+            ->withPivot('qty', 'harga_satuan', 'subtotal')
+            ->withTimestamps();
     }
 
     public function verifiedBy(): BelongsTo

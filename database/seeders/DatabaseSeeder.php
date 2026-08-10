@@ -14,6 +14,7 @@ use App\Models\DusunKeunggulan;
 use App\Models\Setting;
 use App\Models\PaketWisata;
 use App\Models\PaketWisataTier;
+use App\Models\AddOn;
 use App\Models\UmkmProduct;
 use App\Models\VillageStat;
 use Illuminate\Database\Seeder;
@@ -144,6 +145,61 @@ class DatabaseSeeder extends Seeder
             'created_by' => $superadmin->id,
         ]);
 
+        // Add-On
+        $makanSiang = AddOn::firstOrCreate(
+            ['nama' => 'Makan Siang (Nasi Box)'],
+            [
+                'kategori' => 'Makanan',
+                'tipe_harga' => 'per_orang',
+                'harga' => 25000,
+                'deskripsi' => 'Nasi box + lauk pauk + air mineral untuk satu peserta.',
+                'gambar' => 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop&auto=format',
+                'aktif' => true,
+                'urutan' => 1,
+                'created_by' => $superadmin->id,
+            ]
+        );
+
+        AddOn::firstOrCreate(
+            ['nama' => 'Sewa ATV'],
+            [
+                'kategori' => 'Aktivitas',
+                'tipe_harga' => 'per_unit',
+                'harga' => 75000,
+                'deskripsi' => 'Sewa ATV 1 unit untuk rute wisata (±30 menit).',
+                'gambar' => 'https://images.unsplash.com/photo-1519315901367-f34ff9154487?w=400&h=300&fit=crop&auto=format',
+                'aktif' => true,
+                'urutan' => 2,
+                'created_by' => $superadmin->id,
+            ]
+        );
+
+        AddOn::firstOrCreate(
+            ['nama' => 'Sarapan Pagi'],
+            [
+                'kategori' => 'Makanan',
+                'tipe_harga' => 'per_orang',
+                'harga' => 15000,
+                'deskripsi' => 'Sarapan sederhana (nasi + telur + teh hangat).',
+                'aktif' => true,
+                'urutan' => 3,
+                'created_by' => $superadmin->id,
+            ]
+        );
+
+        AddOn::firstOrCreate(
+            ['nama' => 'Sewa Tenda Tambahan'],
+            [
+                'kategori' => 'Perlengkapan',
+                'tipe_harga' => 'per_unit',
+                'harga' => 50000,
+                'deskripsi' => 'Tenda kapasitas 2 orang beserta tikar.',
+                'aktif' => true,
+                'urutan' => 4,
+                'created_by' => $superadmin->id,
+            ]
+        );
+
         // UMKM Products
         $umkmItems = [
             ['nama' => 'Tempe Besem Bu Kartini', 'kategori' => 'Makanan', 'harga' => 5000, 'deskripsi' => 'Tempe besem khas Getas, fermentasi sempurna.', 'gambar' => 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345001'],
@@ -208,6 +264,14 @@ class DatabaseSeeder extends Seeder
         foreach ($bookingData as $b) {
             $paket = $b['paket'];
             $total = $paket->hitungTotalHarga($b['jumlah_peserta'])['total'];
+            $addOnItems = match ($b['nama_lengkap']) {
+                'Dewi Sartika' => [['add_on' => $makanSiang, 'qty' => $b['jumlah_peserta']]],
+                'Ahmad Rizki' => [['add_on' => $makanSiang, 'qty' => $b['jumlah_peserta']]],
+                default => [],
+            };
+            foreach ($addOnItems as $item) {
+                $total += (float) $item['add_on']->harga * $item['qty'];
+            }
             $booking = Booking::create([
                 'booking_code' => Booking::generateBookingCode(),
                 'nama_lengkap' => $b['nama_lengkap'],
@@ -226,6 +290,14 @@ class DatabaseSeeder extends Seeder
                 'created_by' => $superadmin->id,
             ]);
 
+            foreach ($addOnItems as $item) {
+                $booking->addOns()->attach($item['add_on']->id, [
+                    'qty' => $item['qty'],
+                    'harga_satuan' => $item['add_on']->harga,
+                    'subtotal' => (float) $item['add_on']->harga * $item['qty'],
+                ]);
+            }
+
             BookingLog::create([
                 'booking_id' => $booking->id,
                 'admin_id' => $b['status'] === Booking::STATUS_CONFIRMED ? $superadmin->id : null,
@@ -241,8 +313,16 @@ class DatabaseSeeder extends Seeder
             ['key' => 'nama_desa', 'value' => 'Desa Getas', 'deskripsi' => 'Nama desa'],
             ['key' => 'alamat_desa', 'value' => 'Jl. Raya Getas No. 1, Kec. Singorojo, Kab. Kendal 51382', 'deskripsi' => 'Alamat desa'],
             ['key' => 'fonnte_token', 'value' => 'KM65J2AcX5jekDGYqRFG', 'deskripsi' => 'Token API Fonnte'],
-            ['key' => 'rekening_bank', 'value' => 'BNI 123456789 a.n. Desa Getas', 'deskripsi' => 'Informasi rekening untuk pembayaran'],
-            ['key' => 'fe_url', 'value' => 'http://localhost:5713', 'deskripsi' => 'URL frontend untuk link upload bukti di WA'],
+            ['key' => 'rekening_bank', 'value' => 'BNI', 'deskripsi' => 'Nama bank untuk pembayaran'],
+            ['key' => 'rekening_no', 'value' => '123456789', 'deskripsi' => 'Nomor rekening untuk pembayaran'],
+            ['key' => 'rekening_atas_nama', 'value' => 'Desa Getas', 'deskripsi' => 'Nama pemilik rekening'],
+            ['key' => 'qris_image', 'value' => null, 'deskripsi' => 'URL gambar QRIS (opsional, alternatif transfer)'],
+            ['key' => 'ar_url', 'value' => 'https://feby-akliji23.github.io/AR-BETA_V01/', 'deskripsi' => 'URL aplikasi AR'],
+            ['key' => 'check_in_time', 'value' => '13.00 WIB', 'deskripsi' => 'Jam check-in (aturan booking)'],
+            ['key' => 'check_out_time', 'value' => '11.00 WIB', 'deskripsi' => 'Jam check-out (aturan booking)'],
+            ['key' => 'cancel_policy', 'value' => 'Pembatalan/reschedule maks. 8 jam sebelum kedatangan', 'deskripsi' => 'Kebijakan pembatalan'],
+            ['key' => 'night_curfew', 'value' => 'Jam malam mulai 22.00 WIB', 'deskripsi' => 'Aturan jam malam'],
+            ['key' => 'fe_url', 'value' => 'http://localhost:5173', 'deskripsi' => 'URL frontend untuk link upload bukti di WA'],
             ['key' => 'email_desa', 'value' => 'desagetas@kendalkab.go.id', 'deskripsi' => 'Email desa'],
             ['key' => 'jam_pelayanan', 'value' => 'Senin–Jumat: 08.00–15.00 WIB', 'deskripsi' => 'Jam pelayanan'],
             ['key' => 'sosmed_fb', 'value' => 'https://facebook.com/desagetas', 'deskripsi' => 'URL Facebook desa'],

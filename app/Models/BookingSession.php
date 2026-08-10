@@ -33,7 +33,7 @@ class BookingSession extends Model
     public function terisiPadaTanggal(string $tanggal): int
     {
         return (int) Booking::where('sesi', $this->sesi)
-            ->where('tanggal_kunjungan', $tanggal)
+            ->whereDate('tanggal_kunjungan', $tanggal)
             ->where('status', Booking::STATUS_CONFIRMED)
             ->sum('jumlah_peserta');
     }

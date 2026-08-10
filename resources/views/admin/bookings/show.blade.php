@@ -34,6 +34,19 @@
             <div><span class="text-gray-500">Paket</span><p class="font-semibold">{{ $booking->paketWisata->nama ?? '-' }}</p></div>
             <div><span class="text-gray-500">Tanggal Kunjungan</span><p>{{ $booking->tanggal_kunjungan ? $booking->tanggal_kunjungan->format('d-m-Y') : '-' }} — {{ $booking->sesi }}</p></div>
             <div><span class="text-gray-500">Jumlah Peserta</span><p>{{ $booking->jumlah_peserta }} orang</p></div>
+            @if($booking->addOns->count() > 0)
+            <div class="col-span-2">
+                <span class="text-gray-500 block mb-1">Add-On</span>
+                <div class="space-y-1">
+                    @foreach($booking->addOns as $addOn)
+                    <div class="flex justify-between text-sm bg-gray-50 rounded-lg px-3 py-2">
+                        <span>{{ $addOn->nama }} x{{ $addOn->pivot->qty }}</span>
+                        <span class="font-semibold">Rp {{ number_format($addOn->pivot->subtotal, 0, ',', '.') }}</span>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
             <div>
                 <span class="text-gray-500">Nominal yang Harus Dibayar</span>
                 <p class="font-bold text-lg">Rp {{ number_format($booking->total_harga, 0, ',', '.') }}</p>
