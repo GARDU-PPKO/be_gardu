@@ -181,12 +181,6 @@ class DatabaseSeeder extends Seeder
             BudayaSchedule::create(['budaya_id' => $sanggar->id, 'nama_acara' => 'Pentas Seni Malam Jumat', 'hari' => 'Setiap Jumat malam', 'jam' => '19.00–21.00 WIB', 'deskripsi' => 'Pentas seni rutin di Dusun Sanggar.']);
         }
 
-        // Village Profile
-        VillageProfile::create(['tipe' => 'sejarah', 'judul' => 'Sejarah Desa Getas', 'konten' => 'Desa Getas di Kecamatan Singorojo, Kabupaten Kendal berdiri sejak sekitar tahun 1850. Desa ini dianugerahi keindahan Sungai Blukar yang mengalir jernih, bentangan persawahan organik yang subur, dan pesona alam yang asri. Dengan gotong royong warga, wisata tubing Sungai Blukar di Desa Getas telah berkembang pesat dan berhasil meraih penghargaan Desa Wisata Terbaik tingkat Kabupaten Kendal pada tahun 2025.', 'urutan' => 1, 'created_by' => $superadmin->id]);
-        VillageProfile::create(['tipe' => 'visi', 'judul' => 'Visi Desa', 'konten' => '"Desa Getas Maju, Mandiri, dan Sejahtera Berbasis Kearifan Lokal dan Teknologi Digital"', 'urutan' => 2, 'created_by' => $superadmin->id]);
-        VillageProfile::create(['tipe' => 'misi', 'judul' => 'Misi Desa', 'konten' => "1. Meningkatkan infrastruktur dan kebersihan area pariwisata alam.\n2. Mengoptimalkan potensi beras organik dan produk anyaman bambu khas warga.\n3. Menghadirkan pelayanan administrasi publik yang cepat berbasis teknologi digital.", 'urutan' => 3, 'created_by' => $superadmin->id]);
-        VillageProfile::create(['tipe' => 'pemerintahan', 'judul' => 'Perangkat Desa', 'konten' => 'Kepala Desa: Suyitno, S.Pd.\nSekretaris: Supartini\nKasi Layanan: Dwi Lestari', 'urutan' => 4, 'created_by' => $superadmin->id]);
-
         // Village Stats
         $stats = [
             ['label' => 'Total Penduduk', 'nilai' => '4.287', 'satuan' => 'jiwa', 'icon' => 'Users', 'urutan' => 1],

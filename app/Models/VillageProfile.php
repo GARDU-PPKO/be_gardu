@@ -2,13 +2,11 @@
 
 namespace App\Models;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class VillageProfile extends Model
 {
-    protected $table = 'village_profile';
+    protected $table = 'village_profiles';
 
     protected $fillable = [
         'tipe',
@@ -16,11 +14,13 @@ class VillageProfile extends Model
         'konten',
         'urutan',
         'is_active',
-        'created_by',
     ];
 
-    public function createdBy(): BelongsTo
+    protected function casts(): array
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return [
+            'is_active' => 'boolean',
+            'urutan' => 'integer',
+        ];
     }
 }
