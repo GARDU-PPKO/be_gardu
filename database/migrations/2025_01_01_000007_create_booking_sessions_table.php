@@ -9,11 +9,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('booking_sessions', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->string('nama', 20);
-            $table->time('jam_mulai');
-            $table->time('jam_selesai');
+            $table->id();
+            $table->foreignId('paket_wisata_id')->constrained('paket_wisata')->cascadeOnDelete();
+            $table->enum('sesi', ['Pagi', 'Siang', 'Sore']);
+            $table->time('jam_mulai')->nullable();
+            $table->time('jam_selesai')->nullable();
+            $table->integer('kuota');
             $table->boolean('is_active')->default(true);
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });
     }

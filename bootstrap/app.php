@@ -1,9 +1,12 @@
 <?php
 
+use App\Support\ApiResponse;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -21,75 +24,35 @@ return Application::configure(basePath: dirname(__DIR__))
             fn (Request $request) => $request->is('api/*'),
         );
 
-        $exceptions->render(function (\Illuminate\Validation\ValidationException $e, Request $request) {
+        $exceptions->render(function (ValidationException $e, Request $request) {
             if ($request->is('api/*')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validasi gagal.',
-                    'errors' => $e->errors(),
-                ], 422);
+                return ApiResponse::error('Validasi gagal', 422, $e->errors());
             }
+
+            return null;
+        });
+
+        $exceptions->render(function (ModelNotFoundException $e, Request $request) {
+            if ($request->is('api/*')) {
+                return ApiResponse::error('Data tidak ditemukan', 404);
+            }
+
+            return null;
         });
 
         $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, Request $request) {
             if ($request->is('api/*')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized.',
-                    'errors' => null,
-                ], 401);
+                return ApiResponse::error('Unauthorized', 401);
             }
+
+            return null;
         });
 
         $exceptions->render(function (\Illuminate\Auth\Access\AuthorizationException $e, Request $request) {
             if ($request->is('api/*')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Akses ditolak.',
-                    'errors' => null,
-                ], 403);
+                return ApiResponse::error('Akses ditolak', 403);
             }
-        });
 
-        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, Request $request) {
-            if ($request->is('api/*')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Data tidak ditemukan.',
-                    'errors' => null,
-                ], 404);
-            }
-        });
-
-        $exceptions->render(function (\Illuminate\Database\Eloquent\ModelNotFoundException $e, Request $request) {
-            if ($request->is('api/*')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Data tidak ditemukan.',
-                    'errors' => null,
-                ], 404);
-            }
-        });
-
-        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, Request $request) {
-            if ($request->is('api/*')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $e->getMessage() ?: 'Terjadi kesalahan.',
-                    'errors' => null,
-                ], $e->getStatusCode());
-            }
-        });
-
-        $exceptions->render(function (\Throwable $e, Request $request) {
-            if ($request->is('api/*')) {
-                $message = app()->isLocal() ? $e->getMessage() : 'Terjadi kesalahan pada server.';
-
-                return response()->json([
-                    'success' => false,
-                    'message' => $message,
-                    'errors' => null,
-                ], 500);
-            }
+            return null;
         });
     })->create();

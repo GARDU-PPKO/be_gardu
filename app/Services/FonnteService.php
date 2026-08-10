@@ -2,60 +2,106 @@
 
 namespace App\Services;
 
+use App\Models\Setting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class FonnteService
 {
-    protected ?string $token;
-    protected string $baseUrl;
+    private const API_URL = 'https://api.fonnte.com/send';
+
+    private ?string $token;
+    private ?string $adminNumber;
 
     public function __construct()
     {
-        $this->token = config('fonnte.token') ?: null;
-        $this->baseUrl = config('fonnte.base_url');
+        $this->token = Setting::getValue('fonnte_token') ?: config('fonnte.token');
+        $this->adminNumber = Setting::getValue('wa_admin') ?: null;
+    }
+
+    /**
+     * Normalisasi nomor HP Indonesia ke format internasional (08xx -> 628xx).
+     */
+    public static function normalizeNumber(string $number): string
+    {
+        $number = preg_replace('/[^0-9]/', '', $number);
+
+        if (str_starts_with($number, '0')) {
+            $number = '62' . substr($number, 1);
+        } elseif (str_starts_with($number, '8')) {
+            $number = '62' . $number;
+        }
+
+        return $number;
+    }
+
+    public function isConfigured(): bool
+    {
+        return ! empty($this->token);
+    }
+
+    public function getAdminNumber(): ?string
+    {
+        return $this->adminNumber;
+    }
+
+    /**
+     * Kirim pesan WhatsApp. Gagal apapun hanya dicatat di log, tidak melempar exception.
+     */
+    public function send(string $target, string $message): bool
+    {
+        if (! $this->isConfigured()) {
+            Log::warning('Fonnte tidak dikonfigurasi (fonnte_token kosong). Pesan tidak terkirim.', [
+                'target' => $target,
+            ]);
+
+            return false;
+        }
+
+        try {
+            $response = Http::withHeaders(['Authorization' => $this->token])
+                ->asForm()
+                ->post(self::API_URL, [
+                    'target' => self::normalizeNumber($target),
+                    'message' => $message,
+                ]);
+
+            if (! $response->successful()) {
+                Log::warning('Fonnte gagal mengirim pesan.', [
+                    'target' => $target,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return false;
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('Fonnte exception saat mengirim pesan.', [
+                'target' => $target,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 
     public function sendMessage(string $target, string $message, ?string $attachment = null): array
     {
-        if (!$this->token) {
-            Log::info('Fonnte skipped (no token)', ['target' => $target]);
-            return ['status' => 'skipped'];
-        }
-
-        $payload = [
-            'target' => $target,
-            'message' => $message,
-            'countryCode' => '62',
-        ];
-
-        if ($attachment) {
-            $payload['attachment'] = $attachment;
-        }
-
-        $response = Http::withHeaders([
-            'Authorization' => $this->token,
-        ])->post("{$this->baseUrl}/send", $payload);
-
-        if ($response->failed()) {
-            Log::error('Fonnte send failed', [
-                'target' => $target,
-                'response' => $response->body(),
-            ]);
-        }
-
-        return $response->json() ?? [];
+        $success = $this->send($target, $message);
+        return ['status' => $success ? 'success' : 'failed'];
     }
 
     public function checkQuota(): array
     {
-        if (!$this->token) {
+        if (! $this->isConfigured()) {
             return ['status' => 'skipped', 'message' => 'Token Fonnte belum dikonfigurasi'];
         }
 
         $response = Http::withHeaders([
             'Authorization' => $this->token,
-        ])->get("{$this->baseUrl}/device");
+        ])->get('https://api.fonnte.com/device');
 
         if ($response->failed()) {
             Log::error('Fonnte device check failed', ['response' => $response->body()]);
@@ -63,5 +109,17 @@ class FonnteService
         }
 
         return $response->json() ?? [];
+    }
+
+    /**
+     * Kirim notifikasi ke nomor admin (wa_admin di settings).
+     */
+    public function notifyAdmin(string $message): bool
+    {
+        if (! $this->adminNumber) {
+            return false;
+        }
+
+        return $this->send($this->adminNumber, $message);
     }
 }

@@ -18,4 +18,9 @@ class Setting extends Model
         'value',
         'deskripsi',
     ];
+
+    public static function getValue(string $key): ?string
+    {
+        return static::where('key', $key)->value('value');
+    }
 }

@@ -45,16 +45,16 @@ return [
         /*
          * API version.
          */
-        'version' => env('API_VERSION', '0.0.1'),
+        'version' => env('API_VERSION', '1.0.0'),
 
         /*
          * Description rendered on the home page of the API documentation (`/docs/api`).
          */
-        'description' => 'API publik untuk website Desa Getas. Menyediakan data dusun, paket wisata, sesi booking, produk UMKM, budaya, profil desa, statistik desa, dan pengaturan.',
+        'description' => 'API publik Desa Wisata Getas (GARDU). Menyediakan data dusun, paket wisata, sesi booking, produk UMKM, budaya, profil desa, statistik desa, dan pengaturan.',
     ],
 
     'ui' => [
-        'title' => 'Desa Getas API',
+        'title' => 'GARDU API - Desa Wisata Getas',
     ],
 
     'renderer' => 'elements',

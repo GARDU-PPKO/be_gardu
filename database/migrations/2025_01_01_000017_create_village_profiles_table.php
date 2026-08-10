@@ -8,14 +8,13 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('village_profile', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->enum('tipe', ['sejarah', 'visi', 'misi', 'pemerintahan']);
-            $table->string('judul', 200);
-            $table->longText('konten');
+        Schema::create('village_profiles', function (Blueprint $table) {
+            $table->id();
+            $table->enum('tipe', ['sejarah', 'visi', 'misi', 'pemerintahan', 'lainnya'])->default('lainnya');
+            $table->string('judul', 150);
+            $table->text('konten');
             $table->integer('urutan')->default(0);
             $table->boolean('is_active')->default(true);
-            $table->foreignUuid('created_by')->constrained('users');
             $table->timestamps();
             $table->index('tipe');
         });
@@ -23,6 +22,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('village_profile');
+        Schema::dropIfExists('village_profiles');
     }
 };

@@ -4,29 +4,65 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
-use App\Models\TourPackage;
+use App\Models\BookingLog;
+use App\Models\PaketWisata;
+use App\Models\Setting;
 use App\Services\FonnteService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Intervention\Image\Laravel\Facades\Image;
-use OpenSpout\Writer\XLSX\Writer;
 use OpenSpout\Common\Entity\Row;
+use OpenSpout\Writer\XLSX\Writer;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminBookingController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $status = $request->get('status', Booking::STATUS_PENDING_VERIFY);
+        $valid = [
+            'all',
+            Booking::STATUS_PENDING_PAYMENT,
+            Booking::STATUS_PENDING_VERIFY,
+            Booking::STATUS_CONFIRMED,
+            Booking::STATUS_REJECTED,
+            Booking::STATUS_EXPIRED,
+            Booking::STATUS_COMPLETED,
+            Booking::STATUS_CANCELLED,
+            'deleted',
+        ];
+
+        if (! in_array($status, $valid, true)) {
+            $status = Booking::STATUS_PENDING_VERIFY;
+        }
+
+        $query = Booking::with('paketWisata:id,nama');
+
+        if ($status === 'deleted') {
+            $query->onlyTrashed();
+        } elseif ($status === 'all') {
+            $query->orderBy('created_at', 'desc');
+        } else {
+            $query->where('status', $status)->orderBy('created_at', 'asc');
+        }
+
+        $bookings = $query->paginate(15)->withQueryString();
+
         return view('admin.bookings.index', [
-            'bookings' => Booking::with('package:id,nama')->orderBy('created_at', 'desc')->paginate(15),
+            'bookings' => $bookings,
+            'filterStatus' => $status,
         ]);
     }
 
     public function show($id): View
     {
         return view('admin.bookings.show', [
-            'booking' => Booking::with('package:id,nama')->findOrFail($id),
+            'booking' => Booking::withTrashed()
+                ->with(['paketWisata:id,nama', 'logs.admin:id,nama'])
+                ->findOrFail($id),
         ]);
     }
 
@@ -45,135 +81,183 @@ class AdminBookingController extends Controller
         $text = $request->raw_text;
         $data = $this->extractBookingData($text);
 
-        $package = TourPackage::where('nama', 'like', '%' . $data['package_name'] . '%')->first();
+        $package = PaketWisata::where('nama', 'like', '%' . $data['package_name'] . '%')->first();
 
-        if (!$package) {
+        if (! $package) {
             return back()->with('parse_error', 'Paket "' . $data['package_name'] . '" tidak ditemukan. Periksa teks dan coba lagi.')
                 ->withInput()->with('parsed_data', $data);
         }
 
-        $kodeBooking = 'GB-' . strtoupper(Str::random(8));
+        $bookingCode = Booking::generateBookingCode();
 
         $buktiBayar = null;
         if ($request->hasFile('bukti_bayar')) {
             $tanggal = $data['tanggal'] ?: now()->format('Y-m-d');
-            $filename = $tanggal . '_' . $kodeBooking . '.jpg';
+            $filename = $tanggal . '_' . $bookingCode . '.jpg';
 
-            $image = Image::decode($request->file('bukti_bayar'));
+            $image = Image::read($request->file('bukti_bayar'));
             $image->scaleDown(width: 1200);
 
             $image->save(storage_path('app/public/buktibayar/' . $filename));
 
-            $buktiBayar = '/storage/buktibayar/' . $filename;
+            $buktiBayar = 'buktibayar/' . $filename;
         }
 
         $booking = Booking::create([
-            'kode_booking' => $kodeBooking,
-            'nama_pemesan' => $data['nama'],
-            'no_wa_pemesan' => $data['no_wa'],
+            'booking_code' => $bookingCode,
+            'nama_lengkap' => $data['nama'],
+            'no_whatsapp' => $data['no_wa'],
             'email' => $data['email'] ?? null,
-            'kota_asal' => $data['kota'] ?? '',
-            'catatan' => $data['catatan'] ?? null,
-            'package_id' => $package->id,
-            'tanggal' => $data['tanggal'],
-            'sesi' => $data['sesi'],
-            'jumlah_peserta' => $data['jumlah_peserta'],
-            'total_harga' => $data['total_harga'],
-            'status' => 'confirmed',
-            'bukti_bayar' => $buktiBayar,
+            'alamat' => $data['kota'] ?? '',
+            'notes' => $data['catatan'] ?? null,
+            'paket_wisata_id' => $package->id,
+            'tanggal_kunjungan' => $data['tanggal'] ?: now()->format('Y-m-d'),
+            'sesi' => $data['sesi'] ?: 'Pagi',
+            'jumlah_peserta' => $data['jumlah_peserta'] ?: 1,
+            'total_harga' => $data['total_harga'] ?: 0,
+            'status' => Booking::STATUS_CONFIRMED,
+            'bukti_pembayaran_path' => $buktiBayar,
             'raw_wa_text' => $text,
             'created_by' => auth()->id(),
+            'verified_by' => auth()->id(),
+            'verified_at' => now(),
+        ]);
+
+        BookingLog::create([
+            'booking_id' => $booking->id,
+            'admin_id' => auth()->id(),
+            'action' => 'confirmed',
+            'detail' => 'Booking dibuat manual dari teks WhatsApp.',
+            'created_at' => now(),
         ]);
 
         return redirect()->route('admin.bookings.show', $booking->id)
-            ->with('success', 'Booking berhasil dibuat! Kode: ' . $kodeBooking);
+            ->with('success', 'Booking berhasil dibuat! Kode: ' . $bookingCode);
     }
 
-    public function confirm($id, FonnteService $fonnte): RedirectResponse
+    public function confirm($id): RedirectResponse
     {
         $booking = Booking::findOrFail($id);
-        $booking->update(['status' => 'confirmed']);
 
-        $message = "✅ *Booking Terkonfirmasi!*\n\n"
-            . "Kode Booking: *{$booking->kode_booking}*\n"
-            . "Paket: {$booking->package->nama}\n"
-            . "Tanggal: {$booking->tanggal}\n"
-            . "Sesi: {$booking->sesi}\n"
-            . "Jumlah: {$booking->jumlah_peserta} orang\n"
-            . "Total: Rp " . number_format($booking->total_harga, 0, ',', '.') . "\n\n"
-            . "Terima kasih, reservasi Anda telah dikonfirmasi. 🎉\n"
-            . "Harap datang 15 menit sebelum jadwal.";
+        $booking->update([
+            'status' => Booking::STATUS_CONFIRMED,
+            'verified_by' => auth()->id(),
+            'verified_at' => now(),
+        ]);
 
-        $fonnte->sendMessage($booking->no_wa_pemesan, $message);
+        BookingLog::create([
+            'booking_id' => $booking->id,
+            'admin_id' => auth()->id(),
+            'action' => 'confirmed',
+            'detail' => 'Pembayaran divalidasi dan booking dikonfirmasi.',
+            'created_at' => now(),
+        ]);
 
-        return back()->with('success', 'Booking dikonfirmasi, notifikasi terkirim ke WA pelanggan');
+        app(FonnteService::class)->send($booking->no_whatsapp, $this->buildConfirmMessage($booking));
+
+        return back()->with('success', "Booking {$booking->booking_code} dikonfirmasi");
+    }
+
+    public function reject(Request $request, $id): RedirectResponse
+    {
+        $booking = Booking::findOrFail($id);
+
+        $request->validate([
+            'rejected_reason' => 'required_without:rejected_reason_custom|string|max:255',
+            'rejected_reason_custom' => 'nullable|string|max:255',
+        ]);
+
+        $reason = $request->filled('rejected_reason_custom')
+            ? $request->rejected_reason_custom
+            : $request->rejected_reason;
+
+        $booking->update([
+            'status' => Booking::STATUS_REJECTED,
+            'rejected_reason' => $reason,
+            'verified_by' => auth()->id(),
+            'verified_at' => now(),
+        ]);
+
+        BookingLog::create([
+            'booking_id' => $booking->id,
+            'admin_id' => auth()->id(),
+            'action' => 'rejected',
+            'detail' => 'Alasan: ' . $reason,
+            'created_at' => now(),
+        ]);
+
+        app(FonnteService::class)->send($booking->no_whatsapp, $this->buildRejectMessage($booking));
+
+        return back()->with('success', "Booking {$booking->booking_code} ditolak");
     }
 
     public function destroy($id): RedirectResponse
     {
         Booking::findOrFail($id)->delete();
-        return redirect()->route('admin.bookings.index')->with('success', 'Booking dihapus');
+
+        return back()->with('success', 'Booking dihapus (soft delete)');
+    }
+
+    public function restore($id): RedirectResponse
+    {
+        Booking::withTrashed()->findOrFail($id)->restore();
+
+        return back()->with('success', 'Booking dipulihkan');
+    }
+
+    public function showBukti($id): StreamedResponse
+    {
+        $booking = Booking::withTrashed()->findOrFail($id);
+
+        abort_unless($booking->bukti_pembayaran_path, 404);
+        
+        $path = $booking->bukti_pembayaran_path;
+        if (Storage::disk('public')->exists($path)) {
+            return Storage::disk('public')->response($path);
+        }
+
+        abort_unless(Storage::disk('local')->exists($path), 404);
+        return Storage::disk('local')->response($path);
     }
 
     private function extractBookingData(string $text): array
     {
         $data = [
+            'package_name' => '',
+            'tanggal' => '',
+            'sesi' => 'Pagi',
+            'jumlah_peserta' => 1,
+            'total_harga' => 0,
             'nama' => '',
             'no_wa' => '',
             'email' => null,
             'kota' => '',
             'catatan' => null,
-            'package_name' => '',
-            'tanggal' => '',
-            'sesi' => '',
-            'jumlah_peserta' => 1,
-            'total_harga' => 0,
         ];
 
-        // Normalize line endings and split
         foreach (explode("\n", $text) as $raw) {
-            // Strip leading non-word characters (emojis, bullets, etc.) and normalize spaces
             $line = trim(preg_replace('/[^\p{L}\p{N}:.@\s\/-]+/u', ' ', $raw));
             $line = trim(preg_replace('/\s+/', ' ', $line));
-            if (!$line) continue;
+            if (! $line) continue;
 
-            // Paket
             if (preg_match('/^(?:Paket|Nama\s*Paket|Package|Pack)\s*:\s*(.+)$/iu', $line, $m))
                 $data['package_name'] = trim($m[1]);
-
-            // Tanggal
             elseif (preg_match('/^(?:Tanggal|Tgl|Date|Tangeal)\s*:\s*(.+)$/iu', $line, $m))
                 $data['tanggal'] = trim($m[1]);
-
-            // Sesi
             elseif (preg_match('/^(?:Sesi|Session|Jam|Waktu)\s*:\s*(.+)$/iu', $line, $m))
                 $data['sesi'] = trim($m[1]);
-
-            // Jumlah Peserta
             elseif (preg_match('/^(?:Peserta|Jumlah\s*Peserta|Pax|Orang|Peseta)\s*:\s*(\d+)/iu', $line, $m))
                 $data['jumlah_peserta'] = (int) $m[1];
-
-            // Total Harga
             elseif (preg_match('/^(?:Total|Total\s*Harga|Harga|Price|Biaya)\s*:\s*(?:Rp\.?\s*)?([\d.,]+)/iu', $line, $m))
                 $data['total_harga'] = (int) str_replace(['.', ','], '', $m[1]);
-
-            // Nama
             elseif (preg_match('/^(?:Nama|Name|Nama\s*Pemesan)\s*:\s*(.+)$/iu', $line, $m))
                 $data['nama'] = trim($m[1]);
-
-            // No WA
             elseif (preg_match('/^(?:WhatsApp|No\.?\s*WA|WA|Phone|Telepon|No\.?\s*HP|HP)\s*:\s*(.+)$/iu', $line, $m))
                 $data['no_wa'] = trim($m[1]);
-
-            // Email
             elseif (preg_match('/^(?:Email|E-mail|Mail|Surel)\s*:\s*(.+)$/iu', $line, $m))
                 $data['email'] = trim($m[1]);
-
-            // Kota
             elseif (preg_match('/^(?:Kota|City|Asal|Kota\s*Asal|Domisili)\s*:\s*(.+)$/iu', $line, $m))
                 $data['kota'] = trim($m[1]);
-
-            // Catatan
             elseif (preg_match('/^(?:Catatan|Note|Pesan|Keterangan)\s*:\s*(.+)$/iu', $line, $m))
                 $data['catatan'] = trim($m[1]);
         }
@@ -181,34 +265,57 @@ class AdminBookingController extends Controller
         return $data;
     }
 
+    private function buildConfirmMessage(Booking $booking): string
+    {
+        return "GARDU - Booking TERKONFIRMASI ✅\n"
+            . "Kode Booking: {$booking->booking_code}\n"
+            . "Nama: {$booking->nama_lengkap}\n"
+            . "Paket: {$booking->paketWisata?->nama}\n"
+            . "Tanggal: " . ($booking->tanggal_kunjungan ? $booking->tanggal_kunjungan->format('d-m-Y') : '-') . " ({$booking->sesi})\n"
+            . "Peserta: {$booking->jumlah_peserta} orang\n\n"
+            . "Simpan pesan ini dan tunjukkan kepada petugas di resepsionis saat tiba di lokasi.\n"
+            . "Sampai jumpa di Desa Getas!";
+    }
+
+    private function buildRejectMessage(Booking $booking): string
+    {
+        $feUrl = Setting::getValue('fe_url') ?: url('/');
+        $uploadUrl = rtrim($feUrl, '/') . "/booking/upload/{$booking->booking_code}";
+
+        return "GARDU - Bukti Pembayaran DITOLAK\n"
+            . "Kode: {$booking->booking_code}\n"
+            . "Alasan: {$booking->rejected_reason}\n\n"
+            . "Silakan unggah ulang bukti yang benar melalui link berikut:\n{$uploadUrl}";
+    }
+
     public function export()
     {
-        $bookings = Booking::with('package:id,nama')->orderBy('created_at', 'desc')->get();
+        $bookings = Booking::with('paketWisata:id,nama')->orderBy('created_at', 'desc')->get();
 
         $path = tempnam(sys_get_temp_dir(), 'bookings') . '.xlsx';
         $writer = new Writer;
         $writer->openToFile($path);
 
         $writer->addRow(Row::fromValues([
-            'Kode Booking', 'Nama Pemesan', 'No. WA', 'Email', 'Kota Asal',
-            'Paket', 'Tanggal', 'Sesi', 'Jumlah Peserta', 'Total Harga',
+            'Kode Booking', 'Nama Pemesan', 'No. WA', 'Email', 'Alamat',
+            'Paket', 'Tanggal Kunjungan', 'Sesi', 'Jumlah Peserta', 'Total Harga',
             'Status', 'Catatan', 'Tanggal Booking',
         ]));
 
         foreach ($bookings as $b) {
             $writer->addRow(Row::fromValues([
-                $b->kode_booking,
-                $b->nama_pemesan,
-                $b->no_wa_pemesan,
+                $b->booking_code,
+                $b->nama_lengkap,
+                $b->no_whatsapp,
                 $b->email ?? '',
-                $b->kota_asal ?? '',
-                $b->package?->nama ?? '',
-                $b->tanggal,
+                $b->alamat ?? '',
+                $b->paketWisata?->nama ?? '',
+                $b->tanggal_kunjungan ? $b->tanggal_kunjungan->format('Y-m-d') : '',
                 $b->sesi,
                 $b->jumlah_peserta,
                 $b->total_harga,
                 $b->status,
-                $b->catatan ?? '',
+                $b->notes ?? '',
                 $b->created_at->format('Y-m-d H:i'),
             ]));
         }

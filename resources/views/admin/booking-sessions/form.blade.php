@@ -1,10 +1,13 @@
 @extends('admin.layouts.app')
-@section('title', $session ? 'Edit Sesi Booking' : 'Tambah Sesi Booking')
+@section('title', $session ? 'Edit Template Sesi' : 'Tambah Template Sesi')
 
 @section('content')
 <div class="max-w-2xl mx-auto space-y-6">
     <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-bold text-gray-800">{{ $session ? 'Edit Sesi Booking' : 'Tambah Sesi Booking' }}</h2>
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">{{ $session ? 'Edit Template Sesi' : 'Tambah Template Sesi' }}</h2>
+            <p class="text-sm text-gray-500 mt-1">Template berlaku untuk semua tanggal — slot terisi dihitung otomatis</p>
+        </div>
         <a href="{{ route('admin.booking-sessions.index') }}" class="text-sm text-emerald-700 hover:text-emerald-800">← Kembali</a>
     </div>
 
@@ -13,27 +16,48 @@
         @if($session) @method('PUT') @endif
 
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Nama Sesi *</label>
-            <input type="text" name="nama" value="{{ old('nama', $session->nama ?? '') }}" required maxlength="20" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm" placeholder="Contoh: Pagi, Siang, Sore">
-            @error('nama') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+            <label class="block text-sm font-medium text-gray-700 mb-1">Paket Wisata *</label>
+            <select name="paket_wisata_id" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+                <option value="">-- Pilih Paket --</option>
+                @foreach($packages as $pkg)
+                <option value="{{ $pkg->id }}" {{ old('paket_wisata_id', $session->paket_wisata_id ?? '') == $pkg->id ? 'selected' : '' }}>{{ $pkg->nama }}</option>
+                @endforeach
+            </select>
+            @error('paket_wisata_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Sesi *</label>
+            <select name="sesi" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+                <option value="Pagi"  {{ old('sesi', $session->sesi ?? '') === 'Pagi'  ? 'selected' : '' }}>🌅 Pagi</option>
+                <option value="Siang" {{ old('sesi', $session->sesi ?? '') === 'Siang' ? 'selected' : '' }}>☀️ Siang</option>
+                <option value="Sore"  {{ old('sesi', $session->sesi ?? '') === 'Sore'  ? 'selected' : '' }}>🌇 Sore</option>
+            </select>
+            @error('sesi') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
         </div>
 
         <div class="grid grid-cols-2 gap-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Jam Mulai *</label>
-                <input type="time" name="jam_mulai" value="{{ old('jam_mulai', $session->jam_mulai ?? '') }}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Jam Mulai</label>
+                <input type="time" name="jam_mulai" value="{{ old('jam_mulai', $session->jam_mulai ?? '') }}" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
                 @error('jam_mulai') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Jam Selesai *</label>
-                <input type="time" name="jam_selesai" value="{{ old('jam_selesai', $session->jam_selesai ?? '') }}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Jam Selesai</label>
+                <input type="time" name="jam_selesai" value="{{ old('jam_selesai', $session->jam_selesai ?? '') }}" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
                 @error('jam_selesai') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
         </div>
 
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Kuota Maksimal *</label>
+            <input type="number" name="kuota" value="{{ old('kuota', $session->kuota ?? '') }}" required min="1" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm" placeholder="Jumlah peserta maksimal">
+            @error('kuota') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+        </div>
+
         <div class="flex items-center gap-2">
             <input type="checkbox" name="is_active" value="1" id="is_active" {{ old('is_active', $session->is_active ?? true) ? 'checked' : '' }} class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
-            <label for="is_active" class="text-sm font-medium text-gray-700">Aktif</label>
+            <label for="is_active" class="text-sm font-medium text-gray-700">Template Aktif</label>
         </div>
 
         <div class="flex gap-3 pt-2">
