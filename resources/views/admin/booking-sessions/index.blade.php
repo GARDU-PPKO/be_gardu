@@ -26,13 +26,13 @@
             <tbody>
                 @forelse($sessions as $session)
                 <tr class="border-b border-gray-100 hover:bg-gray-50">
-                    <td class="p-4 font-medium">{{ $session->package->nama ?? '-' }}</td>
+                    <td class="p-4 font-medium">{{ $session->paket->nama ?? ($session->package->nama ?? '-') }}</td>
                     <td class="p-4">
                         <span class="px-2 py-1 text-xs rounded-full
                             {{ $session->sesi === 'Pagi' ? 'bg-orange-100 text-orange-700' : '' }}
                             {{ $session->sesi === 'Siang' ? 'bg-yellow-100 text-yellow-700' : '' }}
                             {{ $session->sesi === 'Sore' ? 'bg-blue-100 text-blue-700' : '' }}">
-                            {{ $session->sesi }}
+                            {{ $session->sesi ?? $session->nama }}
                         </span>
                     </td>
                     <td class="p-4 text-gray-600">
@@ -42,17 +42,17 @@
                             <span class="text-gray-400 italic">Belum diatur</span>
                         @endif
                     </td>
-                    <td class="p-4">{{ $session->kuota }} orang</td>
+                    <td class="p-4">{{ $session->kuota ?? '-' }} orang</td>
                     <td class="p-4">
                         <span class="px-2 py-1 text-xs rounded-full {{ $session->is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
                             {{ $session->is_active ? 'Aktif' : 'Nonaktif' }}
                         </span>
                     </td>
                     <td class="p-4 flex gap-2">
-                        <a href="{{ route('admin.booking-sessions.edit', $session->id) }}" class="text-blue-600 hover:text-blue-800 text-xs">Edit</a>
+                        <a href="{{ route('admin.booking-sessions.edit', $session->id) }}" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700 transition">Edit</a>
                         <form method="POST" action="{{ route('admin.booking-sessions.destroy', $session->id) }}" onsubmit="return confirm('Yakin hapus template ini?')">
                             @csrf @method('DELETE')
-                            <button type="submit" class="text-red-600 hover:text-red-800 text-xs">Hapus</button>
+                            <button type="submit" class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs hover:bg-red-700 transition">Hapus</button>
                         </form>
                     </td>
                 </tr>
@@ -61,10 +61,6 @@
                 @endforelse
             </tbody>
         </table>
-        <div class="p-4 border-t">
-            {{ $sessions->links() }}
-        </div>
     </div>
 </div>
 @endsection
-

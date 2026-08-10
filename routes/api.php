@@ -9,10 +9,11 @@ use App\Http\Controllers\Public\TourPackageController;
 use App\Http\Controllers\Public\UmkmProductController;
 use App\Http\Controllers\Public\VillageProfileController;
 use App\Http\Controllers\Public\VillageStatController;
+use App\Http\Controllers\Api\FonnteWebhookController;
 use Illuminate\Support\Facades\Route;
 
+Route::post('fonnte/webhook', FonnteWebhookController::class);
 
-// make test message
 Route::get("test", function () {
     return "Hello Gardu!";
 });

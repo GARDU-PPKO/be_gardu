@@ -4,8 +4,14 @@
 @section('content')
 <div class="space-y-6">
     <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-bold text-gray-800">Bookings</h2>
-        <span class="text-sm text-gray-500">Default filter: menunggu verifikasi (FIFO)</span>
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">Bookings</h2>
+            <p class="text-xs text-gray-500 mt-1">Default filter: menunggu verifikasi (FIFO)</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{{ route('admin.bookings.export') }}" class="px-4 py-2 bg-white border border-emerald-700 text-emerald-700 rounded-lg text-sm hover:bg-emerald-50 transition">Export Excel</a>
+            <a href="{{ route('admin.bookings.parse') }}" class="px-4 py-2 bg-emerald-700 text-white rounded-lg text-sm hover:bg-emerald-800 transition">+ Parse Text WA</a>
+        </div>
     </div>
 
     <form method="GET" class="flex flex-wrap gap-2">
@@ -50,7 +56,7 @@
                     <td class="p-4">{{ $booking->nama_lengkap }}</td>
                     <td class="p-4 font-mono text-xs">{{ $booking->no_whatsapp }}</td>
                     <td class="p-4">{{ $booking->paketWisata->nama ?? '-' }}</td>
-                    <td class="p-4">{{ $booking->tanggal_kunjungan->format('d-m-Y') }} ({{ $booking->sesi }})</td>
+                    <td class="p-4">{{ $booking->tanggal_kunjungan ? $booking->tanggal_kunjungan->format('d-m-Y') : '-' }} ({{ $booking->sesi }})</td>
                     <td class="p-4">{{ $booking->jumlah_peserta }} org</td>
                     <td class="p-4">Rp {{ number_format($booking->total_harga, 0, ',', '.') }}</td>
                     <td class="p-4">
@@ -65,14 +71,18 @@
                         ][$booking->status] ?? 'bg-gray-100 text-gray-600'; @endphp
                         <span class="px-2 py-1 text-xs rounded-full {{ $badge }}">{{ $booking->status }}</span>
                     </td>
-                    <td class="p-4 flex gap-2">
-                        <a href="{{ route('admin.bookings.show', $booking->id) }}" class="text-blue-600 hover:text-blue-800 text-xs">Detail</a>
+                    <td class="p-4 flex items-center gap-2">
+                        <a href="{{ route('admin.bookings.show', $booking->id) }}" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700 transition">Detail</a>
                         @if($booking->trashed())
                         <form method="POST" action="{{ route('admin.bookings.restore', $booking->id) }}" class="inline">
                             @csrf
-                            <button type="submit" class="text-emerald-600 hover:text-emerald-800 text-xs">Restore</button>
+                            <button type="submit" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-xs hover:bg-emerald-700 transition">Restore</button>
                         </form>
                         @endif
+                        <form method="POST" action="{{ route('admin.bookings.destroy', $booking->id) }}" class="inline" onsubmit="return confirm('Yakin hapus booking ini?')">
+                            @csrf @method('DELETE')
+                            <button type="submit" class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs hover:bg-red-700 transition">Hapus</button>
+                        </form>
                     </td>
                 </tr>
                 @empty

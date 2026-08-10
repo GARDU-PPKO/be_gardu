@@ -13,9 +13,9 @@ return new class extends Migration
             $table->string('booking_code', 20)->unique();
             $table->string('nama_lengkap', 100);
             $table->string('no_whatsapp', 20);
-            $table->string('alamat', 255);
-            $table->string('kontak_darurat_nama', 100);
-            $table->string('kontak_darurat_telp', 20);
+            $table->string('alamat', 255)->nullable();
+            $table->string('kontak_darurat_nama', 100)->nullable();
+            $table->string('kontak_darurat_telp', 20)->nullable();
             $table->text('notes')->nullable();
             $table->integer('jumlah_peserta')->default(1);
             $table->date('tanggal_kunjungan');
@@ -37,6 +37,8 @@ return new class extends Migration
             $table->string('rejected_reason', 255)->nullable();
             $table->foreignId('verified_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('verified_at')->nullable();
+            $table->text('raw_wa_text')->nullable();
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
             $table->softDeletes();
 

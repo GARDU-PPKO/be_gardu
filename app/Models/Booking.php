@@ -44,6 +44,8 @@ class Booking extends Model
         'rejected_reason',
         'verified_by',
         'verified_at',
+        'raw_wa_text',
+        'created_by',
     ];
 
     protected function casts(): array
@@ -68,6 +70,11 @@ class Booking extends Model
     public function paketWisata(): BelongsTo
     {
         return $this->belongsTo(PaketWisata::class, 'paket_wisata_id');
+    }
+
+    public function package(): BelongsTo
+    {
+        return $this->paketWisata();
     }
 
     public function verifiedBy(): BelongsTo

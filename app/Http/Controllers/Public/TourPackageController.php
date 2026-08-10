@@ -5,44 +5,15 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\PaketWisata;
 use App\Support\ApiResponse;
+use Dedoc\Scramble\Attributes\Endpoint;
+use Dedoc\Scramble\Attributes\Group;
+use Dedoc\Scramble\Attributes\PathParameter;
 use Illuminate\Http\JsonResponse;
 
+#[Group('Paket Wisata')]
 class TourPackageController extends Controller
 {
-    /**
-     * Ambil daftar paket wisata.
-     *
-     * @response {
-     *   "meta": {
-     *     "success": true,
-     *     "status_code": "200",
-     *     "message": "Success retrieving tour packages"
-     *   },
-     *   "data": [
-     *     {
-     *       "id": 1,
-     *       "nama": "Tubing Adventure",
-     *       "deskripsi": "Menyusuri Sungai Blukar sepanjang 1,5 km.",
-     *       "harga": 75000,
-     *       "satuan": "orang",
-     *       "tag": "Adventure",
-     *       "durasi": "±2 jam",
-     *       "min_participants": 1,
-     *       "max_participants": 10,
-     *       "gambar": "https://...",
-     *       "is_active": true,
-     *       "includes": [
-     *         {
-     *           "id": 1,
-     *           "package_id": 1,
-     *           "item": "Pemandu bersertifikat",
-     *           "urutan": 1
-     *         }
-     *       ]
-     *     }
-     *   ]
-     * }
-     */
+    #[Endpoint('Daftar Paket Wisata')]
     public function index(): JsonResponse
     {
         $packages = PaketWisata::with('tiers')
@@ -56,31 +27,8 @@ class TourPackageController extends Controller
         );
     }
 
-    /**
-     * Ambil detail paket wisata.
-     *
-     * @response {
-     *   "meta": {
-     *     "success": true,
-     *     "status_code": "200",
-     *     "message": "Success retrieving tour package detail"
-     *   },
-     *   "data": {
-     *     "id": 1,
-     *     "nama": "Tubing Adventure",
-     *     "deskripsi": "...",
-     *     "harga": 75000,
-     *     "satuan": "orang",
-     *     "tag": "Adventure",
-     *     "durasi": "±2 jam",
-     *     "min_participants": 1,
-     *     "max_participants": 10,
-     *     "gambar": "https://...",
-     *     "is_active": true,
-     *     "includes": []
-     *   }
-     * }
-     */
+    #[Endpoint('Detail Paket Wisata')]
+    #[PathParameter('id', description: 'ID paket wisata', example: '1')]
     public function show($id): JsonResponse
     {
         $package = PaketWisata::with('tiers')->where('aktif', true)->findOrFail($id);

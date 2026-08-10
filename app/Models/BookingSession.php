@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -49,6 +48,11 @@ class BookingSession extends Model
     public function paket(): BelongsTo
     {
         return $this->belongsTo(PaketWisata::class, 'paket_wisata_id');
+    }
+
+    public function package(): BelongsTo
+    {
+        return $this->paket();
     }
 
     public function createdBy(): BelongsTo

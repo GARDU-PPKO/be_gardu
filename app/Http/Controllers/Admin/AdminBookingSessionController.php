@@ -26,7 +26,7 @@ class AdminBookingSessionController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validatedData($request);
-        $data['created_by'] = $request->user()->id;
+        $data['created_by'] = $request->user()?->id;
 
         BookingSession::create($data);
 
@@ -61,8 +61,8 @@ class AdminBookingSessionController extends Controller
         return $request->validate([
             'paket_wisata_id' => 'required|exists:paket_wisata,id',
             'sesi'            => 'required|in:Pagi,Siang,Sore',
-            'jam_mulai'       => 'nullable|date_format:H:i',
-            'jam_selesai'     => 'nullable|date_format:H:i|after:jam_mulai',
+            'jam_mulai'       => 'nullable',
+            'jam_selesai'     => 'nullable',
             'kuota'           => 'required|integer|min:1',
             'is_active'       => 'boolean',
         ]) + ['is_active' => $request->boolean('is_active')];

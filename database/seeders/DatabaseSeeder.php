@@ -205,7 +205,7 @@ class DatabaseSeeder extends Seeder
             VillageProfile::create($p);
         }
 
-        // Bookings (contoh berbagai status)
+        // Bookings
         $bookingData = [
             ['nama_lengkap' => 'Budi Santoso', 'no_whatsapp' => '62812345678', 'alamat' => 'Semarang', 'kontak_darurat_nama' => 'Siti', 'kontak_darurat_telp' => '62811111111', 'paket' => $genta, 'tanggal' => now()->subDays(5)->toDateString(), 'sesi' => 'Pagi', 'jumlah_peserta' => 8, 'status' => Booking::STATUS_CONFIRMED],
             ['nama_lengkap' => 'Siti Nurhaliza', 'no_whatsapp' => '62821234567', 'alamat' => 'Kendal', 'kontak_darurat_nama' => 'Ahmad', 'kontak_darurat_telp' => '62822222222', 'paket' => $genta, 'tanggal' => now()->subDays(3)->toDateString(), 'sesi' => 'Siang', 'jumlah_peserta' => 5, 'status' => Booking::STATUS_CONFIRMED],
@@ -234,6 +234,7 @@ class DatabaseSeeder extends Seeder
                 'total_harga' => $total,
                 'status' => $b['status'],
                 'rejected_reason' => $b['status'] === Booking::STATUS_REJECTED ? 'Bukti tidak jelas/buram' : null,
+                'created_by' => $superadmin->id,
             ]);
 
             BookingLog::create([
@@ -264,8 +265,7 @@ class DatabaseSeeder extends Seeder
             Setting::firstOrCreate(['key' => $s['key']], $s);
         }
 
-        // Booking Sessions — template acuan per paket per sesi (bukan per tanggal)
-        // Slot terisi dihitung dinamis dari tabel bookings
+        // Booking Sessions — template acuan per paket per sesi
         $packages = [$genta, $gempi, $solo, $buddy, $family];
         $sesiTemplate = [
             ['sesi' => 'Pagi',  'jam_mulai' => '07:00', 'jam_selesai' => '10:00'],
@@ -285,5 +285,8 @@ class DatabaseSeeder extends Seeder
                 ]);
             }
         }
+
+        // POS Seeder
+        $this->call(PosSeeder::class);
     }
 }

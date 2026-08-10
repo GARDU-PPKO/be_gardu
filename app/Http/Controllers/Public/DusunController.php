@@ -5,35 +5,15 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\Dusun;
 use App\Support\ApiResponse;
+use Dedoc\Scramble\Attributes\Endpoint;
+use Dedoc\Scramble\Attributes\Group;
+use Dedoc\Scramble\Attributes\PathParameter;
 use Illuminate\Http\JsonResponse;
 
+#[Group('Dusun')]
 class DusunController extends Controller
 {
-    /**
-     * Ambil daftar dusun untuk slider.
-     *
-     * @response {
-     *   "meta": {
-     *     "success": true,
-     *     "status_code": "200",
-     *     "message": "Success retrieving dusun list"
-     *   },
-     *   "data": [
-     *     {
-     *       "id": 1,
-     *       "nama": "Seklotok",
-     *       "rw": "RW 01",
-     *       "jumlah_rt": 3,
-     *       "jumlah_penduduk": 412,
-     *       "luas_wilayah": "1,2 km²",
-     *       "deskripsi": "Dusun di tepi sungai dengan sawah hijau membentang luas.",
-     *       "thumbnail": "https://...",
-     *       "hero_img": "https://...",
-     *       "is_active": true
-     *     }
-     *   ]
-     * }
-     */
+    #[Endpoint('Daftar Dusun')]
     public function index(): JsonResponse
     {
         $dusun = Dusun::where('is_active', true)
@@ -45,46 +25,8 @@ class DusunController extends Controller
         return ApiResponse::success($dusun, 'Success retrieving dusun list');
     }
 
-    /**
-     * Ambil detail dusun termasuk galeri dan keunggulan.
-     *
-     * @response {
-     *   "meta": {
-     *     "success": true,
-     *     "status_code": "200",
-     *     "message": "Success retrieving dusun detail"
-     *   },
-     *   "data": {
-     *     "id": 1,
-     *     "nama": "Seklotok",
-     *     "rw": "RW 01",
-     *     "jumlah_rt": 3,
-     *     "jumlah_penduduk": 412,
-     *     "luas_wilayah": "1,2 km²",
-     *     "deskripsi": "...",
-     *     "thumbnail": "https://...",
-     *     "hero_img": "https://...",
-     *     "is_active": true,
-     *     "detail": "...",
-     *     "galleries": [
-     *       {
-     *         "id": 11,
-     *         "dusun_id": 1,
-     *         "image_url": "https://...",
-     *         "urutan": 1
-     *       }
-     *     ],
-     *     "keunggulan": [
-     *       {
-     *         "id": 101,
-     *         "dusun_id": 1,
-     *         "keunggulan": "Sawah organik tepi sungai",
-     *         "urutan": 1
-     *       }
-     *     ]
-     *   }
-     * }
-     */
+    #[Endpoint('Detail Dusun')]
+    #[PathParameter('id', description: 'ID dusun', example: '1')]
     public function show($id): JsonResponse
     {
         $dusun = Dusun::with(['galleries', 'keunggulan'])

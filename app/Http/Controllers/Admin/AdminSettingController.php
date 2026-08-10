@@ -17,7 +17,7 @@ class AdminSettingController extends Controller
 
     public function edit($id): View
     {
-        return view('admin.settings.index', ['settings' => Setting::all(), 'editSetting' => Setting::findOrFail($id)]);
+        return view('admin.settings.edit', ['setting' => Setting::findOrFail($id)]);
     }
 
     public function update(Request $request, $id): RedirectResponse

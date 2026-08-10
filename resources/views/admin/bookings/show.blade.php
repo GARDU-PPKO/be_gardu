@@ -32,7 +32,7 @@
             <div><span class="text-gray-500">Alamat</span><p>{{ $booking->alamat }}</p></div>
             <div><span class="text-gray-500">Kontak Darurat</span><p>{{ $booking->kontak_darurat_nama }} ({{ $booking->kontak_darurat_telp }})</p></div>
             <div><span class="text-gray-500">Paket</span><p class="font-semibold">{{ $booking->paketWisata->nama ?? '-' }}</p></div>
-            <div><span class="text-gray-500">Tanggal Kunjungan</span><p>{{ $booking->tanggal_kunjungan->format('d-m-Y') }} — {{ $booking->sesi }}</p></div>
+            <div><span class="text-gray-500">Tanggal Kunjungan</span><p>{{ $booking->tanggal_kunjungan ? $booking->tanggal_kunjungan->format('d-m-Y') : '-' }} — {{ $booking->sesi }}</p></div>
             <div><span class="text-gray-500">Jumlah Peserta</span><p>{{ $booking->jumlah_peserta }} orang</p></div>
             <div>
                 <span class="text-gray-500">Nominal yang Harus Dibayar</span>
@@ -84,7 +84,7 @@
         @endif
     </div>
 
-    @if($booking->status === 'PENDING_VERIFY')
+    @if($booking->status === 'PENDING_VERIFY' || $booking->status === 'PENDING_PAYMENT')
     <div class="flex flex-col gap-3">
         <form method="POST" action="{{ route('admin.bookings.confirm', $booking->id) }}">
             @csrf

@@ -16,6 +16,7 @@ return new class extends Migration
             $table->integer('urutan')->default(0);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+            $table->index('tipe');
         });
     }
 

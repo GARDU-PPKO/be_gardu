@@ -5,38 +5,22 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\BookingSession;
 use App\Support\ApiResponse;
+use Dedoc\Scramble\Attributes\Endpoint;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+#[Group('Sesi Booking')]
 class BookingSessionController extends Controller
 {
-    /**
-     * Cek sisa kuota sesi pada tanggal dan paket tertentu.
-     *
-     * @queryParam package_id int required ID paket wisata. Example: 1
-     * @queryParam tanggal string required Tanggal kunjungan (YYYY-MM-DD). Example: 2026-08-10
-     *
-     * @response {
-     *   "meta": {
-     *     "success": true,
-     *     "status_code": "200",
-     *     "message": "Success retrieving booking sessions"
-     *   },
-     *   "data": [
-     *     {
-     *       "id": 1,
-     *       "package_id": 1,
-     *       "tanggal": "2026-08-10",
-     *       "sesi": "Pagi",
-     *       "kuota": 20,
-     *       "terisi": 5,
-     *       "is_active": true
-     *     }
-     *   ]
-     * }
-     */
+    #[Endpoint('Daftar / Cek Kuota Sesi Booking')]
     public function index(Request $request): JsonResponse
     {
+        if (! $request->has('package_id') && ! $request->has('tanggal')) {
+            $sessions = BookingSession::where('is_active', true)->get();
+            return ApiResponse::success($sessions, 'Success retrieving booking sessions');
+        }
+
         $data = $request->validate([
             'package_id' => 'required|integer|exists:paket_wisata,id',
             'tanggal' => 'required|date_format:Y-m-d',

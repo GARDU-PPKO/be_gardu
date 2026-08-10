@@ -50,7 +50,7 @@ return [
         /*
          * Description rendered on the home page of the API documentation (`/docs/api`).
          */
-        'description' => 'API publik Desa Wisata Getas (GARDU). Dokumentasi lengkap kebutuhan frontend: lihat API_EXPECTED_RESPONSES.md.',
+        'description' => 'API publik Desa Wisata Getas (GARDU). Menyediakan data dusun, paket wisata, sesi booking, produk UMKM, budaya, profil desa, statistik desa, dan pengaturan.',
     ],
 
     'ui' => [

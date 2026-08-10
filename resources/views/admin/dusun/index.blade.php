@@ -35,10 +35,11 @@
                         </span>
                     </td>
                     <td class="p-4 flex gap-2">
-                        <a href="{{ route('admin.dusun.edit', $dusun->id) }}" class="text-blue-600 hover:text-blue-800 text-xs">Edit</a>
+                        <a href="{{ route('admin.dusun.show', $dusun->id) }}" class="px-3 py-1.5 bg-gray-600 text-white rounded-lg text-xs hover:bg-gray-700 transition">Detail</a>
+                        <a href="{{ route('admin.dusun.edit', $dusun->id) }}" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700 transition">Edit</a>
                         <form method="POST" action="{{ route('admin.dusun.destroy', $dusun->id) }}" onsubmit="return confirm('Yakin hapus?')">
                             @csrf @method('DELETE')
-                            <button type="submit" class="text-red-600 hover:text-red-800 text-xs">Hapus</button>
+                            <button type="submit" class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs hover:bg-red-700 transition">Hapus</button>
                         </form>
                     </td>
                 </tr>

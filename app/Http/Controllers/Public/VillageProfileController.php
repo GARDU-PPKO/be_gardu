@@ -5,30 +5,14 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\VillageProfile;
 use App\Support\ApiResponse;
+use Dedoc\Scramble\Attributes\Endpoint;
+use Dedoc\Scramble\Attributes\Group;
 use Illuminate\Http\JsonResponse;
 
+#[Group('Profil Desa')]
 class VillageProfileController extends Controller
-{    /**
-     * Ambil profil desa (sejarah, visi, misi, pemerintahan).
-     *
-     * @response {
-     *   "meta": {
-     *     "success": true,
-     *     "status_code": "200",
-     *     "message": "Success retrieving village profile"
-     *   },
-     *   "data": [
-     *     {
-     *       "id": 1,
-     *       "tipe": "sejarah",
-     *       "judul": "Sejarah Desa Getas",
-     *       "konten": "<p>Desa Getas didirikan pada tahun...</p>",
-     *       "urutan": 1,
-     *       "is_active": true
-     *     }
-     *   ]
-     * }
-     */
+{
+    #[Endpoint('Daftar Profil Desa')]
     public function index(): JsonResponse
     {
         $profiles = VillageProfile::where('is_active', true)

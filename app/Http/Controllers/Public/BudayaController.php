@@ -5,43 +5,15 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\Budaya;
 use App\Support\ApiResponse;
+use Dedoc\Scramble\Attributes\Endpoint;
+use Dedoc\Scramble\Attributes\Group;
+use Dedoc\Scramble\Attributes\PathParameter;
 use Illuminate\Http\JsonResponse;
 
+#[Group('Budaya')]
 class BudayaController extends Controller
 {
-    /**
-     * Ambil daftar kebudayaan beserta jadwal event-nya.
-     *
-     * @response {
-     *   "meta": {
-     *     "success": true,
-     *     "status_code": "200",
-     *     "message": "Success retrieving budaya list"
-     *   },
-     *   "data": [
-     *     {
-     *       "id": 1,
-     *       "judul": "Kuda Lumping",
-     *       "kategori": "Seni Pertunjukan",
-     *       "deskripsi": "Tarian tradisional...",
-     *       "gambar": "https://...",
-     *       "span_grid": 2,
-     *       "is_active": true,
-     *       "schedules": [
-     *         {
-     *           "id": 1,
-     *           "budaya_id": 1,
-     *           "nama_acara": "Kuda Lumping Suroan",
-     *           "hari": "Sabtu",
-     *           "jam": "09.00 - 15.00 WIB",
-     *           "deskripsi": "Pentas utama di Dusun Sanggar",
-     *           "is_active": true
-     *         }
-     *       ]
-     *     }
-     *   ]
-     * }
-     */
+    #[Endpoint('Daftar Budaya')]
     public function index(): JsonResponse
     {
         $budaya = Budaya::with('schedules')
@@ -54,27 +26,8 @@ class BudayaController extends Controller
         return ApiResponse::success($budaya, 'Success retrieving budaya list');
     }
 
-    /**
-     * Ambil detail kebudayaan beserta jadwal event-nya.
-     *
-     * @response {
-     *   "meta": {
-     *     "success": true,
-     *     "status_code": "200",
-     *     "message": "Success retrieving budaya detail"
-     *   },
-     *   "data": {
-     *     "id": 1,
-     *     "judul": "Kuda Lumping",
-     *     "kategori": "Seni Pertunjukan",
-     *     "deskripsi": "Tarian tradisional...",
-     *     "gambar": "https://...",
-     *     "span_grid": 2,
-     *     "is_active": true,
-     *     "schedules": []
-     *   }
-     * }
-     */
+    #[Endpoint('Detail Budaya')]
+    #[PathParameter('id', description: 'ID budaya', example: '1')]
     public function show($id): JsonResponse
     {
         $budaya = Budaya::with('schedules')->where('is_active', true)->findOrFail($id);
