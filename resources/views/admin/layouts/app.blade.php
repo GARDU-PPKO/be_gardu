@@ -47,6 +47,9 @@
                 <a href="{{ route('admin.paket-wisata.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.paket-wisata.*') ? 'bg-emerald-800' : '' }}">
                     <span>🎫</span> Paket Wisata
                 </a>
+                <a href="{{ route('admin.add-ons.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.add-ons.*') ? 'bg-emerald-800' : '' }}">
+                    <span>🍱</span> Add-On
+                </a>
                 <a href="{{ route('admin.booking-sessions.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.booking-sessions.*') ? 'bg-emerald-800' : '' }}">
                     <span>📅</span> Sesi Booking
                 </a>

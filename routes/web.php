@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\AdminDusunController;
 use App\Http\Controllers\Admin\AdminPaketWisataController;
+use App\Http\Controllers\Admin\AdminAddOnController;
 use App\Http\Controllers\Admin\AdminBookingSessionController;
 use App\Http\Controllers\Admin\AdminBookingController;
 use App\Http\Controllers\Admin\AdminUmkmProductController;
@@ -49,6 +50,10 @@ Route::prefix('admin')->group(function () {
         Route::post('paket-wisata/{id}/restore', [AdminPaketWisataController::class, 'restore'])->name('admin.paket-wisata.restore');
         Route::post('paket-wisata/{id}/tiers', [AdminPaketWisataController::class, 'storeTier'])->name('admin.paket-wisata.tiers.store');
         Route::delete('paket-wisata/{id}/tiers/{tierId}', [AdminPaketWisataController::class, 'destroyTier'])->name('admin.paket-wisata.tiers.destroy');
+
+        // Add-On
+        Route::resource('add-ons', AdminAddOnController::class)->except(['show'])->names('admin.add-ons');
+        Route::post('add-ons/{id}/restore', [AdminAddOnController::class, 'restore'])->name('admin.add-ons.restore');
 
         // Booking Sessions
         Route::get('booking-sessions', [AdminBookingSessionController::class, 'index'])->name('admin.booking-sessions.index');
