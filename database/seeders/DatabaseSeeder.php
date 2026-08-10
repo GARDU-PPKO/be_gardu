@@ -15,7 +15,6 @@ use App\Models\Setting;
 use App\Models\PaketWisata;
 use App\Models\PaketWisataTier;
 use App\Models\UmkmProduct;
-use App\Models\VillageProfile;
 use App\Models\VillageStat;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -194,18 +193,7 @@ class DatabaseSeeder extends Seeder
             VillageStat::create($s);
         }
 
-        // Village Profile
-        $profiles = [
-            ['tipe' => 'sejarah', 'judul' => 'Sejarah Desa Getas', 'konten' => '<p>Desa Getas berdiri sejak abad ke-17 sebagai pemukiman kecil di lereng pegunungan Kendal. Nama "Getas" diambil dari kata "nggetas" yang berarti membersihkan lahan untuk bercocok tanam.</p>', 'urutan' => 1],
-            ['tipe' => 'visi', 'judul' => 'Visi Desa Getas', 'konten' => '<p>Menjadi desa wisata yang mandiri, sejahtera, dan berbudaya dengan tetap melestarikan alam serta kearifan lokal pada tahun 2030.</p>', 'urutan' => 2],
-            ['tipe' => 'misi', 'judul' => 'Misi Desa Getas', 'konten' => '<p>1. Mengembangkan potensi wisata alam dan budaya secara berkelanjutan.<br>2. Meningkatkan kesejahteraan masyarakat melalui UMKM dan pariwisata.<br>3. Melestarikan lingkungan dan tradisi lokal.<br>4. Membangun tata kelola desa yang transparan dan partisipatif.</p>', 'urutan' => 3],
-            ['tipe' => 'pemerintahan', 'judul' => 'Pemerintahan Desa', 'konten' => '<p>Desa Getas dipimpin oleh Kepala Desa dengan dukungan perangkat desa serta Badan Permusyawaratan Desa (BPD). Pelayanan publik dilayani di Balai Desa pada jam pelayanan resmi.</p>', 'urutan' => 4],
-        ];
-        foreach ($profiles as $p) {
-            VillageProfile::create($p);
-        }
-
-        // Bookings
+        // Bookings (contoh berbagai status)
         $bookingData = [
             ['nama_lengkap' => 'Budi Santoso', 'no_whatsapp' => '62812345678', 'alamat' => 'Semarang', 'kontak_darurat_nama' => 'Siti', 'kontak_darurat_telp' => '62811111111', 'paket' => $genta, 'tanggal' => now()->subDays(5)->toDateString(), 'sesi' => 'Pagi', 'jumlah_peserta' => 8, 'status' => Booking::STATUS_CONFIRMED],
             ['nama_lengkap' => 'Siti Nurhaliza', 'no_whatsapp' => '62821234567', 'alamat' => 'Kendal', 'kontak_darurat_nama' => 'Ahmad', 'kontak_darurat_telp' => '62822222222', 'paket' => $genta, 'tanggal' => now()->subDays(3)->toDateString(), 'sesi' => 'Siang', 'jumlah_peserta' => 5, 'status' => Booking::STATUS_CONFIRMED],
