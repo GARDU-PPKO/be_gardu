@@ -90,6 +90,62 @@ class AddOnTest extends TestCase
         $this->assertEquals(25000, (float) $booking->addOns->firstWhere('id', $makan->id)->pivot->harga_satuan);
     }
 
+    public function test_store_add_on_per_orang_mengikuti_jumlah_peserta(): void
+    {
+        $paket = $this->makePackage();
+        $this->makeSession();
+        $makan = AddOn::create(['nama' => 'Makan Siang', 'tipe_harga' => 'per_orang', 'harga' => 25000, 'aktif' => true]);
+
+        $response = $this->postJson('/api/bookings', [
+            'package_id' => $paket->id,
+            'customer_name' => 'Budi Santoso',
+            'phone' => '6281234567890',
+            'date' => now()->addDays(2)->toDateString(),
+            'session_time' => 'Pagi (08.00 - 11.00)',
+            'participants' => 8,
+            'addons' => [
+                ['id' => $makan->id, 'quantity' => 1],
+            ],
+        ]);
+
+        $response->assertCreated();
+
+        $booking = Booking::where('booking_code', $response->json('data.kode_booking'))->first();
+        $pivot = $booking->addOns->firstWhere('id', $makan->id)->pivot;
+
+        $this->assertEquals(8, $pivot->qty);
+        $this->assertEquals(25000, (float) $pivot->harga_satuan);
+        $this->assertEquals(200000, (float) $pivot->subtotal);
+        $this->assertEquals(1000000, (float) $booking->total_harga);
+    }
+
+    public function test_store_add_on_per_unit_default_quantity_satu(): void
+    {
+        $paket = $this->makePackage();
+        $this->makeSession();
+        $atv = AddOn::create(['nama' => 'Sewa ATV', 'tipe_harga' => 'per_unit', 'harga' => 75000, 'aktif' => true]);
+
+        $response = $this->postJson('/api/bookings', [
+            'package_id' => $paket->id,
+            'customer_name' => 'Budi Santoso',
+            'phone' => '6281234567890',
+            'date' => now()->addDays(2)->toDateString(),
+            'session_time' => 'Pagi (08.00 - 11.00)',
+            'participants' => 3,
+            'addons' => [
+                ['id' => $atv->id],
+            ],
+        ]);
+
+        $response->assertCreated();
+
+        $booking = Booking::where('booking_code', $response->json('data.kode_booking'))->first();
+        $pivot = $booking->addOns->firstWhere('id', $atv->id)->pivot;
+
+        $this->assertEquals(1, $pivot->qty);
+        $this->assertEquals(75000, (float) $pivot->subtotal);
+    }
+
     public function test_store_menolak_add_on_tidak_aktif(): void
     {
         $paket = $this->makePackage();

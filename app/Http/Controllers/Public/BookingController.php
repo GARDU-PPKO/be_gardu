@@ -32,7 +32,7 @@ class BookingController extends Controller
      * @bodyParam date string required Tanggal kunjungan (YYYY-MM-DD). Example: 2026-08-10
      * @bodyParam session_time string required Sesi lengkap. Example: Pagi (08.00 - 11.00)
      * @bodyParam participants int required Jumlah peserta. Example: 3
-     * @bodyParam addons array|null Daftar add-on yang dipilih [{id, quantity}]. Example: [{"id":1,"quantity":3}]
+     * @bodyParam addons array|null Daftar add-on yang dipilih [{id, quantity?}]. quantity diabaikan untuk add-on per orang. Example: [{"id":1,"quantity":3}]
      * @bodyParam notes string|null Catatan tambahan. Example: Tidak ada alergi
      *
      * @response status=201 {
@@ -82,7 +82,7 @@ class BookingController extends Controller
             'notes' => 'nullable|string',
             'addons' => 'nullable|array',
             'addons.*.id' => 'required|integer|exists:add_ons,id',
-            'addons.*.quantity' => 'required|integer|min:1',
+            'addons.*.quantity' => 'nullable|integer|min:1',
         ], [
             'phone.regex' => 'The phone field must be a valid WhatsApp number.',
         ]);
@@ -139,7 +139,7 @@ class BookingController extends Controller
             return ApiResponse::error($e->getMessage(), 422);
         }
 
-        $addOnResult = $this->processAddOns($data['addons'] ?? []);
+        $addOnResult = $this->processAddOns($data['addons'] ?? [], $data['participants']);
 
         if (! $addOnResult['ok']) {
             return ApiResponse::error($addOnResult['message'], 422, $addOnResult['errors']);
@@ -187,7 +187,7 @@ class BookingController extends Controller
      *
      * @return array{ok: bool, message: string, errors: array, total: float, items: array}
      */
-    private function processAddOns(array $addOns): array
+    private function processAddOns(array $addOns, int $participants): array
     {
         $items = [];
         $total = 0.0;
@@ -202,7 +202,9 @@ class BookingController extends Controller
                 continue;
             }
 
-            $qty = (int) ($addOn['quantity'] ?? $addOn['qty'] ?? 0);
+            $qty = $model->tipe_harga === 'per_orang'
+                ? $participants
+                : (int) ($addOn['quantity'] ?? $addOn['qty'] ?? 1);
 
             if ($qty < 1) {
                 $errors["addons.{$index}.quantity"] = ['Quantity minimal 1.'];
