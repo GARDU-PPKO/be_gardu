@@ -24,7 +24,7 @@ class BookingController extends Controller
      * @bodyParam phone string required Nomor WhatsApp valid. Example: 6281234567890
      * @bodyParam email string|null Email opsional. Example: budi@gmail.com
      * @bodyParam date string required Tanggal kunjungan (YYYY-MM-DD). Example: 2026-08-10
-     * @bodyParam session_time string required Sesi lengkap. Example: Pagi (07.00 - 09.00)
+     * @bodyParam session_time string required Sesi lengkap. Example: Pagi (08.00 - 11.00)
      * @bodyParam participants int required Jumlah peserta. Example: 3
      * @bodyParam notes string|null Catatan tambahan. Example: Tidak ada alergi
      *
@@ -83,8 +83,7 @@ class BookingController extends Controller
 
         $sesi = $this->extractSession($data['session_time']);
 
-        $session = BookingSession::where('paket_wisata_id', $paket->id)
-            ->where('sesi', $sesi)
+        $session = BookingSession::where('sesi', $sesi)
             ->where('is_active', true)
             ->first();
 
@@ -92,11 +91,13 @@ class BookingController extends Controller
             return ApiResponse::error('Sesi yang dipilih tidak tersedia.', 422);
         }
 
-        if ($data['participants'] > $session->sisaPadaTanggal($data['date'])) {
+        $sisaKuota = $session->sisaPadaTanggal($data['date']);
+
+        if ($sisaKuota !== null && $data['participants'] > $sisaKuota) {
             return ApiResponse::error(
                 'Kuota sesi tidak mencukupi untuk jumlah peserta tersebut.',
                 422,
-                ['participants' => ["Sisa kuota sesi ini hanya {$session->sisaPadaTanggal($data['date'])} orang."]]
+                ['participants' => ["Sisa kuota sesi ini hanya {$sisaKuota} orang."]]
             );
         }
 

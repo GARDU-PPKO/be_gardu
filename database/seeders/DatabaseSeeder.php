@@ -193,6 +193,7 @@ class DatabaseSeeder extends Seeder
             VillageStat::create($s);
         }
 
+
         // Bookings (contoh berbagai status)
         $bookingData = [
             ['nama_lengkap' => 'Budi Santoso', 'no_whatsapp' => '62812345678', 'alamat' => 'Semarang', 'kontak_darurat_nama' => 'Siti', 'kontak_darurat_telp' => '62811111111', 'paket' => $genta, 'tanggal' => now()->subDays(5)->toDateString(), 'sesi' => 'Pagi', 'jumlah_peserta' => 8, 'status' => Booking::STATUS_CONFIRMED],
@@ -253,25 +254,22 @@ class DatabaseSeeder extends Seeder
             Setting::firstOrCreate(['key' => $s['key']], $s);
         }
 
-        // Booking Sessions — template acuan per paket per sesi
-        $packages = [$genta, $gempi, $solo, $buddy, $family];
-        $sesiTemplate = [
-            ['sesi' => 'Pagi',  'jam_mulai' => '07:00', 'jam_selesai' => '10:00'],
-            ['sesi' => 'Siang', 'jam_mulai' => '10:00', 'jam_selesai' => '13:00'],
-            ['sesi' => 'Sore',  'jam_mulai' => '14:00', 'jam_selesai' => '17:00'],
+        // Booking Sessions — Master acuan harian (Global untuk semua paket)
+        $masterSessions = [
+            ['sesi' => 'Pagi',  'jam_mulai' => '08:00', 'jam_selesai' => '11:00', 'kuota' => 30],
+            ['sesi' => 'Siang', 'jam_mulai' => '11:00', 'jam_selesai' => '14:00', 'kuota' => 30],
+            ['sesi' => 'Sore',  'jam_mulai' => '14:00', 'jam_selesai' => '16:00', 'kuota' => 30],
         ];
-        foreach ($packages as $pkg) {
-            foreach ($sesiTemplate as $tpl) {
-                BookingSession::create([
-                    'paket_wisata_id' => $pkg->id,
-                    'sesi'        => $tpl['sesi'],
-                    'jam_mulai'   => $tpl['jam_mulai'],
-                    'jam_selesai' => $tpl['jam_selesai'],
-                    'kuota'       => 20,
-                    'is_active'   => true,
-                    'created_by'  => $superadmin->id,
-                ]);
-            }
+
+        foreach ($masterSessions as $tpl) {
+            BookingSession::create([
+                'sesi'        => $tpl['sesi'],
+                'jam_mulai'   => $tpl['jam_mulai'],
+                'jam_selesai' => $tpl['jam_selesai'],
+                'kuota'       => $tpl['kuota'],
+                'is_active'   => true,
+                'created_by'  => $superadmin->id,
+            ]);
         }
 
         // POS Seeder

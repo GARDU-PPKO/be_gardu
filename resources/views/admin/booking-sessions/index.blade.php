@@ -5,17 +5,16 @@
 <div class="space-y-6">
     <div class="flex items-center justify-between">
         <div>
-            <h2 class="text-2xl font-bold text-gray-800">Template Sesi Booking</h2>
-            <p class="text-sm text-gray-500 mt-1">Master sesi acuan per paket — slot terisi dihitung otomatis dari data booking</p>
+            <h2 class="text-2xl font-bold text-gray-800">Master Sesi Booking (Acuan Harian)</h2>
+            <p class="text-sm text-gray-500 mt-1">Master acuan sesi harian untuk pemesanan wisata. Cukup diatur sekali sebagai acuan setiap hari.</p>
         </div>
-        <a href="{{ route('admin.booking-sessions.create') }}" class="px-4 py-2 bg-emerald-700 text-white rounded-lg text-sm hover:bg-emerald-800 transition">+ Tambah Template</a>
+        <a href="{{ route('admin.booking-sessions.create') }}" class="px-4 py-2 bg-emerald-700 text-white rounded-lg text-sm hover:bg-emerald-800 transition">+ Tambah Sesi Acuan</a>
     </div>
 
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
         <table class="w-full text-sm">
             <thead>
                 <tr class="text-left text-gray-500 border-b bg-gray-50">
-                    <th class="p-4 font-semibold">Paket</th>
                     <th class="p-4 font-semibold">Sesi</th>
                     <th class="p-4 font-semibold">Jam Operasional</th>
                     <th class="p-4 font-semibold">Kuota</th>
@@ -26,7 +25,6 @@
             <tbody>
                 @forelse($sessions as $session)
                 <tr class="border-b border-gray-100 hover:bg-gray-50">
-                    <td class="p-4 font-medium">{{ $session->paket->nama ?? ($session->package->nama ?? '-') }}</td>
                     <td class="p-4">
                         <span class="px-2 py-1 text-xs rounded-full
                             {{ $session->sesi === 'Pagi' ? 'bg-orange-100 text-orange-700' : '' }}
@@ -57,7 +55,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="6" class="p-8 text-center text-gray-400">Belum ada template sesi booking</td></tr>
+                <tr><td colspan="5" class="p-8 text-center text-gray-400">Belum ada template sesi booking</td></tr>
                 @endforelse
             </tbody>
         </table>

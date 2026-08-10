@@ -10,7 +10,6 @@ class BookingSession extends Model
     protected $table = 'booking_sessions';
 
     protected $fillable = [
-        'paket_wisata_id',
         'sesi',
         'jam_mulai',
         'jam_selesai',
@@ -33,21 +32,22 @@ class BookingSession extends Model
      */
     public function terisiPadaTanggal(string $tanggal): int
     {
-        return Booking::where('paket_wisata_id', $this->paket_wisata_id)
-            ->where('sesi', $this->sesi)
+        return (int) Booking::where('sesi', $this->sesi)
             ->where('tanggal_kunjungan', $tanggal)
             ->where('status', Booking::STATUS_CONFIRMED)
             ->sum('jumlah_peserta');
     }
 
-    public function sisaPadaTanggal(string $tanggal): int
+    /**
+     * Sisa kuota pada tanggal tertentu. Mengembalikan null jika unlimited.
+     */
+    public function sisaPadaTanggal(string $tanggal): ?int
     {
-        return max(0, (int) $this->kuota - $this->terisiPadaTanggal($tanggal));
-    }
+        if ($this->kuota === null) {
+            return null; // Unlimited
+        }
 
-    public function paket(): BelongsTo
-    {
-        return $this->belongsTo(PaketWisata::class, 'paket_wisata_id');
+        return max(0, (int) $this->kuota - $this->terisiPadaTanggal($tanggal));
     }
 
     public function package(): BelongsTo

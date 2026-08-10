@@ -53,11 +53,6 @@ class PaketWisata extends Model
         return $this->hasMany(PaketWisataTier::class, 'paket_id');
     }
 
-    public function sessions(): HasMany
-    {
-        return $this->hasMany(BookingSession::class, 'paket_wisata_id');
-    }
-
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class, 'paket_wisata_id');

@@ -16,17 +16,6 @@
         @if($session) @method('PUT') @endif
 
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Paket Wisata *</label>
-            <select name="paket_wisata_id" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
-                <option value="">-- Pilih Paket --</option>
-                @foreach($packages as $pkg)
-                <option value="{{ $pkg->id }}" {{ old('paket_wisata_id', $session->paket_wisata_id ?? '') == $pkg->id ? 'selected' : '' }}>{{ $pkg->nama }}</option>
-                @endforeach
-            </select>
-            @error('paket_wisata_id') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-        </div>
-
-        <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Sesi *</label>
             <select name="sesi" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
                 <option value="Pagi"  {{ old('sesi', $session->sesi ?? '') === 'Pagi'  ? 'selected' : '' }}>🌅 Pagi</option>

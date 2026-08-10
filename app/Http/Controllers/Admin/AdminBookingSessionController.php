@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\BookingSession;
-use App\Models\PaketWisata;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -14,13 +13,13 @@ class AdminBookingSessionController extends Controller
     public function index(): View
     {
         return view('admin.booking-sessions.index', [
-            'sessions' => BookingSession::with('paket:id,nama')->orderBy('paket_wisata_id')->orderBy('sesi')->paginate(25),
+            'sessions' => BookingSession::orderBy('jam_mulai')->paginate(25),
         ]);
     }
 
     public function create(): View
     {
-        return view('admin.booking-sessions.form', ['session' => null, 'packages' => PaketWisata::all()]);
+        return view('admin.booking-sessions.form', ['session' => null]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -37,7 +36,6 @@ class AdminBookingSessionController extends Controller
     {
         return view('admin.booking-sessions.form', [
             'session'  => BookingSession::findOrFail($id),
-            'packages' => PaketWisata::all(),
         ]);
     }
 
@@ -59,12 +57,13 @@ class AdminBookingSessionController extends Controller
     private function validatedData(Request $request): array
     {
         return $request->validate([
-            'paket_wisata_id' => 'required|exists:paket_wisata,id',
             'sesi'            => 'required|in:Pagi,Siang,Sore',
-            'jam_mulai'       => 'nullable',
-            'jam_selesai'     => 'nullable',
+            'jam_mulai'       => 'nullable|date_format:H:i',
+            'jam_selesai'     => 'nullable|date_format:H:i|after:jam_mulai',
             'kuota'           => 'required|integer|min:1',
             'is_active'       => 'boolean',
-        ]) + ['is_active' => $request->boolean('is_active')];
+        ]) + [
+            'is_active' => $request->boolean('is_active'),
+        ];
     }
 }

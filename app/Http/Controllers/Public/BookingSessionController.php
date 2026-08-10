@@ -22,21 +22,21 @@ class BookingSessionController extends Controller
         }
 
         $data = $request->validate([
-            'package_id' => 'required|integer|exists:paket_wisata,id',
             'tanggal' => 'required|date_format:Y-m-d',
         ]);
 
-        $sessions = BookingSession::where('paket_wisata_id', $data['package_id'])
-            ->where('is_active', true)
+        $sessions = BookingSession::where('is_active', true)
             ->orderBy('id')
             ->get()
             ->map(fn (BookingSession $session) => [
                 'id' => $session->id,
-                'package_id' => $session->paket_wisata_id,
                 'tanggal' => $data['tanggal'],
                 'sesi' => $session->sesi,
+                'jam_mulai' => $session->jam_mulai,
+                'jam_selesai' => $session->jam_selesai,
                 'kuota' => $session->kuota,
                 'terisi' => $session->terisiPadaTanggal($data['tanggal']),
+                'sisa_kuota' => $session->sisaPadaTanggal($data['tanggal']),
                 'is_active' => (bool) $session->is_active,
             ])
             ->values();
