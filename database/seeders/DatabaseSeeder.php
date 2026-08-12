@@ -202,15 +202,15 @@ class DatabaseSeeder extends Seeder
 
         // UMKM Products
         $umkmItems = [
-            ['nama' => 'Tempe Besem Bu Kartini', 'kategori' => 'Makanan', 'harga' => 5000, 'deskripsi' => 'Tempe besem khas Getas, fermentasi sempurna.', 'gambar' => 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345001'],
-            ['nama' => 'Keripik Singkong Aneka Rasa', 'kategori' => 'Makanan', 'harga' => 15000, 'deskripsi' => 'Keripik singkong renyah aneka rasa.', 'gambar' => 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345002'],
-            ['nama' => 'Anyaman Bambu Pak Rejo', 'kategori' => 'Kerajinan', 'harga' => 45000, 'deskripsi' => 'Anyaman bambu kualitas ekspor.', 'gambar' => 'https://images.unsplash.com/photo-1586717799252-bd134ad00e26?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345003'],
-            ['nama' => 'Beras Organik Pak Triyono', 'kategori' => 'Pertanian', 'harga' => 18000, 'deskripsi' => 'Beras organik asli Getas per kg.', 'gambar' => 'https://images.unsplash.com/photo-1536304929831-ee1ca9d44906?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345005'],
-            ['nama' => 'Kopi Arabika Getas', 'kategori' => 'Oleh-Oleh', 'harga' => 65000, 'deskripsi' => 'Kopi arabika premium 200g.', 'gambar' => 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345007'],
-            ['nama' => 'Sirup Jahe Madu Bu Endang', 'kategori' => 'Oleh-Oleh', 'harga' => 30000, 'deskripsi' => 'Sirup jahe madu sehat.', 'gambar' => 'https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345008'],
+            ['nama' => 'Tempe Besem Bu Kartini', 'kategori' => 'Makanan', 'harga' => 5000, 'stock' => 40, 'sku' => 'UMKM-001', 'deskripsi' => 'Tempe besem khas Getas, fermentasi sempurna.', 'gambar' => 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345001'],
+            ['nama' => 'Keripik Singkong Aneka Rasa', 'kategori' => 'Makanan', 'harga' => 15000, 'stock' => 50, 'sku' => 'UMKM-002', 'deskripsi' => 'Keripik singkong renyah aneka rasa.', 'gambar' => 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345002'],
+            ['nama' => 'Anyaman Bambu Pak Rejo', 'kategori' => 'Kerajinan', 'harga' => 45000, 'stock' => 15, 'sku' => 'UMKM-003', 'deskripsi' => 'Anyaman bambu kualitas ekspor.', 'gambar' => 'https://images.unsplash.com/photo-1586717799252-bd134ad00e26?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345003'],
+            ['nama' => 'Beras Organik Pak Triyono', 'kategori' => 'Pertanian', 'harga' => 18000, 'stock' => 60, 'sku' => 'UMKM-004', 'deskripsi' => 'Beras organik asli Getas per kg.', 'gambar' => 'https://images.unsplash.com/photo-1536304929831-ee1ca9d44906?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345005'],
+            ['nama' => 'Kopi Arabika Getas', 'kategori' => 'Oleh-Oleh', 'harga' => 65000, 'stock' => 25, 'sku' => 'UMKM-005', 'deskripsi' => 'Kopi arabika premium 200g.', 'gambar' => 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345007'],
+            ['nama' => 'Sirup Jahe Madu Bu Endang', 'kategori' => 'Oleh-Oleh', 'harga' => 30000, 'stock' => 30, 'sku' => 'UMKM-006', 'deskripsi' => 'Sirup jahe madu sehat.', 'gambar' => 'https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345008'],
         ];
         foreach ($umkmItems as $u) {
-            UmkmProduct::create(array_merge($u, ['created_by' => $superadmin->id]));
+            UmkmProduct::updateOrCreate(['sku' => $u['sku']], array_merge($u, ['created_by' => $superadmin->id]));
         }
 
         // Budaya

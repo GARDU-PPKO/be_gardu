@@ -19,6 +19,8 @@ class UmkmProduct extends Model
         'nama',
         'kategori',
         'harga',
+        'stock',
+        'sku',
         'deskripsi',
         'gambar',
         'no_wa_penjual',
@@ -30,6 +32,7 @@ class UmkmProduct extends Model
     {
         return [
             'harga' => 'decimal:2',
+            'stock' => 'integer',
         ];
     }
 
