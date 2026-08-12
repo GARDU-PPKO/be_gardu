@@ -108,8 +108,16 @@
                             <td class="p-4">
                                 <div class="max-w-xs space-y-0.5">
                                     @foreach($t->items as $item)
-                                        <div class="text-[11px] text-slate-700">
-                                            • {{ $item->product_name }} <span class="font-bold text-slate-500">({{ $item->quantity }}x)</span>
+                                        <div class="text-[11px] text-slate-700 flex items-start gap-1">
+                                            <span>•</span>
+                                            <span class="flex-1">{{ $item->product_name }} <span class="font-bold text-slate-500">({{ $item->quantity }}x)</span></span>
+                                            @if($item->item_type === 'paket_wisata')
+                                                <span class="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">Tiket</span>
+                                            @elseif($item->item_type === 'umkm_product')
+                                                <span class="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-amber-50 text-amber-700 border border-amber-200">UMKM</span>
+                                            @else
+                                                <span class="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-slate-100 text-slate-500 border border-slate-200">POS</span>
+                                            @endif
                                         </div>
                                     @endforeach
                                 </div>
@@ -121,12 +129,25 @@
                                 <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border {{ $t->payment_method === 'cash' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : ($t->payment_method === 'qris' ? 'bg-blue-50 text-blue-800 border-blue-200' : 'bg-purple-50 text-purple-800 border-purple-200') }}">
                                     {{ $t->payment_method }}
                                 </span>
+                                <span class="ml-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border {{ $t->status === 'completed' ? 'bg-slate-50 text-slate-700 border-slate-200' : 'bg-rose-50 text-rose-700 border-rose-200' }}">
+                                    {{ $t->status }}
+                                </span>
                             </td>
                             <td class="p-4 text-right">
-                                <a href="{{ route('admin.pos.receipt', $t->id) }}" target="_blank" class="px-3 py-1.5 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-bold rounded-lg transition inline-flex items-center gap-1.5">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                                    <span>Struk</span>
-                                </a>
+                                <div class="flex items-center justify-end gap-1.5">
+                                    <a href="{{ route('admin.pos.receipt', $t->id) }}" target="_blank" class="px-3 py-1.5 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-bold rounded-lg transition inline-flex items-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                        <span>Struk</span>
+                                    </a>
+                                    @if($t->status === 'completed')
+                                        <form method="POST" action="{{ route('admin.pos.cancel', $t->id) }}" onsubmit="return confirm('Batalkan transaksi ini? Stok & booking terkait akan dikembalikan.');">
+                                            @csrf
+                                            <button type="submit" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-lg transition">
+                                                Batalkan
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @empty

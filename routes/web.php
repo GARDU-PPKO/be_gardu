@@ -34,6 +34,7 @@ Route::prefix('admin')->group(function () {
         Route::delete('pos/products/{id}', [AdminPosController::class, 'destroyProduct'])->name('admin.pos.products.destroy');
         Route::get('pos/transactions', [AdminPosController::class, 'transactions'])->name('admin.pos.transactions.index');
         Route::get('pos/transactions/{id}/receipt', [AdminPosController::class, 'receipt'])->name('admin.pos.receipt');
+        Route::post('pos/{id}/cancel', [AdminPosController::class, 'cancelTransaction'])->name('admin.pos.cancel');
 
         // Users (superadmin only)
         Route::resource('users', AdminUserController::class)->except(['show'])->names('admin.users');

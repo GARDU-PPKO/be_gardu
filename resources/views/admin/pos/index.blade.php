@@ -12,14 +12,27 @@
         .pos-grid {
             grid-auto-rows: max-content !important;
         }
+        #posContainer {
+            height: 100vh;
+            height: 100svh;
+            height: 100dvh;
+            padding-bottom: env(safe-area-inset-bottom, 0);
+            padding-left: env(safe-area-inset-left, 0);
+            padding-right: env(safe-area-inset-right, 0);
+        }
     </style>
 </head>
 <body class="h-full font-sans antialiased bg-slate-100 text-slate-800 select-none overflow-hidden">
 
 <div class="h-screen flex flex-col p-2 sm:p-3 md:p-4 gap-2 md:gap-3 bg-slate-100" id="posContainer">
-    
+    <a href="{{ route('admin.dashboard') }}" title="Kembali ke Dashboard"
+   class="fixed top-3 left-3 z-40 w-9 h-9 rounded-full bg-slate-900/90 hover:bg-slate-700 text-white flex items-center justify-center shadow-md border border-slate-700 transition active:scale-95">
+    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+    </svg>
+</a>
     <!-- Top Bar Navigation (Clean Header) -->
-    <header class="bg-slate-900 text-white rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 shadow-sm flex items-center justify-between flex-shrink-0">
+    <!-- <header class="bg-slate-900 text-white rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 shadow-sm flex items-center justify-between flex-shrink-0">
         <div class="flex items-center gap-2.5">
             <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 flex-shrink-0">
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
@@ -53,13 +66,13 @@
                 <span class="sm:hidden">Keluar</span>
             </a>
         </div>
-    </header>
+    </header> -->
 
     <!-- Main Tablet Workspace: Side-by-Side 2 Columns (Flex Row) -->
-    <div class="flex-1 flex flex-row gap-2.5 md:gap-3 min-h-0 overflow-hidden">
+    <div class="flex-1 flex flex-col lg:flex-row gap-2.5 md:gap-3 min-h-0 overflow-hidden">
         
         <!-- Left Section: Catalog (Category Pills Wrap Cleanly, Search Bar, Product Grid) -->
-        <div class="flex-1 flex flex-col bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden min-w-0">
+        <div class="flex-1 flex flex-col bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden min-w-0 min-h-0">
             
             <!-- Category Filter & Search Header (Clean Flex Wrap Layout) -->
             <div class="p-2 sm:p-2.5 border-b border-slate-200 bg-white flex flex-col gap-2 flex-shrink-0">
@@ -73,58 +86,76 @@
 
                 <!-- Row 2: Category Filter Pills (Flex Wrap so ALL pills wrap and 100% visible without clipping) -->
                 <div class="flex flex-wrap gap-1.5 w-full py-0.5">
-                    <button type="button" class="category-btn px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-semibold transition bg-slate-900 text-white shadow-xs" data-category="all">
-                        Semua ({{ count($products) }})
+                    <button type="button" class="type-btn px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-semibold transition bg-slate-900 text-white shadow-xs" data-type="all">
+                        Semua ({{ $catalog->count() }})
                     </button>
-                    @foreach($categories as $cat)
-                        @php $countInCat = $products->where('category_id', $cat->id)->count(); @endphp
-                        <button type="button" class="category-btn px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium transition bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200" data-category="{{ $cat->id }}">
-                            {{ $cat->name }} <span class="text-[10px] text-slate-400">({{ $countInCat }})</span>
-                        </button>
-                    @endforeach
+                    <button type="button" class="type-btn px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium transition bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200" data-type="paket_wisata">
+                        Paket Wisata ({{ $catalog->where('type', 'paket_wisata')->count() }})
+                    </button>
+                    <button type="button" class="type-btn px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium transition bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200" data-type="umkm_product">
+                        Produk UMKM ({{ $catalog->where('type', 'umkm_product')->count() }})
+                    </button>
+                    <button type="button" class="type-btn px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium transition bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200" data-type="pos_product">
+                        Produk POS ({{ $catalog->where('type', 'pos_product')->count() }})
+                    </button>
                 </div>
             </div>
 
             <!-- Product Cards Catalog Grid (Entire Card Clickable to Add directly to Cart) -->
             <div class="flex-1 p-2.5 sm:p-3 overflow-y-auto grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5 content-start bg-slate-50/70 pos-grid" id="productGrid">
-                @forelse($products as $prod)
+                @forelse($catalog as $item)
+                    @php
+                        $isPaket = $item['type'] === 'paket_wisata';
+                        $stock = $item['stock'];
+                    @endphp
                     <div class="product-card group bg-white border border-slate-200 hover:border-emerald-600 hover:shadow-md transition cursor-pointer rounded-xl p-2.5 flex flex-col justify-between relative overflow-hidden active:scale-[0.98]"
                          style="min-height: 195px;"
-                         data-id="{{ $prod->id }}"
-                         data-name="{{ $prod->name }}"
-                         data-price="{{ $prod->price }}"
-                         data-stock="{{ $prod->stock }}"
-                         data-category="{{ $prod->category_id }}">
+                         data-type="{{ $item['type'] }}"
+                         data-id="{{ $item['id'] }}"
+                         data-name="{{ $item['name'] }}"
+                         data-price="{{ $item['price'] }}"
+                         data-stock="{{ $stock ?? 0 }}"
+                         data-min-participants="{{ $item['min_participants'] ?? 1 }}"
+                         data-category="{{ $item['category'] }}">
                         
                         <!-- Image & Stock Badge -->
                         <div class="relative w-full h-24 sm:h-28 mb-2 rounded-lg bg-slate-100 overflow-hidden border border-slate-100 flex-shrink-0">
-                            @if($prod->image)
-                                <img src="{{ $prod->image }}" alt="{{ $prod->name }}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy">
+                            @if($item['image'])
+                                <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy">
                             @else
                                 <div class="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">
                                     <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                                 </div>
                             @endif
 
-                            <span class="absolute top-1.5 right-1.5 px-2 py-0.5 rounded text-[10px] font-bold backdrop-blur-md shadow-xs {{ $prod->stock > 10 ? 'bg-slate-900/80 text-white' : ($prod->stock > 0 ? 'bg-amber-600/90 text-white' : 'bg-rose-600/90 text-white') }}">
-                                Stok: {{ $prod->stock }}
-                            </span>
+                            @if(!$isPaket)
+                                <span class="absolute top-1.5 right-1.5 px-2 py-0.5 rounded text-[10px] font-bold backdrop-blur-md shadow-xs {{ $stock > 10 ? 'bg-slate-900/80 text-white' : ($stock > 0 ? 'bg-amber-600/90 text-white' : 'bg-rose-600/90 text-white') }}">
+                                    Stok: {{ $stock }}
+                                </span>
+                            @else
+                                <span class="absolute top-1.5 right-1.5 px-2 py-0.5 rounded text-[10px] font-bold backdrop-blur-md shadow-xs bg-emerald-700/90 text-white">
+                                    Paket Wisata
+                                </span>
+                            @endif
                         </div>
 
                         <!-- Card Body (Category, Title, Prominent Price Tag) -->
                         <div class="flex-1 flex flex-col justify-between">
                             <div>
                                 <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider truncate">
-                                    {{ $prod->category->name ?? 'Umum' }}
+                                    {{ $item['sub_label'] }} • {{ $item['category'] }}
                                 </div>
-                                <h4 class="font-bold text-slate-900 text-xs sm:text-sm leading-snug line-clamp-2 mt-0.5 group-hover:text-emerald-700 transition-colors" title="{{ $prod->name }}">
-                                    {{ $prod->name }}
+                                <h4 class="font-bold text-slate-900 text-xs sm:text-sm leading-snug line-clamp-2 mt-0.5 group-hover:text-emerald-700 transition-colors" title="{{ $item['name'] }}">
+                                    {{ $item['name'] }}
                                 </h4>
                             </div>
 
                             <div class="pt-2 border-t border-slate-100 mt-2 flex items-center justify-between">
                                 <span class="text-emerald-700 font-black text-xs sm:text-sm md:text-base">
-                                    Rp {{ number_format($prod->price, 0, ',', '.') }}
+                                    Rp {{ number_format($item['price'], 0, ',', '.') }}
+                                    @if($item['type'] === 'paket_wisata')
+                                        <span class="text-[9px] text-slate-400 font-semibold">/{{ $item['is_per_orang'] ? 'orang' : 'paket' }}</span>
+                                    @endif
                                 </span>
                             </div>
                         </div>
@@ -132,14 +163,14 @@
                 @empty
                     <div class="col-span-full py-12 text-center text-slate-400">
                         <svg width="36" height="36" class="mx-auto mb-2 text-slate-300 stroke-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
-                        <p class="text-xs font-semibold">Belum ada produk POS yang aktif.</p>
+                        <p class="text-xs font-semibold">Belum ada item yang aktif.</p>
                     </div>
                 @endforelse
             </div>
         </div>
 
         <!-- Right Section: Fixed Side Cart & Payment (Side-by-Side on Tablet) -->
-        <div class="w-64 sm:w-72 md:w-80 lg:w-96 flex flex-col bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden flex-shrink-0">
+        <div class="w-full h-[45%] min-h-0 lg:w-96 lg:h-auto flex flex-col bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden flex-shrink-0">
             
             <!-- Cart Header -->
             <div class="p-2.5 px-3 border-b border-slate-200 bg-slate-900 text-white flex items-center justify-between flex-shrink-0">
@@ -152,8 +183,11 @@
                 </button>
             </div>
 
+            <!-- Cart Scroll Area: Items + Checkout in one scrollable container -->
+            <div class="flex-1 overflow-y-auto min-h-0 flex flex-col">
+
             <!-- Cart Items Container -->
-            <div class="flex-1 p-2.5 overflow-y-auto space-y-1.5 bg-slate-50/50" id="cartItemsList">
+            <div class="flex-1 p-2.5 space-y-1.5 bg-slate-50/50" id="cartItemsList">
                 <div id="emptyCartMessage" class="h-full flex flex-col items-center justify-center text-center py-8 text-slate-400">
                     <svg width="32" height="32" class="text-slate-300 mb-1.5 stroke-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                     <p class="text-xs font-semibold text-slate-600">Keranjang Kosong</p>
@@ -162,7 +196,7 @@
             </div>
 
             <!-- Checkout & Payment Panel -->
-            <div class="p-2.5 sm:p-3 border-t border-slate-200 bg-white space-y-2 flex-shrink-0">
+            <div class="p-2.5 sm:p-3 border-t border-slate-200 bg-white space-y-2">
                 
                 <!-- Totals -->
                 <div class="space-y-1 text-xs">
@@ -224,6 +258,55 @@
                     <span>Proses Pembayaran</span>
                 </button>
             </div>
+
+            </div><!-- /Cart Scroll Area -->
+        </div>
+    </div>
+</div>
+
+<!-- Visitor Info Modal (required if paket wisata in cart) -->
+<div id="visitorModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-5 border border-slate-100">
+        <h3 class="text-sm font-bold text-slate-900 mb-0.5">Data Pengunjung</h3>
+        <p class="text-[11px] text-slate-500 mb-4">Keranjang berisi paket wisata. Isi data pengunjung untuk membuat tiket booking.</p>
+
+        <div class="space-y-2.5">
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Nama Lengkap</label>
+                <input type="text" id="visitorNameInput" placeholder="Nama pengunjung" autocomplete="off"
+                       class="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-600 focus:outline-none transition">
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">No. WhatsApp</label>
+                <input type="text" id="visitorPhoneInput" placeholder="628xxxxxxxxxx" inputmode="numeric" autocomplete="off"
+                       class="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-600 focus:outline-none transition">
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Tanggal Kunjungan</label>
+                    <input type="date" id="visitorDateInput"
+                           class="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-600 focus:outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Sesi</label>
+                    <select id="visitorSessionSelect"
+                            class="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-600 focus:outline-none transition">
+                        @foreach($sessions as $session)
+                            <option value="{{ $session->sesi }}">{{ $session->sesi }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+            <p id="visitorErrorText" class="text-[10px] font-semibold text-rose-600 hidden"></p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 mt-5">
+            <button type="button" id="visitorCancelBtn" class="py-2 rounded-lg border border-slate-300 text-slate-700 font-semibold text-xs hover:bg-slate-100 transition">
+                Batal
+            </button>
+            <button type="button" id="visitorConfirmBtn" class="py-2 rounded-lg bg-emerald-700 text-white font-semibold text-xs hover:bg-emerald-800 transition flex items-center justify-center gap-1">
+                Lanjut Bayar
+            </button>
         </div>
     </div>
 </div>
@@ -262,7 +345,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let selectedPaymentMethod = 'cash';
 
     const productCards = document.querySelectorAll('.product-card');
-    const categoryBtns = document.querySelectorAll('.category-btn');
+    const typeBtns = document.querySelectorAll('.type-btn');
     const searchInput = document.getElementById('searchInput');
     const cartItemsList = document.getElementById('cartItemsList');
     const emptyCartMessage = document.getElementById('emptyCartMessage');
@@ -283,6 +366,30 @@ document.addEventListener('DOMContentLoaded', function() {
     const printReceiptBtn = document.getElementById('printReceiptBtn');
     const closeModalBtn = document.getElementById('closeModalBtn');
 
+    const visitorModal = document.getElementById('visitorModal');
+    const visitorNameInput = document.getElementById('visitorNameInput');
+    const visitorPhoneInput = document.getElementById('visitorPhoneInput');
+    const visitorDateInput = document.getElementById('visitorDateInput');
+    const visitorSessionSelect = document.getElementById('visitorSessionSelect');
+    const visitorErrorText = document.getElementById('visitorErrorText');
+    const visitorCancelBtn = document.getElementById('visitorCancelBtn');
+    const visitorConfirmBtn = document.getElementById('visitorConfirmBtn');
+
+    let pendingCheckout = null;
+
+    function openVisitorModal() {
+        visitorErrorText.classList.add('hidden');
+        visitorErrorText.textContent = '';
+        if (!visitorDateInput.value) {
+            visitorDateInput.value = new Date().toISOString().slice(0, 10);
+        }
+        visitorModal.classList.remove('hidden');
+    }
+
+    function closeVisitorModal() {
+        visitorModal.classList.add('hidden');
+    }
+
     function getRawPaidAmount() {
         const clean = paidAmountInput.value.replace(/[^0-9]/g, '');
         return clean ? parseInt(clean, 10) : 0;
@@ -297,30 +404,30 @@ document.addEventListener('DOMContentLoaded', function() {
         calculateChange();
     }
 
-    categoryBtns.forEach(btn => {
+    typeBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            categoryBtns.forEach(b => {
+            typeBtns.forEach(b => {
                 b.classList.remove('bg-slate-900', 'text-white', 'shadow-xs');
                 b.classList.add('bg-slate-100', 'text-slate-600', 'border', 'border-slate-200');
             });
             btn.classList.remove('bg-slate-100', 'text-slate-600', 'border', 'border-slate-200');
             btn.classList.add('bg-slate-900', 'text-white', 'shadow-xs');
 
-            const category = btn.dataset.category;
-            filterProducts(category, searchInput.value.toLowerCase());
+            const type = btn.dataset.type;
+            filterProducts(type, searchInput.value.toLowerCase());
         });
     });
 
     searchInput.addEventListener('input', (e) => {
-        const activeCategory = document.querySelector('.category-btn.bg-slate-900')?.dataset.category || 'all';
-        filterProducts(activeCategory, e.target.value.toLowerCase());
+        const activeType = document.querySelector('.type-btn.bg-slate-900')?.dataset.type || 'all';
+        filterProducts(activeType, e.target.value.toLowerCase());
     });
 
-    function filterProducts(category, search) {
+    function filterProducts(type, search) {
         productCards.forEach(card => {
-            const matchesCategory = category === 'all' || card.dataset.category === category;
+            const matchesType = type === 'all' || card.dataset.type === type;
             const matchesSearch = card.dataset.name.toLowerCase().includes(search);
-            if (matchesCategory && matchesSearch) {
+            if (matchesType && matchesSearch) {
                 card.classList.remove('hidden');
             } else {
                 card.classList.add('hidden');
@@ -330,25 +437,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
     productCards.forEach(card => {
         card.addEventListener('click', () => {
-            const id = parseInt(card.dataset.id);
+            const type = card.dataset.type;
+            const id = card.dataset.id;
             const name = card.dataset.name;
             const price = parseFloat(card.dataset.price);
             const stock = parseInt(card.dataset.stock);
+            const minPax = parseInt(card.dataset.minParticipants || '1', 10);
+            const isPaket = type === 'paket_wisata';
 
-            if (stock <= 0) {
+            if (!isPaket && stock <= 0) {
                 alert('Stok produk habis!');
                 return;
             }
 
-            const existingIndex = cart.findIndex(item => item.id === id);
+            const existingIndex = cart.findIndex(item => item.type === type && item.id === id);
             if (existingIndex > -1) {
-                if (cart[existingIndex].quantity + 1 > stock) {
+                if (!isPaket && cart[existingIndex].quantity + 1 > stock) {
                     alert('Jumlah melebihi stok yang tersedia (' + stock + ')');
                     return;
                 }
                 cart[existingIndex].quantity++;
             } else {
-                cart.push({ id, name, price, stock, quantity: 1 });
+                cart.push({ type, id, name, price, stock, isPaket, quantity: isPaket ? minPax : 1, minParticipants: isPaket ? minPax : 1 });
             }
 
             renderCart();
@@ -385,6 +495,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="flex-1 min-w-0 pr-1.5">
                     <h5 class="font-bold text-slate-900 truncate text-xs">${item.name}</h5>
                     <div class="text-slate-500 text-[10px] mt-0.5">
+                        ${item.isPaket ? '<span class="text-emerald-700 font-bold uppercase text-[9px]">Paket Wisata</span> ' + (item.minParticipants > 1 ? '<span class="text-slate-400 text-[9px]">(min ' + item.minParticipants + ' org)</span> ' : '') : ''}
                         Rp ${formatRupiah(item.price)} x ${item.quantity} = <strong class="text-emerald-700 font-extrabold">Rp ${formatRupiah(subtotal)}</strong>
                     </div>
                 </div>
@@ -408,7 +519,7 @@ document.addEventListener('DOMContentLoaded', function() {
     cartItemsList.addEventListener('click', (e) => {
         if (e.target.classList.contains('increase-btn')) {
             const index = parseInt(e.target.dataset.index);
-            if (cart[index].quantity + 1 > cart[index].stock) {
+            if (!cart[index].isPaket && cart[index].quantity + 1 > cart[index].stock) {
                 alert('Stok produk tidak mencukupi');
                 return;
             }
@@ -416,7 +527,13 @@ document.addEventListener('DOMContentLoaded', function() {
             renderCart();
         } else if (e.target.classList.contains('decrease-btn')) {
             const index = parseInt(e.target.dataset.index);
-            if (cart[index].quantity > 1) {
+            if (cart[index].isPaket) {
+                if (cart[index].quantity > cart[index].minParticipants) {
+                    cart[index].quantity--;
+                } else {
+                    alert('Jumlah minimal paket ' + cart[index].minParticipants + ' orang.');
+                }
+            } else if (cart[index].quantity > 1) {
                 cart[index].quantity--;
             } else {
                 cart.splice(index, 1);
@@ -511,15 +628,63 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        const hasPaket = cart.some(item => item.isPaket);
+
+        if (hasPaket) {
+            pendingCheckout = { total, paid };
+            openVisitorModal();
+            return;
+        }
+
+        await doCheckout(null);
+    });
+
+    visitorCancelBtn.addEventListener('click', closeVisitorModal);
+
+    visitorConfirmBtn.addEventListener('click', async () => {
+        const name = visitorNameInput.value.trim();
+        const phone = visitorPhoneInput.value.trim();
+        const visitDate = visitorDateInput.value;
+        const sesi = visitorSessionSelect.value;
+
+        if (!name || !phone || !visitDate || !sesi) {
+            visitorErrorText.textContent = 'Semua field wajib diisi.';
+            visitorErrorText.classList.remove('hidden');
+            return;
+        }
+
+        if (!/^(0|62)[0-9]{8,15}$/.test(phone)) {
+            visitorErrorText.textContent = 'Nomor WhatsApp tidak valid (contoh: 628xxxx).';
+            visitorErrorText.classList.remove('hidden');
+            return;
+        }
+
+        visitorErrorText.classList.add('hidden');
+        closeVisitorModal();
+        await doCheckout({ name, phone, visitDate, sesi });
+    });
+
+    async function doCheckout(visitor) {
         checkoutBtn.disabled = true;
         checkoutBtn.innerHTML = `<span>Memproses...</span>`;
 
+        const total = pendingCheckout?.total ?? getTotalPrice();
+        const paid = pendingCheckout?.paid ?? getRawPaidAmount();
+        pendingCheckout = null;
+
         const payload = {
-            items: cart.map(item => ({ product_id: item.id, quantity: item.quantity })),
+            items: cart.map(item => ({ item_type: item.type, item_id: item.id, quantity: item.quantity })),
             paid_amount: selectedPaymentMethod === 'cash' ? paid : total,
             payment_method: selectedPaymentMethod,
             _token: '{{ csrf_token() }}'
         };
+
+        if (visitor) {
+            payload.customer_name = visitor.name;
+            payload.customer_phone = visitor.phone;
+            payload.visit_date = visitor.visitDate;
+            payload.sesi = visitor.sesi;
+        }
 
         try {
             const response = await fetch('{{ route('admin.pos.checkout') }}', {
@@ -541,6 +706,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 receiptModal.classList.remove('hidden');
 
                 cart = [];
+                visitorNameInput.value = '';
+                visitorPhoneInput.value = '';
                 renderCart();
             } else {
                 alert(data.message || 'Terjadi kesalahan saat memproses transaksi');
@@ -552,7 +719,7 @@ document.addEventListener('DOMContentLoaded', function() {
             checkoutBtn.disabled = false;
             checkoutBtn.innerHTML = `<span>Proses Pembayaran</span>`;
         }
-    });
+    }
 
     closeModalBtn.addEventListener('click', () => {
         receiptModal.classList.add('hidden');

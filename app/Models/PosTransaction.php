@@ -14,6 +14,7 @@ class PosTransaction extends Model
     protected $fillable = [
         'invoice_number',
         'user_id',
+        'customer_name',
         'total_amount',
         'paid_amount',
         'change_amount',
