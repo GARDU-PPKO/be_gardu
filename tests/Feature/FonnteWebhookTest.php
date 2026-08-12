@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Booking;
 use App\Models\FonnteWebhook;
-use App\Models\TourPackage;
+use App\Models\PaketWisata;
 use App\Models\User;
 use App\Services\FonnteService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -14,13 +14,13 @@ class FonnteWebhookTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected TourPackage $package;
+    protected PaketWisata $package;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        User::create([
+        $user = User::create([
             'username' => 'superadmin',
             'name' => 'Super Admin',
             'email' => 'superadmin@test.com',
@@ -28,17 +28,16 @@ class FonnteWebhookTest extends TestCase
             'role' => 'superadmin',
         ]);
 
-        $this->package = TourPackage::create([
+        $this->package = PaketWisata::create([
             'nama' => 'Tubing Adventure',
+            'kategori' => 'Petualangan',
+            'tipe_harga' => 'per_paket_fixed',
+            'kapasitas_per_unit' => 10,
+            'harga_paket' => 75000,
             'deskripsi' => 'Adventure tubing',
-            'harga' => 75000,
-            'satuan' => 'orang',
-            'durasi' => '2 jam',
-            'min_participants' => 1,
-            'max_participants' => 10,
             'gambar' => 'https://example.com/img.jpg',
-            'is_active' => true,
-            'created_by' => 1,
+            'aktif' => true,
+            'created_by' => $user->id,
         ]);
     }
 
@@ -46,7 +45,7 @@ class FonnteWebhookTest extends TestCase
     {
         $response = $this->postJson('/api/fonnte/webhook', []);
 
-        $response->assertJson(['status' => 'ignored']);
+        $response->assertJson(['success' => true, 'message' => 'Pesan diterima tetapi tidak diproses.']);
     }
 
     public function test_creates_webhook_log(): void
@@ -69,7 +68,7 @@ class FonnteWebhookTest extends TestCase
             'message' => 'Halo, saya mau booking',
         ]);
 
-        $response->assertJson(['status' => 'invalid_format']);
+        $response->assertJson(['success' => false, 'message' => 'Format data booking tidak lengkap.']);
     }
 
     public function test_creates_booking_from_valid_message(): void
@@ -87,14 +86,14 @@ class FonnteWebhookTest extends TestCase
             'message' => $message,
         ]);
 
-        $response->assertJson(['status' => 'success']);
+        $response->assertJson(['success' => true, 'message' => 'Booking berhasil dibuat.']);
 
         $this->assertDatabaseHas('bookings', [
-            'nama_pemesan' => 'Budi Santoso',
-            'no_wa_pemesan' => '62812345678',
-            'package_id' => $this->package->id,
+            'nama_lengkap' => 'Budi Santoso',
+            'no_whatsapp' => '62812345678',
+            'paket_wisata_id' => $this->package->id,
             'jumlah_peserta' => 3,
-            'status' => 'pending',
+            'status' => Booking::STATUS_PENDING_PAYMENT,
         ]);
     }
 }

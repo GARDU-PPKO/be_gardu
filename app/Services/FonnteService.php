@@ -101,7 +101,7 @@ class FonnteService
 
         $response = Http::withHeaders([
             'Authorization' => $this->token,
-        ])->get('https://api.fonnte.com/device');
+        ])->post('https://api.fonnte.com/device');
 
         if ($response->failed()) {
             Log::error('Fonnte device check failed', ['response' => $response->body()]);

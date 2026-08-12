@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Response\ApiResponse;
 use App\Models\Booking;
 use App\Models\FonnteWebhook;
-use App\Models\TourPackage;
+use App\Models\PaketWisata;
 use App\Models\User;
 use App\Services\FonnteService;
 use Dedoc\Scramble\Attributes\Endpoint;
@@ -47,7 +47,7 @@ class FonnteWebhookController extends Controller
             return $this->error('Format data booking tidak lengkap.', 400);
         }
 
-        $package = TourPackage::where('is_active', true)
+        $package = PaketWisata::where('aktif', true)
             ->where('nama', 'like', '%' . $data['package_name'] . '%')
             ->first();
 
@@ -58,22 +58,29 @@ class FonnteWebhookController extends Controller
 
         $admin = User::where('role', 'superadmin')->firstOrFail();
 
-        $kodeBooking = 'GB-' . strtoupper(Str::random(8));
+        $kodeBooking = Booking::generateBookingCode();
+
+        try {
+            $pricing = $package->hitungTotalHarga(max(1, $data['jumlah_peserta']));
+            $totalHarga = $pricing['total'];
+        } catch (\Throwable $e) {
+            $totalHarga = max(0, $data['total_harga'] ?: (float)($package->harga_paket ?? 0));
+        }
 
         $booking = Booking::create([
-            'kode_booking' => $kodeBooking,
-            'nama_pemesan' => $data['nama'],
-            'no_wa_pemesan' => $data['no_wa'],
+            'booking_code' => $kodeBooking,
+            'nama_lengkap' => $data['nama'],
+            'no_whatsapp' => $data['no_wa'],
             'email' => $data['email'] ?? null,
-            'kota_asal' => $data['kota'] ?? '',
-            'catatan' => $data['catatan'] ?? null,
-            'package_id' => $package->id,
-            'tanggal' => $data['tanggal'] ?: now()->toDateString(),
+            'alamat' => $data['kota'] ?? '',
+            'notes' => $data['catatan'] ?? null,
+            'paket_wisata_id' => $package->id,
+            'tanggal_kunjungan' => $data['tanggal'] ?: now()->toDateString(),
             'sesi' => $data['sesi'] ?: 'Pagi',
             'jumlah_peserta' => max(1, $data['jumlah_peserta']),
-            'total_harga' => max(0, $data['total_harga'] ?: $package->harga),
-            'status' => 'pending',
-            'bukti_bayar' => $attachment,
+            'total_harga' => max(0, $data['total_harga'] ?: $totalHarga),
+            'status' => Booking::STATUS_PENDING_PAYMENT,
+            'bukti_pembayaran_path' => $attachment,
             'raw_wa_text' => $message,
             'created_by' => $admin->id,
         ]);
@@ -81,7 +88,7 @@ class FonnteWebhookController extends Controller
         $reply = "✅ *Booking Berhasil!*\n\n"
             . "Kode Booking: *{$kodeBooking}*\n"
             . "Paket: {$package->nama}\n"
-            . "Tanggal: {$booking->tanggal}\n"
+            . "Tanggal: " . $booking->tanggal_kunjungan->toDateString() . "\n"
             . "Sesi: {$booking->sesi}\n"
             . "Peserta: {$booking->jumlah_peserta} orang\n"
             . "Total: Rp " . number_format($booking->total_harga, 0, ',', '.') . "\n\n"
@@ -93,7 +100,7 @@ class FonnteWebhookController extends Controller
 
         return $this->success([
             'kode_booking' => $kodeBooking,
-            'status' => 'pending',
+            'status' => Booking::STATUS_PENDING_PAYMENT,
         ], 'Booking berhasil dibuat.');
     }
 
