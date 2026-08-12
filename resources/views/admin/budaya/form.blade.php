@@ -8,11 +8,11 @@
         <a href="{{ route('admin.budaya.index') }}" class="text-sm text-emerald-700 hover:text-emerald-800">← Kembali</a>
     </div>
 
-    <form method="POST" action="{{ $budaya ? route('admin.budaya.update', $budaya->id) : route('admin.budaya.store') }}" class="bg-white rounded-xl shadow-sm p-6 space-y-4">
+    <form method="POST" action="{{ $budaya ? route('admin.budaya.update', $budaya->id) : route('admin.budaya.store') }}" enctype="multipart/form-data" class="bg-white rounded-xl shadow-sm p-6 space-y-4">
         @csrf
         @if($budaya) @method('PUT') @endif
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Judul *</label>
                 <input type="text" name="judul" value="{{ old('judul', $budaya->judul ?? '') }}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
@@ -24,8 +24,11 @@
                 @error('kategori') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Gambar URL *</label>
-                <input type="text" name="gambar" value="{{ old('gambar', $budaya->gambar ?? '') }}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Gambar {{ $budaya ? '' : '*' }}</label>
+                @if(!empty($budaya->gambar))
+                    <img src="{{ $budaya->gambar }}" alt="Gambar saat ini" class="w-full h-32 object-cover rounded-lg border border-gray-200 mb-2">
+                @endif
+                <input type="file" name="gambar" accept="image/*" {{ $budaya ? '' : 'required' }} class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
                 @error('gambar') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
             <div>

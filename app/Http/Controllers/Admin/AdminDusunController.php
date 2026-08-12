@@ -8,6 +8,7 @@ use App\Models\DusunGallery;
 use App\Models\DusunKeunggulan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class AdminDusunController extends Controller
@@ -32,11 +33,13 @@ class AdminDusunController extends Controller
             'luas_wilayah' => 'required|string|max:50',
             'deskripsi' => 'required|string',
             'detail' => 'required|string',
-            'hero_img' => 'required|string|max:255',
-            'thumbnail' => 'required|string|max:255',
+            'hero_img' => 'required|image|max:2048',
+            'thumbnail' => 'required|image|max:2048',
             'is_active' => 'boolean',
         ]);
 
+        $data['hero_img'] = Storage::url($request->file('hero_img')->store('dusun', 'public'));
+        $data['thumbnail'] = Storage::url($request->file('thumbnail')->store('dusun', 'public'));
         $data['created_by'] = $request->user()->id;
         $dusun = Dusun::create($data);
 
@@ -64,10 +67,24 @@ class AdminDusunController extends Controller
             'luas_wilayah' => 'required|string|max:50',
             'deskripsi' => 'required|string',
             'detail' => 'required|string',
-            'hero_img' => 'required|string|max:255',
-            'thumbnail' => 'required|string|max:255',
+            'hero_img' => 'nullable|image|max:2048',
+            'thumbnail' => 'nullable|image|max:2048',
             'is_active' => 'boolean',
         ]);
+
+        if ($request->hasFile('hero_img')) {
+            $this->deleteOldImage($dusun->hero_img);
+            $data['hero_img'] = Storage::url($request->file('hero_img')->store('dusun', 'public'));
+        } else {
+            unset($data['hero_img']);
+        }
+
+        if ($request->hasFile('thumbnail')) {
+            $this->deleteOldImage($dusun->thumbnail);
+            $data['thumbnail'] = Storage::url($request->file('thumbnail')->store('dusun', 'public'));
+        } else {
+            unset($data['thumbnail']);
+        }
 
         $dusun->update($data);
         return redirect()->route('admin.dusun.index')->with('success', 'Dusun berhasil diupdate');
@@ -83,8 +100,10 @@ class AdminDusunController extends Controller
     {
         $dusun = Dusun::findOrFail($id);
         $data = $request->validate([
-            'image_url' => 'required|string|max:255',
+            'image_url' => 'required|image|max:2048',
         ]);
+
+        $data['image_url'] = Storage::url($request->file('image_url')->store('dusun/galleries', 'public'));
 
         $dusun->galleries()->create($data);
         return redirect()->route('admin.dusun.edit', $id)->with('success', 'Galeri berhasil ditambahkan');

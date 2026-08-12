@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AddOn;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class AdminAddOnController extends Controller
@@ -40,6 +41,9 @@ class AdminAddOnController extends Controller
     public function update(Request $request, $id): RedirectResponse
     {
         $addOn = AddOn::withTrashed()->findOrFail($id);
+        if ($request->hasFile('gambar')) {
+            $this->deleteOldImage($addOn->gambar);
+        }
         $addOn->update($this->validatedData($request));
 
         return redirect()->route('admin.add-ons.index')->with('success', 'Add-on berhasil diupdate');
@@ -67,12 +71,18 @@ class AdminAddOnController extends Controller
             'tipe_harga' => 'required|in:per_orang,per_unit',
             'harga' => 'required|numeric|min:0',
             'deskripsi' => 'nullable|string',
-            'gambar' => 'nullable|string|max:255',
+            'gambar' => 'nullable|image|max:2048',
             'aktif' => 'boolean',
             'urutan' => 'nullable|integer|min:1',
         ]);
 
         $data['aktif'] = $request->boolean('aktif');
+
+        if ($request->hasFile('gambar')) {
+            $data['gambar'] = Storage::url($request->file('gambar')->store('add-ons', 'public'));
+        } else {
+            unset($data['gambar']);
+        }
 
         return $data;
     }

@@ -7,6 +7,7 @@ use App\Models\PaketWisata;
 use App\Models\PaketWisataTier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class AdminPaketWisataController extends Controller
@@ -50,6 +51,9 @@ class AdminPaketWisataController extends Controller
     public function update(Request $request, $id): RedirectResponse
     {
         $package = PaketWisata::findOrFail($id);
+        if ($request->hasFile('gambar')) {
+            $this->deleteOldImage($package->gambar);
+        }
         $package->update($this->validatedData($request));
 
         return redirect()->route('admin.paket-wisata.index')->with('success', 'Paket wisata berhasil diupdate');
@@ -104,9 +108,7 @@ class AdminPaketWisataController extends Controller
             'kapasitas_per_unit' => 'nullable|integer|min:1',
             'harga_paket' => 'nullable|numeric|min:0',
             'deskripsi' => 'nullable|string',
-            'fasilitas' => 'nullable|array',
-            'fasilitas.*' => 'nullable|string|max:255',
-            'gambar' => 'nullable|string|max:255',
+            'gambar' => 'nullable|image|max:2048',
             'tag' => 'nullable|string|max:50',
             'durasi' => 'nullable|string|max:100',
             'aktif' => 'boolean',
@@ -120,8 +122,14 @@ class AdminPaketWisataController extends Controller
             $data['kapasitas_per_unit'] = null;
         }
 
-        $data['fasilitas'] = array_values(array_filter(array_map('trim', $data['fasilitas'] ?? [])));
+        $data['fasilitas'] = array_values(array_filter(array_map('trim', explode("\n", (string) $request->input('fasilitas')))));
         $data['aktif'] = $request->boolean('aktif');
+
+        if ($request->hasFile('gambar')) {
+            $data['gambar'] = Storage::url($request->file('gambar')->store('paket-wisata', 'public'));
+        } else {
+            unset($data['gambar']);
+        }
 
         return $data;
     }
