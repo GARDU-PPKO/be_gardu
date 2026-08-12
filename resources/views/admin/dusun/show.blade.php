@@ -12,7 +12,7 @@
     </div>
 
     <div class="bg-white rounded-xl shadow-sm p-6 space-y-4">
-        <div class="grid grid-cols-2 gap-4 text-sm">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div><span class="text-gray-500">Nama</span><p class="font-semibold">{{ $dusun->nama }}</p></div>
             <div><span class="text-gray-500">RW</span><p class="font-semibold">{{ $dusun->rw }}</p></div>
             <div><span class="text-gray-500">Jumlah RT</span><p>{{ $dusun->jumlah_rt }}</p></div>

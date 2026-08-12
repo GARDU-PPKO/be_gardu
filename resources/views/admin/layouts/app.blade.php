@@ -8,12 +8,26 @@
     @vite(['resources/css/app.css'])
 </head>
 <body class="bg-gray-100 font-sans antialiased">
+    @auth
+    {{-- Overlay mobile --}}
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden" onclick="toggleSidebar(false)"></div>
+
+    {{-- Tombol hamburger (mobile) --}}
+    <button type="button" id="hamburgerBtn" aria-label="Buka menu" onclick="toggleSidebar(true)"
+        class="lg:hidden fixed top-4 left-4 z-40 w-10 h-10 rounded-lg bg-emerald-700 text-white shadow-lg flex items-center justify-center">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+    </button>
+
     <div class="min-h-screen flex">
-        @auth
-        <aside class="w-64 bg-emerald-900 text-white flex flex-col">
-            <div class="p-5 border-b border-emerald-800">
-                <h1 class="text-lg font-bold">Desa Getas</h1>
-                <p class="text-xs text-emerald-300">Admin Panel</p>
+        <aside id="sidebar" class="w-64 bg-emerald-900 text-white flex flex-col fixed inset-y-0 left-0 z-40 -translate-x-full transition-transform duration-300 lg:translate-x-0 lg:static">
+            <div class="p-5 border-b border-emerald-800 flex items-center justify-between">
+                <div>
+                    <h1 class="text-lg font-bold">Desa Getas</h1>
+                    <p class="text-xs text-emerald-300">Admin Panel</p>
+                </div>
+                <button type="button" aria-label="Tutup menu" onclick="toggleSidebar(false)" class="lg:hidden text-emerald-300 hover:text-white">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
             </div>
             <nav class="flex-1 p-4 space-y-1 text-sm overflow-y-auto">
                 <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.dashboard') ? 'bg-emerald-800' : '' }}">
@@ -85,7 +99,7 @@
         </aside>
         @endauth
 
-        <main class="flex-1 @auth p-6 @endauth">
+        <main class="flex-1 @auth p-4 pt-20 md:p-6 md:pt-6 lg:pt-6 @endauth">
             @if(session('success'))
                 <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 text-sm">{{ session('success') }}</div>
             @endif
@@ -95,6 +109,28 @@
             @yield('content')
         </main>
     </div>
+    <script>
+        function toggleSidebar(open) {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const hamburger = document.getElementById('hamburgerBtn');
+            if (!sidebar || !overlay) return;
+            if (open) {
+                sidebar.classList.remove('-translate-x-full');
+                sidebar.classList.add('translate-x-0');
+                overlay.classList.remove('hidden');
+                if (hamburger) hamburger.classList.add('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                sidebar.classList.remove('translate-x-0');
+                overlay.classList.add('hidden');
+                if (hamburger) hamburger.classList.remove('hidden');
+            }
+        }
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('#sidebar a')) toggleSidebar(false);
+        });
+    </script>
     @stack('scripts')
 </body>
 </html>

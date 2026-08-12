@@ -26,7 +26,7 @@
             <span class="px-3 py-1 text-xs rounded-full {{ $badge }}">{{ $booking->status }}</span>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 text-sm">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div><span class="text-gray-500">Nama Lengkap</span><p class="font-semibold">{{ $booking->nama_lengkap }}</p></div>
             <div><span class="text-gray-500">No. WA</span><p class="font-semibold font-mono">{{ $booking->no_whatsapp }}</p></div>
             <div><span class="text-gray-500">Alamat</span><p>{{ $booking->alamat }}</p></div>

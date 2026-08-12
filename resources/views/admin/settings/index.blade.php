@@ -8,6 +8,7 @@
     </div>
 
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead>
                 <tr class="text-left text-gray-500 border-b bg-gray-50">
@@ -32,6 +33,7 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 @endsection

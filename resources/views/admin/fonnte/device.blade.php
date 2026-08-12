@@ -3,7 +3,7 @@
 
 @section('content')
 <div class="max-w-3xl mx-auto space-y-6">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h2 class="text-2xl font-bold text-gray-800">Status Fonnte</h2>
         <a href="{{ route('admin.fonnte.device') }}" class="px-4 py-2 bg-emerald-700 text-white rounded-lg text-sm hover:bg-emerald-800 transition">Refresh</a>
     </div>

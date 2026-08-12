@@ -3,12 +3,12 @@
 
 @section('content')
 <div class="space-y-6">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Bookings</h2>
             <p class="text-xs text-gray-500 mt-1">Default filter: menunggu verifikasi (FIFO)</p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
             <a href="{{ route('admin.bookings.export') }}" class="px-4 py-2 bg-white border border-emerald-700 text-emerald-700 rounded-lg text-sm hover:bg-emerald-50 transition">Export Excel</a>
             <a href="{{ route('admin.bookings.parse') }}" class="px-4 py-2 bg-emerald-700 text-white rounded-lg text-sm hover:bg-emerald-800 transition">+ Parse Text WA</a>
         </div>
@@ -35,6 +35,7 @@
     </form>
 
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead>
                 <tr class="text-left text-gray-500 border-b bg-gray-50">
@@ -90,6 +91,7 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
         <div class="p-4 border-t">
             {{ $bookings->links() }}
         </div>

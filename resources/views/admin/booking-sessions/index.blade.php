@@ -3,7 +3,7 @@
 
 @section('content')
 <div class="space-y-6">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
             <h2 class="text-2xl font-bold text-gray-800">Master Sesi Booking (Acuan Harian)</h2>
             <p class="text-sm text-gray-500 mt-1">Master acuan sesi harian untuk pemesanan wisata. Cukup diatur sekali sebagai acuan setiap hari.</p>
@@ -12,6 +12,7 @@
     </div>
 
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead>
                 <tr class="text-left text-gray-500 border-b bg-gray-50">
@@ -59,6 +60,7 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 @endsection
