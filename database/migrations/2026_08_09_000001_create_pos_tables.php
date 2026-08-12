@@ -33,7 +33,7 @@ return new class extends Migration
         Schema::create('pos_transactions', function (Blueprint $table) {
             $table->id();
             $table->string('invoice_number')->unique();
-            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignUuid('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->decimal('total_amount', 12, 2)->default(0);
             $table->decimal('paid_amount', 12, 2)->default(0);
             $table->decimal('change_amount', 12, 2)->default(0);

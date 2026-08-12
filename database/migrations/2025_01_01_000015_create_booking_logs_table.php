@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('booking_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('booking_id')->constrained('bookings')->cascadeOnDelete();
-            $table->foreignId('admin_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignUuid('admin_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('action', 50);
             $table->text('detail')->nullable();
             $table->timestamp('created_at')->useCurrent();

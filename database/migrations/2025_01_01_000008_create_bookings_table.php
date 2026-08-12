@@ -35,10 +35,10 @@ return new class extends Migration
                 'CANCELLED',
             ])->default('PENDING_PAYMENT');
             $table->string('rejected_reason', 255)->nullable();
-            $table->foreignId('verified_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignUuid('verified_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('verified_at')->nullable();
             $table->text('raw_wa_text')->nullable();
-            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
             $table->softDeletes();
 

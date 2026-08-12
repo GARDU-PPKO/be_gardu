@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('tag', 50)->nullable();
             $table->string('durasi', 100)->nullable();
             $table->boolean('aktif')->default(true);
-            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
             $table->softDeletes();
         });
