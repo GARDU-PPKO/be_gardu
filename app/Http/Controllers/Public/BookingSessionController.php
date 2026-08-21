@@ -51,6 +51,8 @@ class BookingSessionController extends Controller
                 'package_id' => $session->paket_wisata_id,
                 'tanggal' => $data['tanggal'],
                 'sesi' => $session->sesi,
+                'jam_mulai' => $session->jam_mulai,
+                'jam_selesai' => $session->jam_selesai,
                 'kuota' => $session->kuota,
                 'terisi' => $session->terisiPadaTanggal($data['tanggal']),
                 'is_active' => (bool) $session->is_active,

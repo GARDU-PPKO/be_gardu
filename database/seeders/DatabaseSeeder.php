@@ -247,18 +247,20 @@ class DatabaseSeeder extends Seeder
 
         // Settings
         $settings = [
-            ['key' => 'wa_admin', 'value' => '6287825520140', 'deskripsi' => 'Nomor WhatsApp admin'],
+            ['key' => 'wa_admin', 'value' => '085181639693', 'deskripsi' => 'Nomor WhatsApp admin (format: 08xxx)'],
             ['key' => 'nama_desa', 'value' => 'Desa Getas', 'deskripsi' => 'Nama desa'],
             ['key' => 'alamat_desa', 'value' => 'Jl. Raya Getas No. 1, Kec. Singorojo, Kab. Kendal 51382', 'deskripsi' => 'Alamat desa'],
             ['key' => 'fonnte_token', 'value' => 'KM65J2AcX5jekDGYqRFG', 'deskripsi' => 'Token API Fonnte'],
             ['key' => 'rekening_bank', 'value' => 'BNI 123456789 a.n. Desa Getas', 'deskripsi' => 'Informasi rekening untuk pembayaran'],
             ['key' => 'fe_url', 'value' => 'http://localhost:5713', 'deskripsi' => 'URL frontend untuk link upload bukti di WA'],
-            ['key' => 'email_desa', 'value' => 'desagetas@kendalkab.go.id', 'deskripsi' => 'Email desa'],
-            ['key' => 'jam_pelayanan', 'value' => 'Senin–Jumat: 08.00–15.00 WIB', 'deskripsi' => 'Jam pelayanan'],
-            ['key' => 'sosmed_fb', 'value' => 'https://facebook.com/desagetas', 'deskripsi' => 'URL Facebook desa'],
-            ['key' => 'sosmed_ig', 'value' => 'https://instagram.com/desagetas', 'deskripsi' => 'URL Instagram desa'],
-            ['key' => 'sosmed_yt', 'value' => 'https://youtube.com/@desagetas', 'deskripsi' => 'URL YouTube desa'],
-            ['key' => 'sosmed_web', 'value' => 'https://desagetas.id', 'deskripsi' => 'URL Website desa'],
+            ['key' => 'email_desa', 'value' => 'pesonagetasofficial@gmail.com', 'deskripsi' => 'Email desa'],
+            ['key' => 'jam_pelayanan', 'value' => 'Setiap Hari: 08.00–15.00 WIB', 'deskripsi' => 'Jam pelayanan'],
+            ['key' => 'sosmed_fb', 'value' => '', 'deskripsi' => 'URL Facebook desa (kosongkan jika tidak ada)'],
+            ['key' => 'sosmed_ig', 'value' => 'https://www.instagram.com/gardutourism.id/', 'deskripsi' => 'URL Instagram desa (kosongkan jika tidak ada)'],
+            ['key' => 'sosmed_yt', 'value' => '', 'deskripsi' => 'URL YouTube desa (kosongkan jika tidak ada)'],
+            ['key' => 'sosmed_tiktok', 'value' => '', 'deskripsi' => 'URL TikTok desa (kosongkan jika tidak ada)'],
+            ['key' => 'sosmed_web', 'value' => '', 'deskripsi' => 'URL Website desa (kosongkan jika tidak ada)'],
+            ['key' => 'hero_image', 'value' => '', 'deskripsi' => 'URL/path gambar hero section (kosongkan untuk pakai default)'],
         ];
         foreach ($settings as $s) {
             Setting::firstOrCreate(['key' => $s['key']], $s);
