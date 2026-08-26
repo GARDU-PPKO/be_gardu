@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -87,7 +86,8 @@ class PaketWisata extends Model
             ];
         }
 
-        $jumlahUnit = (int) ceil($jumlahPeserta / max(1, (int) $this->kapasitas_per_unit));
+        $kapasitas = (int) $this->kapasitas_per_unit;
+        $jumlahUnit = $kapasitas > 0 ? (int) ceil($jumlahPeserta / $kapasitas) : 1;
 
         return [
             'harga_per_orang' => null,

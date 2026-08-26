@@ -11,7 +11,7 @@
         }
         body {
             font-family: 'Courier New', Courier, monospace;
-            font-size: 12px;
+            font-size: 24px;
             color: #000;
             background: #fff;
             margin: 0;
@@ -20,13 +20,19 @@
         }
         .text-center { text-align: center; }
         .bold { font-weight: bold; }
+        .logo {
+            display: block;
+            margin: 0 auto 8px;
+            width: 150px;
+            height: auto;
+        }
         .header-title {
-            font-size: 16px;
+            font-size: 32px;
             font-weight: bold;
             letter-spacing: 1px;
         }
         .header-sub {
-            font-size: 11px;
+            font-size: 22px;
             color: #444;
             margin-top: 2px;
         }
@@ -39,7 +45,7 @@
             justify-content: space-between;
             gap: 8px;
             margin-bottom: 3px;
-            font-size: 12px;
+            font-size: 24px;
         }
         .info-row .label { color: #333; flex-shrink: 0; }
         .info-row .value {
@@ -54,12 +60,12 @@
             gap: 8px;
             margin-bottom: 3px;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 24px;
         }
         .item-row .item-name { overflow-wrap: break-word; word-break: break-word; }
         .item-row .item-total { white-space: nowrap; }
         .item-detail {
-            font-size: 11px;
+            font-size: 22px;
             color: #555;
             margin: 0 0 5px 10px;
         }
@@ -67,20 +73,20 @@
             display: flex;
             justify-content: space-between;
             gap: 8px;
-            font-size: 15px;
+            font-size: 30px;
             font-weight: bold;
         }
         .money-row {
             display: flex;
             justify-content: space-between;
             gap: 8px;
-            font-size: 12px;
+            font-size: 24px;
             margin-top: 3px;
         }
         .money-row .value { font-weight: bold; }
         .footer {
             text-align: center;
-            font-size: 11px;
+            font-size: 22px;
             margin-top: 15px;
             line-height: 1.5;
         }
@@ -108,7 +114,20 @@
 
     <button onclick="window.print()" class="btn-print no-print">🖨️ Cetak Struk</button>
 
+    @php
+        $logoPath = public_path('images/Logo_Gardu_V2.png');
+        $logoBase64 = '';
+        if (file_exists($logoPath)) {
+            $extension = pathinfo($logoPath, PATHINFO_EXTENSION);
+            $mime = 'image/' . ($extension === 'jpg' ? 'jpeg' : $extension);
+            $logoBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($logoPath));
+        } else {
+            $logoBase64 = asset('images/Logo_Gardu_V2.png');
+        }
+    @endphp
+
     <div class="text-center">
+        <img src="{{ $logoBase64 }}" alt="Logo Gardu" class="logo">
         <div class="header-title">DESA WISATA GETAS</div>
         <div class="header-sub">Kec. Singorojo, Kab. Kendal</div>
         <div class="header-sub">Struk Pembayaran POS</div>
@@ -146,9 +165,20 @@
             <span class="item-name">{{ $item->product_name }}</span>
             <span class="item-total">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</span>
         </div>
-        <div class="item-detail">
-            {{ $item->quantity }} x @ Rp {{ number_format($item->price, 0, ',', '.') }}
-        </div>
+        @if($item->item_type === 'paket_wisata')
+            @php
+                $kapasitas = (int) ($item->item?->kapasitas_per_unit ?? 0);
+                $jumlahUnit = $kapasitas > 0 ? (int) ceil((int) $item->quantity / $kapasitas) : 1;
+                $hargaUnit = $jumlahUnit > 0 ? (float) $item->subtotal / $jumlahUnit : 0;
+            @endphp
+            <div class="item-detail">
+                {{ $jumlahUnit }} paket ({{ $item->quantity }} org) x @ Rp {{ number_format($hargaUnit, 0, ',', '.') }}
+            </div>
+        @else
+            <div class="item-detail">
+                {{ $item->quantity }} x @ Rp {{ number_format($item->price, 0, ',', '.') }}
+            </div>
+        @endif
         @if($item->item_type === 'paket_wisata' && $item->booking)
             <div class="item-detail">
                 Kode Booking: <span class="bold">{{ $item->booking->booking_code }}</span>

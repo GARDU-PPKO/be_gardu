@@ -81,7 +81,10 @@ class AdminPosController extends Controller
                 'sku' => null,
                 'sub_label' => 'Paket Wisata',
                 'is_per_orang' => $isPerOrang,
-                'min_participants' => $isPerOrang ? (int) ($tiers->first()->min_peserta ?? 1) : 1,
+                'kapasitas_per_unit' => $isPerOrang ? null : (int) ($pk->kapasitas_per_unit ?? 1),
+                'min_participants' => $isPerOrang
+                    ? (int) ($tiers->first()->min_peserta ?? 1)
+                    : (int) ($pk->kapasitas_per_unit ?? 1),
             ]);
         }
 
@@ -134,7 +137,7 @@ class AdminPosController extends Controller
                     case 'pos_product':
                         $product = PosProduct::lockForUpdate()->find($itemData['item_id']);
                         if (! $product) {
-                            throw new \Exception("Produk POS tidak ditemukan.");
+                            throw new \Exception('Produk POS tidak ditemukan.');
                         }
                         if ($product->stock < $quantity) {
                             throw new \Exception("Stok produk {$product->name} tidak mencukupi (Stok: {$product->stock}).");
@@ -156,7 +159,7 @@ class AdminPosController extends Controller
                     case 'umkm_product':
                         $product = UmkmProduct::lockForUpdate()->find($itemData['item_id']);
                         if (! $product) {
-                            throw new \Exception("Produk UMKM tidak ditemukan.");
+                            throw new \Exception('Produk UMKM tidak ditemukan.');
                         }
                         if ($product->stock < $quantity) {
                             throw new \Exception("Stok produk {$product->nama} tidak mencukupi (Stok: {$product->stock}).");
@@ -178,7 +181,7 @@ class AdminPosController extends Controller
                     case 'paket_wisata':
                         $paket = PaketWisata::where('aktif', true)->find($itemData['item_id']);
                         if (! $paket) {
-                            throw new \Exception("Paket wisata tidak ditemukan.");
+                            throw new \Exception('Paket wisata tidak ditemukan.');
                         }
                         $session = BookingSession::where('sesi', $visitor['sesi'])
                             ->where('is_active', true)
@@ -213,13 +216,13 @@ class AdminPosController extends Controller
             }
 
             if ($validated['payment_method'] === 'cash' && $validated['paid_amount'] < $totalAmount) {
-                throw new \Exception("Jumlah uang dibayar (Rp " . number_format($validated['paid_amount'], 0, ',', '.') . ") kurang dari total belanja (Rp " . number_format($totalAmount, 0, ',', '.') . ").");
+                throw new \Exception('Jumlah uang dibayar (Rp '.number_format($validated['paid_amount'], 0, ',', '.').') kurang dari total belanja (Rp '.number_format($totalAmount, 0, ',', '.').').');
             }
 
             $paidAmount = $validated['payment_method'] !== 'cash' ? $totalAmount : $validated['paid_amount'];
             $changeAmount = max(0, $paidAmount - $totalAmount);
 
-            $invoiceNumber = 'POS-' . date('Ymd') . '-' . strtoupper(Str::random(5));
+            $invoiceNumber = 'POS-'.date('Ymd').'-'.strtoupper(Str::random(5));
 
             $transaction = PosTransaction::create([
                 'invoice_number' => $invoiceNumber,
@@ -253,7 +256,7 @@ class AdminPosController extends Controller
                         'alamat' => null,
                         'kontak_darurat_nama' => null,
                         'kontak_darurat_telp' => null,
-                        'notes' => 'Booking walk-in via POS ' . $invoiceNumber,
+                        'notes' => 'Booking walk-in via POS '.$invoiceNumber,
                         'jumlah_peserta' => $item['quantity'],
                         'tanggal_kunjungan' => $visitor['visit_date'],
                         'paket_wisata_id' => $item['item_id'],
@@ -270,7 +273,7 @@ class AdminPosController extends Controller
                         'booking_id' => $booking->id,
                         'admin_id' => auth()->id(),
                         'action' => 'confirmed',
-                        'detail' => 'Booking walk-in dibuat via POS ' . $invoiceNumber,
+                        'detail' => 'Booking walk-in dibuat via POS '.$invoiceNumber,
                         'created_at' => now(),
                     ]);
 
@@ -343,7 +346,7 @@ class AdminPosController extends Controller
                             'booking_id' => $booking->id,
                             'admin_id' => auth()->id(),
                             'action' => 'cancelled_via_pos',
-                            'detail' => 'Booking dibatalkan karena transaksi POS ' . $transaction->invoice_number . ' dibatalkan.',
+                            'detail' => 'Booking dibatalkan karena transaksi POS '.$transaction->invoice_number.' dibatalkan.',
                             'created_at' => now(),
                         ]);
                     }
@@ -355,6 +358,7 @@ class AdminPosController extends Controller
             return redirect()->route('admin.pos.transactions.index')->with('success', 'Transaksi berhasil dibatalkan. Stok dikembalikan.');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return redirect()->route('admin.pos.transactions.index')->with('error', $e->getMessage());
         }
     }
@@ -398,7 +402,7 @@ class AdminPosController extends Controller
         ]);
 
         if (empty($validated['sku'])) {
-            $validated['sku'] = 'SKU-' . strtoupper(Str::random(6));
+            $validated['sku'] = 'SKU-'.strtoupper(Str::random(6));
         }
 
         if ($request->hasFile('image')) {
@@ -423,7 +427,7 @@ class AdminPosController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category_id' => 'nullable|exists:pos_categories,id',
-            'sku' => 'nullable|string|max:50|unique:pos_products,sku,' . $id,
+            'sku' => 'nullable|string|max:50|unique:pos_products,sku,'.$id,
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'is_active' => 'boolean',

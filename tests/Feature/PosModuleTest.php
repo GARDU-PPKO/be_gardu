@@ -62,7 +62,7 @@ class PosModuleTest extends TestCase
                     'item_type' => 'pos_product',
                     'item_id' => (string) $product->id,
                     'quantity' => 2,
-                ]
+                ],
             ],
             'paid_amount' => 50000,
             'payment_method' => 'cash',
@@ -117,7 +117,7 @@ class PosModuleTest extends TestCase
                     'item_type' => 'umkm_product',
                     'item_id' => $umkm->id,
                     'quantity' => 3,
-                ]
+                ],
             ],
             'paid_amount' => 20000,
             'payment_method' => 'cash',
@@ -173,7 +173,7 @@ class PosModuleTest extends TestCase
                     'item_type' => 'paket_wisata',
                     'item_id' => (string) $paket->id,
                     'quantity' => 2,
-                ]
+                ],
             ],
             'paid_amount' => 160000,
             'payment_method' => 'cash',
@@ -339,7 +339,7 @@ class PosModuleTest extends TestCase
             'total_amount' => 15000,
             'paid_amount' => 20000,
             'change_amount' => 5000,
-            'payment_method' => 'cash'  ,
+            'payment_method' => 'cash',
             'status' => 'completed',
         ]);
 
@@ -348,5 +348,132 @@ class PosModuleTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('POS-TEST-12345');
         $response->assertSee('DESA WISATA GETAS');
+    }
+
+    public function test_pos_checkout_paket_fixed_dihitung_per_unit_berdasarkan_kapasitas(): void
+    {
+        $paket = PaketWisata::create([
+            'nama' => 'Genta Gempi Buddy',
+            'kategori' => 'camping',
+            'tipe_harga' => 'per_paket_fixed',
+            'harga_paket' => 130000,
+            'kapasitas_per_unit' => 2,
+            'deskripsi' => 'Camping berdua.',
+            'aktif' => true,
+            'created_by' => $this->user->id,
+        ]);
+
+        BookingSession::create([
+            'sesi' => 'Pagi',
+            'jam_mulai' => '08:00',
+            'jam_selesai' => '11:00',
+            'kuota' => 30,
+            'is_active' => true,
+            'created_by' => $this->user->id,
+        ]);
+
+        $visitDate = now()->addDays(3)->toDateString();
+
+        $payload = [
+            'items' => [
+                [
+                    'item_type' => 'paket_wisata',
+                    'item_id' => (string) $paket->id,
+                    'quantity' => 3,
+                ],
+            ],
+            'paid_amount' => 260000,
+            'payment_method' => 'cash',
+            'customer_name' => 'Rombongan Tiga',
+            'customer_phone' => '62812345679',
+            'visit_date' => $visitDate,
+            'sesi' => 'Pagi',
+        ];
+
+        $response = $this->actingAs($this->user)->postJson(route('admin.pos.checkout'), $payload);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'change_amount' => 0,
+        ]);
+
+        // 3 orang / kapasitas 2 = 2 unit (ceil) => 2 x 130.000 = 260.000
+        $this->assertDatabaseHas('pos_transactions', [
+            'total_amount' => 260000,
+        ]);
+
+        $item = PosTransactionItem::where('item_type', 'paket_wisata')->first();
+        $this->assertNotNull($item);
+        $this->assertEquals(260000, (int) $item->subtotal);
+        $this->assertEquals(3, (int) $item->quantity);
+
+        $booking = Booking::where('nama_lengkap', 'Rombongan Tiga')->first();
+        $this->assertNotNull($booking);
+        $this->assertEquals(3, (int) $booking->jumlah_peserta);
+        $this->assertEquals(260000, (int) $booking->total_harga);
+    }
+
+    public function test_pos_checkout_paket_fixed_tanpa_kapasitas_harga_flat(): void
+    {
+        $paket = PaketWisata::create([
+            'nama' => 'Paket Flat',
+            'kategori' => 'tubing',
+            'tipe_harga' => 'per_paket_fixed',
+            'harga_paket' => 100000,
+            'kapasitas_per_unit' => null,
+            'deskripsi' => 'Harga tetap berapapun pesertanya.',
+            'aktif' => true,
+            'created_by' => $this->user->id,
+        ]);
+
+        BookingSession::create([
+            'sesi' => 'Siang',
+            'jam_mulai' => '11:00',
+            'jam_selesai' => '14:00',
+            'kuota' => 30,
+            'is_active' => true,
+            'created_by' => $this->user->id,
+        ]);
+
+        $visitDate = now()->addDays(4)->toDateString();
+
+        $payload = [
+            'items' => [
+                [
+                    'item_type' => 'paket_wisata',
+                    'item_id' => (string) $paket->id,
+                    'quantity' => 5,
+                ],
+            ],
+            'paid_amount' => 100000,
+            'payment_method' => 'cash',
+            'customer_name' => 'Grup Besar',
+            'customer_phone' => '62812345680',
+            'visit_date' => $visitDate,
+            'sesi' => 'Siang',
+        ];
+
+        $response = $this->actingAs($this->user)->postJson(route('admin.pos.checkout'), $payload);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'change_amount' => 0,
+        ]);
+
+        // Tanpa kapasitas => harga paket flat 1x, tidak dikali per orang
+        $this->assertDatabaseHas('pos_transactions', [
+            'total_amount' => 100000,
+        ]);
+
+        $item = PosTransactionItem::where('item_type', 'paket_wisata')->first();
+        $this->assertNotNull($item);
+        $this->assertEquals(100000, (int) $item->subtotal);
+
+        $booking = Booking::where('nama_lengkap', 'Grup Besar')->first();
+        $this->assertNotNull($booking);
+        $this->assertEquals(5, (int) $booking->jumlah_peserta);
+        $this->assertEquals(100000, (int) $booking->total_harga);
     }
 }

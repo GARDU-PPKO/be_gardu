@@ -96,3 +96,4 @@ Route::prefix('admin')->group(function () {
         Route::get('fonnte-device', [FonnteController::class, 'device'])->name('admin.fonnte.device');
     });
 });
+Route::get('/orders/{order}/print-data', [OrderController::class, 'printData']);

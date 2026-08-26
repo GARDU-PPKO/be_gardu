@@ -116,6 +116,8 @@
                          data-price="{{ $item['price'] }}"
                          data-stock="{{ $stock ?? 0 }}"
                          data-min-participants="{{ $item['min_participants'] ?? 1 }}"
+                         data-kapasitas="{{ $item['kapasitas_per_unit'] ?? null }}"
+                         data-is-per-orang="{{ $item['is_per_orang'] ?? false ? '1' : '0' }}"
                          data-category="{{ $item['category'] }}">
                         
                         <!-- Image & Stock Badge -->
@@ -154,7 +156,7 @@
                                 <span class="text-emerald-700 font-black text-xs sm:text-sm md:text-base">
                                     Rp {{ number_format($item['price'], 0, ',', '.') }}
                                     @if($item['type'] === 'paket_wisata')
-                                        <span class="text-[9px] text-slate-400 font-semibold">/{{ $item['is_per_orang'] ? 'orang' : 'paket' }}</span>
+                                        <span class="text-[9px] text-slate-400 font-semibold">/{{ $item['is_per_orang'] ? 'orang' : ('paket (' . ($item['kapasitas_per_unit'] ?? 1) . ' org)') }}</span>
                                     @endif
                                 </span>
                             </div>
@@ -443,6 +445,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const price = parseFloat(card.dataset.price);
             const stock = parseInt(card.dataset.stock);
             const minPax = parseInt(card.dataset.minParticipants || '1', 10);
+            const capacity = parseInt(card.dataset.kapasitas || '0', 10);
+            const isPerOrang = card.dataset.isPerOrang === '1';
             const isPaket = type === 'paket_wisata';
 
             if (!isPaket && stock <= 0) {
@@ -458,12 +462,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 cart[existingIndex].quantity++;
             } else {
-                cart.push({ type, id, name, price, stock, isPaket, quantity: isPaket ? minPax : 1, minParticipants: isPaket ? minPax : 1 });
+                cart.push({ type, id, name, price, stock, isPaket, isPerOrang, capacity, quantity: isPaket ? minPax : 1, minParticipants: isPaket ? minPax : 1 });
             }
 
             renderCart();
         });
     });
+
+    function getSubtotal(item) {
+        if (item.isPaket && !item.isPerOrang && item.capacity > 0) {
+            const units = Math.ceil(item.quantity / item.capacity);
+            return units * item.price;
+        }
+        return item.price * item.quantity;
+    }
 
     function renderCart() {
         if (cart.length === 0) {
@@ -486,7 +498,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         cart.forEach((item, index) => {
             totalQty += item.quantity;
-            const subtotal = item.price * item.quantity;
+            const subtotal = getSubtotal(item);
             totalPrice += subtotal;
 
             const itemEl = document.createElement('div');
@@ -495,8 +507,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="flex-1 min-w-0 pr-1.5">
                     <h5 class="font-bold text-slate-900 truncate text-xs">${item.name}</h5>
                     <div class="text-slate-500 text-[10px] mt-0.5">
-                        ${item.isPaket ? '<span class="text-emerald-700 font-bold uppercase text-[9px]">Paket Wisata</span> ' + (item.minParticipants > 1 ? '<span class="text-slate-400 text-[9px]">(min ' + item.minParticipants + ' org)</span> ' : '') : ''}
-                        Rp ${formatRupiah(item.price)} x ${item.quantity} = <strong class="text-emerald-700 font-extrabold">Rp ${formatRupiah(subtotal)}</strong>
+                        ${item.isPaket ? '<span class="text-emerald-700 font-bold uppercase text-[9px]">Paket Wisata</span> ' : ''}
+                        ${item.isPaket && item.isPerOrang
+                            ? 'Rp ' + formatRupiah(item.price) + ' x ' + item.quantity + ' org = <strong class="text-emerald-700 font-extrabold">Rp ' + formatRupiah(subtotal) + '</strong>'
+                            : item.isPaket && item.capacity > 0
+                                ? Math.ceil(item.quantity / item.capacity) + ' paket (' + item.quantity + ' org) x Rp ' + formatRupiah(item.price) + ' = <strong class="text-emerald-700 font-extrabold">Rp ' + formatRupiah(subtotal) + '</strong>'
+                                : 'Rp ' + formatRupiah(item.price) + ' x ' + item.quantity + ' = <strong class="text-emerald-700 font-extrabold">Rp ' + formatRupiah(subtotal) + '</strong>'}
                     </div>
                 </div>
                 <div class="flex items-center gap-1 flex-shrink-0">
@@ -574,7 +590,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function getTotalPrice() {
-        return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        return cart.reduce((sum, item) => sum + getSubtotal(item), 0);
     }
 
     function calculateChange() {

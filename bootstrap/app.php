@@ -8,7 +8,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
-return Application::configure(basePath: dirname(__DIR__))
+$app = Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         api: __DIR__.'/../routes/api.php',
@@ -56,3 +56,12 @@ return Application::configure(basePath: dirname(__DIR__))
             return null;
         });
     })->create();
+
+// Shared hosting: override public path ke public_html
+// Struktur hosting: /home/user/domains/site/public_html (public) + /home/user/domains/site/be_gardu (laravel)
+$hostingPublicHtml = dirname(__DIR__, 2) . '/public_html';
+if (is_dir($hostingPublicHtml) && !str_contains(__DIR__, 'Developments')) {
+    $app->usePublicPath($hostingPublicHtml);
+}
+
+return $app;
