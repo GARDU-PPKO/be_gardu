@@ -9,8 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('dusun_galleries', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('dusun_id')->constrained('dusun')->cascadeOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('dusun_id')->constrained('dusun')->cascadeOnDelete();
             $table->string('image_url', 255);
             $table->integer('urutan')->default(0);
             $table->timestamps();

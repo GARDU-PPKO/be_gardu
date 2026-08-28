@@ -1,0 +1,151 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Http\Response\ApiResponse;
+use App\Models\Booking;
+use App\Models\FonnteWebhook;
+use App\Models\PaketWisata;
+use App\Models\User;
+use App\Services\FonnteService;
+use Dedoc\Scramble\Attributes\Endpoint;
+use Dedoc\Scramble\Attributes\Group;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+
+#[Group('Webhook')]
+class FonnteWebhookController extends Controller
+{
+    use ApiResponse;
+
+    #[Endpoint('Webhook Fonnte', description: 'Menerima pesan WhatsApp dari Fonnte dan membuat booking otomatis')]
+    public function __invoke(Request $request, FonnteService $fonnte): JsonResponse
+    {
+        $phone = $request->input('phone');
+        $message = $request->input('message');
+        $attachment = $request->input('attachment');
+
+        FonnteWebhook::create([
+            'phone' => $phone,
+            'message' => $message,
+            'attachment' => $attachment,
+            'event' => $request->input('event'),
+            'fonnte_type' => $message ? 'incoming' : 'status',
+            'raw_payload' => $request->all(),
+        ]);
+
+        if (!$phone || !$message) {
+            return $this->success(null, 'Pesan diterima tetapi tidak diproses.');
+        }
+
+        $data = $this->extractBookingData($message);
+
+        if (empty($data['nama']) || empty($data['no_wa']) || empty($data['package_name'])) {
+            $fonnte->sendMessage($phone, "Maaf, format data booking tidak lengkap.\n\nPastikan format:\nNama: ...\nNo. WA: ...\nPaket: ...\nTanggal: ...\nSesi: ...\nPeserta: ...\nTotal: ...");
+            return $this->error('Format data booking tidak lengkap.', 400);
+        }
+
+        $package = PaketWisata::where('aktif', true)
+            ->where('nama', 'like', '%' . $data['package_name'] . '%')
+            ->first();
+
+        if (!$package) {
+            $fonnte->sendMessage($phone, "Maaf, paket \"{$data['package_name']}\" tidak ditemukan. Silakan cek daftar paket wisata yang tersedia.");
+            return $this->error('Paket wisata tidak ditemukan.', 404);
+        }
+
+        $admin = User::where('role', 'superadmin')->firstOrFail();
+
+        $kodeBooking = Booking::generateBookingCode();
+
+        try {
+            $pricing = $package->hitungTotalHarga(max(1, $data['jumlah_peserta']));
+            $totalHarga = $pricing['total'];
+        } catch (\Throwable $e) {
+            $totalHarga = max(0, $data['total_harga'] ?: (float)($package->harga_paket ?? 0));
+        }
+
+        $booking = Booking::create([
+            'booking_code' => $kodeBooking,
+            'nama_lengkap' => $data['nama'],
+            'no_whatsapp' => $data['no_wa'],
+            'email' => $data['email'] ?? null,
+            'alamat' => $data['kota'] ?? '',
+            'notes' => $data['catatan'] ?? null,
+            'paket_wisata_id' => $package->id,
+            'tanggal_kunjungan' => $data['tanggal'] ?: now()->toDateString(),
+            'sesi' => $data['sesi'] ?: 'Pagi',
+            'jumlah_peserta' => max(1, $data['jumlah_peserta']),
+            'total_harga' => max(0, $data['total_harga'] ?: $totalHarga),
+            'status' => Booking::STATUS_PENDING_PAYMENT,
+            'bukti_pembayaran_path' => $attachment,
+            'raw_wa_text' => $message,
+            'created_by' => $admin->id,
+        ]);
+
+        $reply = "✅ *Booking Berhasil!*\n\n"
+            . "Kode Booking: *{$kodeBooking}*\n"
+            . "Paket: {$package->nama}\n"
+            . "Tanggal: " . $booking->tanggal_kunjungan->toDateString() . "\n"
+            . "Sesi: {$booking->sesi}\n"
+            . "Peserta: {$booking->jumlah_peserta} orang\n"
+            . "Total: Rp " . number_format($booking->total_harga, 0, ',', '.') . "\n\n"
+            . "Silakan transfer ke:\n"
+            . "Bank BNI 123456789 a.n. Desa Getas\n\n"
+            . "Kirimkan bukti transfer ke nomor ini untuk konfirmasi.";
+
+        $fonnte->sendMessage($phone, $reply);
+
+        return $this->success([
+            'kode_booking' => $kodeBooking,
+            'status' => Booking::STATUS_PENDING_PAYMENT,
+        ], 'Booking berhasil dibuat.');
+    }
+
+    private function extractBookingData(string $text): array
+    {
+        $data = [
+            'nama' => '',
+            'no_wa' => '',
+            'email' => null,
+            'kota' => '',
+            'catatan' => null,
+            'package_name' => '',
+            'tanggal' => '',
+            'sesi' => '',
+            'jumlah_peserta' => 1,
+            'total_harga' => 0,
+        ];
+
+        foreach (explode("\n", $text) as $raw) {
+            $line = trim(preg_replace('/[^\p{L}\p{N}:.@\s\/-]+/u', ' ', $raw));
+            $line = trim(preg_replace('/\s+/', ' ', $line));
+            if (!$line) continue;
+
+            if (preg_match('/^(?:Paket|Nama\s*Paket|Package|Pack)\s*:\s*(.+)$/iu', $line, $m))
+                $data['package_name'] = trim($m[1]);
+            elseif (preg_match('/^(?:Tanggal|Tgl|Date|Tangeal)\s*:\s*(.+)$/iu', $line, $m))
+                $data['tanggal'] = trim($m[1]);
+            elseif (preg_match('/^(?:Sesi|Session|Jam|Waktu)\s*:\s*(.+)$/iu', $line, $m))
+                $data['sesi'] = trim($m[1]);
+            elseif (preg_match('/^(?:Peserta|Jumlah\s*Peserta|Pax|Orang|Peseta)\s*:\s*(\d+)/iu', $line, $m))
+                $data['jumlah_peserta'] = (int) $m[1];
+            elseif (preg_match('/^(?:Total|Total\s*Harga|Harga|Price|Biaya)\s*:\s*(?:Rp\.?\s*)?([\d.,]+)/iu', $line, $m))
+                $data['total_harga'] = (int) str_replace(['.', ','], '', $m[1]);
+            elseif (preg_match('/^(?:Nama|Name|Nama\s*Pemesan)\s*:\s*(.+)$/iu', $line, $m))
+                $data['nama'] = trim($m[1]);
+            elseif (preg_match('/^(?:WhatsApp|No\.?\s*WA|WA|Phone|Telepon|No\.?\s*HP|HP)\s*:\s*(.+)$/iu', $line, $m))
+                $data['no_wa'] = trim($m[1]);
+            elseif (preg_match('/^(?:Email|E-mail|Mail|Surel)\s*:\s*(.+)$/iu', $line, $m))
+                $data['email'] = trim($m[1]);
+            elseif (preg_match('/^(?:Kota|City|Asal|Kota\s*Asal|Domisili)\s*:\s*(.+)$/iu', $line, $m))
+                $data['kota'] = trim($m[1]);
+            elseif (preg_match('/^(?:Catatan|Note|Pesan|Keterangan)\s*:\s*(.+)$/iu', $line, $m))
+                $data['catatan'] = trim($m[1]);
+        }
+
+        return $data;
+    }
+}

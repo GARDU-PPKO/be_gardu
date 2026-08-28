@@ -5,25 +5,47 @@ namespace App\Models;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Booking extends Model
 {
+    use SoftDeletes;
+
+    public const STATUS_PENDING_PAYMENT = 'PENDING_PAYMENT';
+    public const STATUS_PENDING_VERIFY = 'PENDING_VERIFY';
+    public const STATUS_CONFIRMED = 'CONFIRMED';
+    public const STATUS_REJECTED = 'REJECTED';
+    public const STATUS_EXPIRED = 'EXPIRED';
+    public const STATUS_COMPLETED = 'COMPLETED';
+    public const STATUS_CANCELLED = 'CANCELLED';
+
     protected $table = 'bookings';
 
     protected $fillable = [
-        'kode_booking',
-        'nama_pemesan',
-        'no_wa_pemesan',
+        'booking_code',
+        'nama_lengkap',
+        'no_whatsapp',
         'email',
-        'kota_asal',
-        'catatan',
-        'package_id',
-        'tanggal',
-        'sesi',
+        'alamat',
+        'kontak_darurat_nama',
+        'kontak_darurat_telp',
+        'notes',
         'jumlah_peserta',
+        'tanggal_kunjungan',
+        'paket_wisata_id',
+        'sesi',
         'total_harga',
+        'bukti_pembayaran_path',
+        'nominal_transfer',
+        'metode_pembayaran',
         'status',
-        'bukti_bayar',
+        'expired_at',
+        'rejected_reason',
+        'verified_by',
+        'verified_at',
         'raw_wa_text',
         'created_by',
     ];
@@ -31,18 +53,57 @@ class Booking extends Model
     protected function casts(): array
     {
         return [
-            'tanggal' => 'date',
+            'tanggal_kunjungan' => 'date',
             'total_harga' => 'decimal:2',
+            'nominal_transfer' => 'decimal:2',
+            'expired_at' => 'datetime',
+            'verified_at' => 'datetime',
         ];
+    }
+
+    public static function generateBookingCode(): string
+    {
+        do {
+            $code = 'GRD-' . now()->format('Ymd') . '-' . strtoupper(Str::random(4));
+        } while (static::withTrashed()->where('booking_code', $code)->exists());
+
+        return $code;
+    }
+
+    public function paketWisata(): BelongsTo
+    {
+        return $this->belongsTo(PaketWisata::class, 'paket_wisata_id');
     }
 
     public function package(): BelongsTo
     {
-        return $this->belongsTo(TourPackage::class, 'package_id');
+        return $this->paketWisata();
     }
 
-    public function createdBy(): BelongsTo
+    public function addOns(): BelongsToMany
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsToMany(AddOn::class, 'booking_add_on')
+            ->withPivot('qty', 'harga_satuan', 'subtotal')
+            ->withTimestamps();
+    }
+
+    public function verifiedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'verified_by');
+    }
+
+    public function logs(): HasMany
+    {
+        return $this->hasMany(BookingLog::class, 'booking_id')->latest('created_at');
+    }
+
+    public function isFinalStatus(): bool
+    {
+        return in_array($this->status, [
+            self::STATUS_REJECTED,
+            self::STATUS_EXPIRED,
+            self::STATUS_COMPLETED,
+            self::STATUS_CANCELLED,
+        ], true);
     }
 }

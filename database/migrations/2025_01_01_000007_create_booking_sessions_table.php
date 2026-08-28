@@ -10,13 +10,12 @@ return new class extends Migration
     {
         Schema::create('booking_sessions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('package_id')->constrained('tour_packages');
-            $table->date('tanggal');
-            $table->enum('sesi', ['Pagi', 'Siang', 'Sore']);
-            $table->integer('kuota');
-            $table->integer('terisi')->default(0);
+            $table->string('sesi', 50);
+            $table->time('jam_mulai')->nullable();
+            $table->time('jam_selesai')->nullable();
+            $table->integer('kuota')->nullable(); // NULL = Unlimited
             $table->boolean('is_active')->default(true);
-            $table->foreignId('created_by')->constrained('users');
+            $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });
     }

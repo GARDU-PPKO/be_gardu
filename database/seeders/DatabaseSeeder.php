@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use App\Models\Booking;
+use App\Models\BookingLog;
 use App\Models\BookingSession;
 use App\Models\Budaya;
 use App\Models\BudayaSchedule;
@@ -11,10 +12,10 @@ use App\Models\Dusun;
 use App\Models\DusunGallery;
 use App\Models\DusunKeunggulan;
 use App\Models\Setting;
-use App\Models\TourPackage;
-use App\Models\TourPackageInclude;
+use App\Models\PaketWisata;
+use App\Models\PaketWisataTier;
+use App\Models\AddOn;
 use App\Models\UmkmProduct;
-use App\Models\VillageProfile;
 use App\Models\VillageStat;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -69,83 +70,147 @@ class DatabaseSeeder extends Seeder
             }
         }
 
-        // Tour Packages
-        $pkg1 = TourPackage::create([
-            'nama' => 'Tubing Adventure',
-            'deskripsi' => 'Menyusuri Sungai Blukar sepanjang 1,5 km dengan arus alami.',
-            'harga' => 75000, 'satuan' => 'orang', 'tag' => 'Terpopuler',
-            'durasi' => '±2 jam', 'min_participants' => 1, 'max_participants' => 10,
+        // Paket Wisata (sesuai dokumentasi booking_flow_file_handling.md)
+        $genta = PaketWisata::create([
+            'nama' => 'GENTA Explorer',
+            'kategori' => 'tubing',
+            'tipe_harga' => 'per_orang_tier',
+            'deskripsi' => 'Menyusuri Sungai Blukar dengan arus alami. Harga per orang turun untuk rombongan lebih banyak.',
+            'fasilitas' => ['Pelampung & helm', 'Pemandu lokal', 'Air minum', 'Foto dokumentasi'],
             'gambar' => 'https://images.unsplash.com/photo-1546058914-5000137323f0?w=500&h=320&fit=crop&auto=format',
+            'tag' => 'Terpopuler',
+            'durasi' => '±2 jam',
+            'aktif' => true,
             'created_by' => $superadmin->id,
         ]);
-        foreach (['Pelampung & helm', 'Pemandu lokal', 'Air minum'] as $i => $item) {
-            TourPackageInclude::create(['package_id' => $pkg1->id, 'item' => $item, 'urutan' => $i]);
-        }
+        PaketWisataTier::create(['paket_id' => $genta->id, 'min_peserta' => 10, 'harga_per_orang' => 110000]);
+        PaketWisataTier::create(['paket_id' => $genta->id, 'min_peserta' => 5, 'harga_per_orang' => 125000]);
 
-        $pkg2 = TourPackage::create([
-            'nama' => 'River Exploration',
-            'deskripsi' => 'Eksplorasi sungai bersama guide berpengalaman dan safety equipment lengkap.',
-            'harga' => 95000, 'satuan' => 'orang', 'tag' => null,
-            'durasi' => '±3 jam', 'min_participants' => 1, 'max_participants' => 8,
+        // GEMPI Adventure — angka tier placeholder (dokumen tidak mencantumkan nominal), admin dapat ubah di panel
+        $gempi = PaketWisata::create([
+            'nama' => 'GEMPI Adventure',
+            'kategori' => 'tubing',
+            'tipe_harga' => 'per_orang_tier',
+            'deskripsi' => 'Adventure tubing dengan rute lebih panjang dan safety gear lengkap.',
+            'fasilitas' => ['Full safety gear', 'Pemandu senior', 'Makan ringan', 'Foto dokumentasi'],
             'gambar' => 'https://images.unsplash.com/photo-1561774711-b0fa364863b7?w=500&h=320&fit=crop&auto=format',
+            'tag' => null,
+            'durasi' => '±3 jam',
+            'aktif' => true,
             'created_by' => $superadmin->id,
         ]);
-        foreach (['Full safety gear', 'Pemandu senior', 'Foto dokumentasi', 'Air minum'] as $i => $item) {
-            TourPackageInclude::create(['package_id' => $pkg2->id, 'item' => $item, 'urutan' => $i]);
-        }
+        PaketWisataTier::create(['paket_id' => $gempi->id, 'min_peserta' => 10, 'harga_per_orang' => 95000]);
+        PaketWisataTier::create(['paket_id' => $gempi->id, 'min_peserta' => 5, 'harga_per_orang' => 110000]);
 
-        $pkg3 = TourPackage::create([
-            'nama' => 'Family Package',
-            'deskripsi' => 'Paket keluarga lengkap — tubing, makan siang, foto dokumentasi.',
-            'harga' => 250000, 'satuan' => 'grup', 'tag' => 'Promo',
-            'durasi' => '½ hari', 'min_participants' => 2, 'max_participants' => 6,
-            'gambar' => 'https://images.unsplash.com/photo-1520329612326-d6038d1395a1?w=500&h=320&fit=crop&auto=format',
+        $solo = PaketWisata::create([
+            'nama' => 'Genta Gempi Solo',
+            'kategori' => 'camping',
+            'tipe_harga' => 'per_paket_fixed',
+            'harga_paket' => 80000,
+            'kapasitas_per_unit' => 1,
+            'deskripsi' => 'Camping solo — 1 tenda, 1 peserta.',
+            'fasilitas' => ['1 tenda', 'Tikar & sleeping bag', 'Area api unggun'],
+            'gambar' => 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=500&h=320&fit=crop&auto=format',
+            'durasi' => '1 malam',
+            'aktif' => true,
             'created_by' => $superadmin->id,
         ]);
-        foreach (['Full safety gear', 'Pemandu keluarga', 'Makan siang', 'Foto & video', 'Suvenir'] as $i => $item) {
-            TourPackageInclude::create(['package_id' => $pkg3->id, 'item' => $item, 'urutan' => $i]);
-        }
 
-        $pkg4 = TourPackage::create([
-            'nama' => 'Group Package',
-            'deskripsi' => 'Paket rombongan minimal 20 orang dengan guide dan makan siang.',
-            'harga' => 65000, 'satuan' => 'orang', 'tag' => null,
-            'durasi' => '½ hari', 'min_participants' => 20, 'max_participants' => 100,
-            'gambar' => 'https://images.unsplash.com/photo-1643215721864-cd4c354ac298?w=500&h=320&fit=crop&auto=format',
+        $buddy = PaketWisata::create([
+            'nama' => 'Genta Gempi Buddy',
+            'kategori' => 'camping',
+            'tipe_harga' => 'per_paket_fixed',
+            'harga_paket' => 130000,
+            'kapasitas_per_unit' => 2,
+            'deskripsi' => 'Camping berdua — 1 tenda untuk 2 peserta.',
+            'fasilitas' => ['1 tenda', '2 tikar & sleeping bag', 'Area api unggun', 'Makan malam'],
+            'gambar' => 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=500&h=320&fit=crop&auto=format',
+            'durasi' => '1 malam',
+            'aktif' => true,
             'created_by' => $superadmin->id,
         ]);
-        foreach (['Safety equipment', 'Multiple guide', 'Makan siang', 'Area gathering'] as $i => $item) {
-            TourPackageInclude::create(['package_id' => $pkg4->id, 'item' => $item, 'urutan' => $i]);
-        }
 
-        // Booking Sessions
-        $sessions = ['Pagi', 'Siang', 'Sore'];
-        foreach ([$pkg1, $pkg2] as $pkg) {
-            for ($d = 1; $d <= 30; $d++) {
-                foreach ($sessions as $sesi) {
-                    BookingSession::create([
-                        'package_id' => $pkg->id,
-                        'tanggal' => now()->addDays($d)->toDateString(),
-                        'sesi' => $sesi,
-                        'kuota' => 20,
-                        'terisi' => rand(0, 5),
-                        'created_by' => $superadmin->id,
-                    ]);
-                }
-            }
-        }
+        $family = PaketWisata::create([
+            'nama' => 'Genta Gempi Family',
+            'kategori' => 'camping',
+            'tipe_harga' => 'per_paket_fixed',
+            'harga_paket' => 180000,
+            'kapasitas_per_unit' => 2,
+            'deskripsi' => 'Camping keluarga — 1 tenda per 2 peserta (bisa multi-tenda), termasuk makan malam & api unggun.',
+            'fasilitas' => ['1 tenda per 2 peserta', 'Tikar & sleeping bag', 'Area api unggun', 'Makan malam', 'Sarapan'],
+            'gambar' => 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=500&h=320&fit=crop&auto=format',
+            'tag' => 'Promo',
+            'durasi' => '1 malam',
+            'aktif' => true,
+            'created_by' => $superadmin->id,
+        ]);
+
+        // Add-On
+        $makanSiang = AddOn::firstOrCreate(
+            ['nama' => 'Makan Siang (Nasi Box)'],
+            [
+                'kategori' => 'Makanan',
+                'tipe_harga' => 'per_orang',
+                'harga' => 25000,
+                'deskripsi' => 'Nasi box + lauk pauk + air mineral untuk satu peserta.',
+                'gambar' => 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop&auto=format',
+                'aktif' => true,
+                'urutan' => 1,
+                'created_by' => $superadmin->id,
+            ]
+        );
+
+        AddOn::firstOrCreate(
+            ['nama' => 'Sewa ATV'],
+            [
+                'kategori' => 'Aktivitas',
+                'tipe_harga' => 'per_unit',
+                'harga' => 75000,
+                'deskripsi' => 'Sewa ATV 1 unit untuk rute wisata (±30 menit).',
+                'gambar' => 'https://images.unsplash.com/photo-1519315901367-f34ff9154487?w=400&h=300&fit=crop&auto=format',
+                'aktif' => true,
+                'urutan' => 2,
+                'created_by' => $superadmin->id,
+            ]
+        );
+
+        AddOn::firstOrCreate(
+            ['nama' => 'Sarapan Pagi'],
+            [
+                'kategori' => 'Makanan',
+                'tipe_harga' => 'per_orang',
+                'harga' => 15000,
+                'deskripsi' => 'Sarapan sederhana (nasi + telur + teh hangat).',
+                'aktif' => true,
+                'urutan' => 3,
+                'created_by' => $superadmin->id,
+            ]
+        );
+
+        AddOn::firstOrCreate(
+            ['nama' => 'Sewa Tenda Tambahan'],
+            [
+                'kategori' => 'Perlengkapan',
+                'tipe_harga' => 'per_unit',
+                'harga' => 50000,
+                'deskripsi' => 'Tenda kapasitas 2 orang beserta tikar.',
+                'aktif' => true,
+                'urutan' => 4,
+                'created_by' => $superadmin->id,
+            ]
+        );
 
         // UMKM Products
         $umkmItems = [
-            ['nama' => 'Tempe Besem Bu Kartini', 'kategori' => 'Makanan', 'harga' => 5000, 'deskripsi' => 'Tempe besem khas Getas, fermentasi sempurna.', 'gambar' => 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345001'],
-            ['nama' => 'Keripik Singkong Aneka Rasa', 'kategori' => 'Makanan', 'harga' => 15000, 'deskripsi' => 'Keripik singkong renyah aneka rasa.', 'gambar' => 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345002'],
-            ['nama' => 'Anyaman Bambu Pak Rejo', 'kategori' => 'Kerajinan', 'harga' => 45000, 'deskripsi' => 'Anyaman bambu kualitas ekspor.', 'gambar' => 'https://images.unsplash.com/photo-1586717799252-bd134ad00e26?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345003'],
-            ['nama' => 'Beras Organik Pak Triyono', 'kategori' => 'Pertanian', 'harga' => 18000, 'deskripsi' => 'Beras organik asli Getas per kg.', 'gambar' => 'https://images.unsplash.com/photo-1536304929831-ee1ca9d44906?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345005'],
-            ['nama' => 'Kopi Arabika Getas', 'kategori' => 'Oleh-Oleh', 'harga' => 65000, 'deskripsi' => 'Kopi arabika premium 200g.', 'gambar' => 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345007'],
-            ['nama' => 'Sirup Jahe Madu Bu Endang', 'kategori' => 'Oleh-Oleh', 'harga' => 30000, 'deskripsi' => 'Sirup jahe madu sehat.', 'gambar' => 'https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345008'],
+            ['nama' => 'Tempe Besem Bu Kartini', 'kategori' => 'Makanan', 'harga' => 5000, 'stock' => 40, 'sku' => 'UMKM-001', 'deskripsi' => 'Tempe besem khas Getas, fermentasi sempurna.', 'gambar' => 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345001'],
+            ['nama' => 'Keripik Singkong Aneka Rasa', 'kategori' => 'Makanan', 'harga' => 15000, 'stock' => 50, 'sku' => 'UMKM-002', 'deskripsi' => 'Keripik singkong renyah aneka rasa.', 'gambar' => 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345002'],
+            ['nama' => 'Anyaman Bambu Pak Rejo', 'kategori' => 'Kerajinan', 'harga' => 45000, 'stock' => 15, 'sku' => 'UMKM-003', 'deskripsi' => 'Anyaman bambu kualitas ekspor.', 'gambar' => 'https://images.unsplash.com/photo-1586717799252-bd134ad00e26?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345003'],
+            ['nama' => 'Beras Organik Pak Triyono', 'kategori' => 'Pertanian', 'harga' => 18000, 'stock' => 60, 'sku' => 'UMKM-004', 'deskripsi' => 'Beras organik asli Getas per kg.', 'gambar' => 'https://images.unsplash.com/photo-1536304929831-ee1ca9d44906?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345005'],
+            ['nama' => 'Kopi Arabika Getas', 'kategori' => 'Oleh-Oleh', 'harga' => 65000, 'stock' => 25, 'sku' => 'UMKM-005', 'deskripsi' => 'Kopi arabika premium 200g.', 'gambar' => 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345007'],
+            ['nama' => 'Sirup Jahe Madu Bu Endang', 'kategori' => 'Oleh-Oleh', 'harga' => 30000, 'stock' => 30, 'sku' => 'UMKM-006', 'deskripsi' => 'Sirup jahe madu sehat.', 'gambar' => 'https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?w=400&h=300&fit=crop&auto=format', 'no_wa_penjual' => '62812345008'],
         ];
         foreach ($umkmItems as $u) {
-            UmkmProduct::create(array_merge($u, ['created_by' => $superadmin->id]));
+            UmkmProduct::updateOrCreate(['sku' => $u['sku']], array_merge($u, ['created_by' => $superadmin->id]));
         }
 
         // Budaya
@@ -172,12 +237,6 @@ class DatabaseSeeder extends Seeder
             BudayaSchedule::create(['budaya_id' => $sanggar->id, 'nama_acara' => 'Pentas Seni Malam Jumat', 'hari' => 'Setiap Jumat malam', 'jam' => '19.00–21.00 WIB', 'deskripsi' => 'Pentas seni rutin di Dusun Sanggar.']);
         }
 
-        // Village Profile
-        VillageProfile::create(['tipe' => 'sejarah', 'judul' => 'Sejarah Desa Getas', 'konten' => 'Desa Getas di Kecamatan Singorojo, Kabupaten Kendal berdiri sejak sekitar tahun 1850. Desa ini dianugerahi keindahan Sungai Blukar yang mengalir jernih, bentangan persawahan organik yang subur, dan pesona alam yang asri. Dengan gotong royong warga, wisata tubing Sungai Blukar di Desa Getas telah berkembang pesat dan berhasil meraih penghargaan Desa Wisata Terbaik tingkat Kabupaten Kendal pada tahun 2025.', 'urutan' => 1, 'created_by' => $superadmin->id]);
-        VillageProfile::create(['tipe' => 'visi', 'judul' => 'Visi Desa', 'konten' => '"Desa Getas Maju, Mandiri, dan Sejahtera Berbasis Kearifan Lokal dan Teknologi Digital"', 'urutan' => 2, 'created_by' => $superadmin->id]);
-        VillageProfile::create(['tipe' => 'misi', 'judul' => 'Misi Desa', 'konten' => "1. Meningkatkan infrastruktur dan kebersihan area pariwisata alam.\n2. Mengoptimalkan potensi beras organik dan produk anyaman bambu khas warga.\n3. Menghadirkan pelayanan administrasi publik yang cepat berbasis teknologi digital.", 'urutan' => 3, 'created_by' => $superadmin->id]);
-        VillageProfile::create(['tipe' => 'pemerintahan', 'judul' => 'Perangkat Desa', 'konten' => 'Kepala Desa: Suyitno, S.Pd.\nSekretaris: Supartini\nKasi Layanan: Dwi Lestari', 'urutan' => 4, 'created_by' => $superadmin->id]);
-
         // Village Stats
         $stats = [
             ['label' => 'Total Penduduk', 'nilai' => '4.287', 'satuan' => 'jiwa', 'icon' => 'Users', 'urutan' => 1],
@@ -190,9 +249,110 @@ class DatabaseSeeder extends Seeder
             VillageStat::create($s);
         }
 
+
+        // Bookings (contoh berbagai status)
+        $bookingData = [
+            ['nama_lengkap' => 'Budi Santoso', 'no_whatsapp' => '62812345678', 'alamat' => 'Semarang', 'kontak_darurat_nama' => 'Siti', 'kontak_darurat_telp' => '62811111111', 'paket' => $genta, 'tanggal' => now()->subDays(5)->toDateString(), 'sesi' => 'Pagi', 'jumlah_peserta' => 8, 'status' => Booking::STATUS_CONFIRMED],
+            ['nama_lengkap' => 'Siti Nurhaliza', 'no_whatsapp' => '62821234567', 'alamat' => 'Kendal', 'kontak_darurat_nama' => 'Ahmad', 'kontak_darurat_telp' => '62822222222', 'paket' => $genta, 'tanggal' => now()->subDays(3)->toDateString(), 'sesi' => 'Siang', 'jumlah_peserta' => 5, 'status' => Booking::STATUS_CONFIRMED],
+            ['nama_lengkap' => 'Ahmad Rizki', 'no_whatsapp' => '62856473829', 'alamat' => 'Pekalongan', 'kontak_darurat_nama' => 'Dewi', 'kontak_darurat_telp' => '62833333333', 'paket' => $gempi, 'tanggal' => now()->subDays(1)->toDateString(), 'sesi' => 'Pagi', 'jumlah_peserta' => 5, 'status' => Booking::STATUS_CONFIRMED],
+            ['nama_lengkap' => 'Dewi Sartika', 'no_whatsapp' => '6282328753061', 'alamat' => 'Jakarta', 'kontak_darurat_nama' => 'Rudi', 'kontak_darurat_telp' => '62844444444', 'paket' => $buddy, 'tanggal' => now()->addDays(2)->toDateString(), 'sesi' => 'Sore', 'jumlah_peserta' => 2, 'status' => Booking::STATUS_PENDING_VERIFY],
+            ['nama_lengkap' => 'Rudi Hartono', 'no_whatsapp' => '62812345679', 'alamat' => 'Bandung', 'kontak_darurat_nama' => 'Ani', 'kontak_darurat_telp' => '62855555555', 'paket' => $gempi, 'tanggal' => now()->addDays(3)->toDateString(), 'sesi' => 'Siang', 'jumlah_peserta' => 6, 'status' => Booking::STATUS_PENDING_VERIFY],
+            ['nama_lengkap' => 'Ani Rahmawati', 'no_whatsapp' => '62877778888', 'alamat' => 'Yogyakarta', 'kontak_darurat_nama' => 'Tono', 'kontak_darurat_telp' => '62866666666', 'paket' => $genta, 'tanggal' => now()->addDays(5)->toDateString(), 'sesi' => 'Pagi', 'jumlah_peserta' => 5, 'status' => Booking::STATUS_PENDING_PAYMENT],
+            ['nama_lengkap' => 'Lina Marlina', 'no_whatsapp' => '62811122233', 'alamat' => 'Cirebon', 'kontak_darurat_nama' => 'Bambang', 'kontak_darurat_telp' => '62877777777', 'paket' => $family, 'tanggal' => now()->addDays(10)->toDateString(), 'sesi' => 'Siang', 'jumlah_peserta' => 4, 'status' => Booking::STATUS_REJECTED],
+            ['nama_lengkap' => 'Rina Susanti', 'no_whatsapp' => '62866778899', 'alamat' => 'Magelang', 'kontak_darurat_nama' => 'Joko', 'kontak_darurat_telp' => '62888888888', 'paket' => $solo, 'tanggal' => now()->addDays(14)->toDateString(), 'sesi' => 'Pagi', 'jumlah_peserta' => 1, 'status' => Booking::STATUS_PENDING_PAYMENT],
+        ];
+        foreach ($bookingData as $b) {
+            $paket = $b['paket'];
+            $total = $paket->hitungTotalHarga($b['jumlah_peserta'])['total'];
+            $addOnItems = match ($b['nama_lengkap']) {
+                'Dewi Sartika' => [['add_on' => $makanSiang, 'qty' => $b['jumlah_peserta']]],
+                'Ahmad Rizki' => [['add_on' => $makanSiang, 'qty' => $b['jumlah_peserta']]],
+                default => [],
+            };
+            foreach ($addOnItems as $item) {
+                $total += (float) $item['add_on']->harga * $item['qty'];
+            }
+            $booking = Booking::create([
+                'booking_code' => Booking::generateBookingCode(),
+                'nama_lengkap' => $b['nama_lengkap'],
+                'no_whatsapp' => $b['no_whatsapp'],
+                'email' => strtolower(str_replace(' ', '', $b['nama_lengkap'])) . '@example.com',
+                'alamat' => $b['alamat'],
+                'kontak_darurat_nama' => $b['kontak_darurat_nama'],
+                'kontak_darurat_telp' => $b['kontak_darurat_telp'],
+                'jumlah_peserta' => $b['jumlah_peserta'],
+                'tanggal_kunjungan' => $b['tanggal'],
+                'paket_wisata_id' => $paket->id,
+                'sesi' => $b['sesi'],
+                'total_harga' => $total,
+                'status' => $b['status'],
+                'rejected_reason' => $b['status'] === Booking::STATUS_REJECTED ? 'Bukti tidak jelas/buram' : null,
+                'created_by' => $superadmin->id,
+            ]);
+
+            foreach ($addOnItems as $item) {
+                $booking->addOns()->attach($item['add_on']->id, [
+                    'qty' => $item['qty'],
+                    'harga_satuan' => $item['add_on']->harga,
+                    'subtotal' => (float) $item['add_on']->harga * $item['qty'],
+                ]);
+            }
+
+            BookingLog::create([
+                'booking_id' => $booking->id,
+                'admin_id' => $b['status'] === Booking::STATUS_CONFIRMED ? $superadmin->id : null,
+                'action' => strtolower(str_replace('_', ' ', $b['status'])),
+                'detail' => 'Seed data contoh.',
+                'created_at' => now(),
+            ]);
+        }
+
         // Settings
-        Setting::create(['key' => 'wa_admin', 'value' => '6281234567890', 'deskripsi' => 'Nomor WhatsApp admin']);
-        Setting::create(['key' => 'nama_desa', 'value' => 'Desa Getas', 'deskripsi' => 'Nama desa']);
-        Setting::create(['key' => 'alamat_desa', 'value' => 'Jl. Raya Getas No. 1, Kec. Singorojo, Kab. Kendal 51382', 'deskripsi' => 'Alamat desa']);
+        $settings = [
+            ['key' => 'wa_admin', 'value' => '6287825520140', 'deskripsi' => 'Nomor WhatsApp admin'],
+            ['key' => 'nama_desa', 'value' => 'Desa Getas', 'deskripsi' => 'Nama desa'],
+            ['key' => 'alamat_desa', 'value' => 'Jl. Raya Getas No. 1, Kec. Singorojo, Kab. Kendal 51382', 'deskripsi' => 'Alamat desa'],
+            ['key' => 'fonnte_token', 'value' => 'KM65J2AcX5jekDGYqRFG', 'deskripsi' => 'Token API Fonnte'],
+            ['key' => 'rekening_bank', 'value' => 'BNI', 'deskripsi' => 'Nama bank untuk pembayaran'],
+            ['key' => 'rekening_no', 'value' => '123456789', 'deskripsi' => 'Nomor rekening untuk pembayaran'],
+            ['key' => 'rekening_atas_nama', 'value' => 'Desa Getas', 'deskripsi' => 'Nama pemilik rekening'],
+            ['key' => 'qris_image', 'value' => null, 'deskripsi' => 'URL gambar QRIS (opsional, alternatif transfer)'],
+            ['key' => 'ar_url', 'value' => 'https://feby-akliji23.github.io/AR-BETA_V01/', 'deskripsi' => 'URL aplikasi AR'],
+            ['key' => 'check_in_time', 'value' => '13.00 WIB', 'deskripsi' => 'Jam check-in (aturan booking)'],
+            ['key' => 'check_out_time', 'value' => '11.00 WIB', 'deskripsi' => 'Jam check-out (aturan booking)'],
+            ['key' => 'cancel_policy', 'value' => 'Pembatalan/reschedule maks. 8 jam sebelum kedatangan', 'deskripsi' => 'Kebijakan pembatalan'],
+            ['key' => 'night_curfew', 'value' => 'Jam malam mulai 22.00 WIB', 'deskripsi' => 'Aturan jam malam'],
+            ['key' => 'fe_url', 'value' => 'http://localhost:5173', 'deskripsi' => 'URL frontend untuk link upload bukti di WA'],
+            ['key' => 'email_desa', 'value' => 'desagetas@kendalkab.go.id', 'deskripsi' => 'Email desa'],
+            ['key' => 'jam_pelayanan', 'value' => 'Senin–Jumat: 08.00–15.00 WIB', 'deskripsi' => 'Jam pelayanan'],
+            ['key' => 'sosmed_fb', 'value' => 'https://facebook.com/desagetas', 'deskripsi' => 'URL Facebook desa'],
+            ['key' => 'sosmed_ig', 'value' => 'https://instagram.com/desagetas', 'deskripsi' => 'URL Instagram desa'],
+            ['key' => 'sosmed_yt', 'value' => 'https://youtube.com/@desagetas', 'deskripsi' => 'URL YouTube desa'],
+            ['key' => 'sosmed_web', 'value' => 'https://desagetas.id', 'deskripsi' => 'URL Website desa'],
+        ];
+        foreach ($settings as $s) {
+            Setting::firstOrCreate(['key' => $s['key']], $s);
+        }
+
+        // Booking Sessions — Master acuan harian (Global untuk semua paket)
+        $masterSessions = [
+            ['sesi' => 'Pagi',  'jam_mulai' => '08:00', 'jam_selesai' => '11:00', 'kuota' => 30],
+            ['sesi' => 'Siang', 'jam_mulai' => '11:00', 'jam_selesai' => '14:00', 'kuota' => 30],
+            ['sesi' => 'Sore',  'jam_mulai' => '14:00', 'jam_selesai' => '16:00', 'kuota' => 30],
+        ];
+
+        foreach ($masterSessions as $tpl) {
+            BookingSession::create([
+                'sesi'        => $tpl['sesi'],
+                'jam_mulai'   => $tpl['jam_mulai'],
+                'jam_selesai' => $tpl['jam_selesai'],
+                'kuota'       => $tpl['kuota'],
+                'is_active'   => true,
+                'created_by'  => $superadmin->id,
+            ]);
+        }
+
+        // POS Seeder
+        $this->call(PosSeeder::class);
     }
 }

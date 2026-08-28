@@ -49,14 +49,15 @@
                 <tbody>
                     @foreach($recent_bookings as $booking)
                     <tr class="border-b border-gray-100">
-                        <td class="py-3 font-mono text-xs">{{ $booking->kode_booking }}</td>
-                        <td class="py-3">{{ $booking->nama_pemesan }}</td>
-                        <td class="py-3">{{ $booking->package->nama ?? '-' }}</td>
-                        <td class="py-3">{{ $booking->tanggal }}</td>
+                        <td class="py-3 font-mono text-xs">{{ $booking->booking_code }}</td>
+                        <td class="py-3">{{ $booking->nama_lengkap }}</td>
+                        <td class="py-3">{{ $booking->paketWisata->nama ?? '-' }}</td>
+                        <td class="py-3">{{ $booking->tanggal_kunjungan->format('d-m-Y') }} ({{ $booking->sesi }})</td>
                         <td class="py-3">
                             <span class="px-2 py-1 text-xs rounded-full 
-                                @if($booking->status === 'confirmed') bg-green-100 text-green-700
-                                @elseif($booking->status === 'cancelled') bg-red-100 text-red-700
+                                @if($booking->status === 'CONFIRMED') bg-green-100 text-green-700
+                                @elseif($booking->status === 'PENDING_VERIFY') bg-orange-100 text-orange-700
+                                @elseif($booking->status === 'REJECTED' || $booking->status === 'CANCELLED') bg-red-100 text-red-700
                                 @else bg-yellow-100 text-yellow-700 @endif">
                                 {{ $booking->status }}
                             </span>

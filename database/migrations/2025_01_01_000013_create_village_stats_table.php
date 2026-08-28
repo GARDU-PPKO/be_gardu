@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('village_stats', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('label', 200);
             $table->string('nilai', 50);
             $table->string('satuan', 50)->nullable();
@@ -17,6 +17,7 @@ return new class extends Migration
             $table->integer('urutan')->default(0);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+            $table->index('urutan');
         });
     }
 

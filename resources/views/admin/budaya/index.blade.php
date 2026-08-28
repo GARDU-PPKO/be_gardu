@@ -3,12 +3,13 @@
 
 @section('content')
 <div class="space-y-6">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <h2 class="text-2xl font-bold text-gray-800">Budaya</h2>
         <a href="{{ route('admin.budaya.create') }}" class="px-4 py-2 bg-emerald-700 text-white rounded-lg text-sm hover:bg-emerald-800 transition">+ Tambah Budaya</a>
     </div>
 
     <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead>
                 <tr class="text-left text-gray-500 border-b bg-gray-50">
@@ -31,10 +32,10 @@
                         </span>
                     </td>
                     <td class="p-4 flex gap-2">
-                        <a href="{{ route('admin.budaya.edit', $budaya->id) }}" class="text-blue-600 hover:text-blue-800 text-xs">Edit</a>
+                        <a href="{{ route('admin.budaya.edit', $budaya->id) }}" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700 transition">Edit</a>
                         <form method="POST" action="{{ route('admin.budaya.destroy', $budaya->id) }}" onsubmit="return confirm('Yakin hapus?')">
                             @csrf @method('DELETE')
-                            <button type="submit" class="text-red-600 hover:text-red-800 text-xs">Hapus</button>
+                            <button type="submit" class="px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs hover:bg-red-700 transition">Hapus</button>
                         </form>
                     </td>
                 </tr>
@@ -43,6 +44,7 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 @endsection

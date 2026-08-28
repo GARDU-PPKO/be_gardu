@@ -16,7 +16,7 @@
         </ol>
     </div>
 
-    <form method="POST" action="{{ route('admin.bookings.parse-text') }}" class="bg-white rounded-xl shadow-sm p-6 space-y-4">
+    <form method="POST" action="{{ route('admin.bookings.parse-text') }}" enctype="multipart/form-data" class="bg-white rounded-xl shadow-sm p-6 space-y-4">
         @csrf
 
         <div>
@@ -26,8 +26,10 @@
         </div>
 
         <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">URL Bukti Bayar (opsional)</label>
-            <input type="text" name="bukti_bayar" value="{{ old('bukti_bayar') }}" placeholder="https://example.com/bukti.jpg" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Upload Bukti Bayar</label>
+            <input type="file" name="bukti_bayar" accept="image/jpeg,image/png,image/jpg" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+            <p class="text-xs text-gray-400 mt-1">Format: JPG/PNG. Maks 5MB. Gambar akan dikompres otomatis.</p>
+            @error('bukti_bayar') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
         </div>
 
         @if(session('parsed_data'))

@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -11,11 +10,10 @@ class BookingSession extends Model
     protected $table = 'booking_sessions';
 
     protected $fillable = [
-        'package_id',
-        'tanggal',
         'sesi',
+        'jam_mulai',
+        'jam_selesai',
         'kuota',
-        'terisi',
         'is_active',
         'created_by',
     ];
@@ -23,13 +21,38 @@ class BookingSession extends Model
     protected function casts(): array
     {
         return [
-            'tanggal' => 'date',
+            'is_active' => 'boolean',
+            'kuota' => 'integer',
         ];
+    }
+
+    /**
+     * Hitung jumlah peserta yang sudah booking pada sesi ini untuk tanggal tertentu.
+     * Hanya booking berstatus CONFIRMED yang mengurangi stok hari itu.
+     */
+    public function terisiPadaTanggal(string $tanggal): int
+    {
+        return (int) Booking::where('sesi', $this->sesi)
+            ->whereDate('tanggal_kunjungan', $tanggal)
+            ->where('status', Booking::STATUS_CONFIRMED)
+            ->sum('jumlah_peserta');
+    }
+
+    /**
+     * Sisa kuota pada tanggal tertentu. Mengembalikan null jika unlimited.
+     */
+    public function sisaPadaTanggal(string $tanggal): ?int
+    {
+        if ($this->kuota === null) {
+            return null; // Unlimited
+        }
+
+        return max(0, (int) $this->kuota - $this->terisiPadaTanggal($tanggal));
     }
 
     public function package(): BelongsTo
     {
-        return $this->belongsTo(TourPackage::class, 'package_id');
+        return $this->paket();
     }
 
     public function createdBy(): BelongsTo

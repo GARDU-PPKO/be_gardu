@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('umkm_products', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('nama', 200);
             $table->enum('kategori', ['Makanan', 'Kerajinan', 'Pertanian', 'Oleh-Oleh']);
             $table->decimal('harga', 12, 2);
@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('gambar', 255);
             $table->string('no_wa_penjual', 20);
             $table->boolean('is_active')->default(true);
-            $table->foreignId('created_by')->constrained('users');
+            $table->foreignUuid('created_by')->constrained('users');
             $table->timestamps();
         });
     }

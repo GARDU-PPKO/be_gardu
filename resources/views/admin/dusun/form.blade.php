@@ -9,11 +9,11 @@
     </div>
 
     {{-- Main Form untuk data dusun --}}
-    <form method="POST" action="{{ $dusun ? route('admin.dusun.update', $dusun->id) : route('admin.dusun.store') }}" class="bg-white rounded-xl shadow-sm p-6 space-y-4">
+    <form method="POST" action="{{ $dusun ? route('admin.dusun.update', $dusun->id) : route('admin.dusun.store') }}" enctype="multipart/form-data" class="bg-white rounded-xl shadow-sm p-6 space-y-4">
         @csrf
         @if($dusun) @method('PUT') @endif
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Nama *</label>
                 <input type="text" name="nama" value="{{ old('nama', $dusun->nama ?? '') }}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
@@ -40,13 +40,19 @@
                 @error('luas_wilayah') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Hero Image URL *</label>
-                <input type="text" name="hero_img" value="{{ old('hero_img', $dusun->hero_img ?? '') }}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Hero Image {{ $dusun ? '' : '*' }}</label>
+                @if(!empty($dusun->hero_img))
+                    <img src="{{ $dusun->hero_img }}" alt="Hero image saat ini" class="w-full h-32 object-cover rounded-lg border border-gray-200 mb-2">
+                @endif
+                <input type="file" name="hero_img" accept="image/*" {{ $dusun ? '' : 'required' }} class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
                 @error('hero_img') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Thumbnail URL *</label>
-                <input type="text" name="thumbnail" value="{{ old('thumbnail', $dusun->thumbnail ?? '') }}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Thumbnail {{ $dusun ? '' : '*' }}</label>
+                @if(!empty($dusun->thumbnail))
+                    <img src="{{ $dusun->thumbnail }}" alt="Thumbnail saat ini" class="w-full h-32 object-cover rounded-lg border border-gray-200 mb-2">
+                @endif
+                <input type="file" name="thumbnail" accept="image/*" {{ $dusun ? '' : 'required' }} class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
                 @error('thumbnail') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
             <div class="flex items-center gap-2 pt-6">
@@ -94,9 +100,12 @@
         <p class="text-gray-400 text-sm">Belum ada galeri</p>
         @endif
 
-        <form method="POST" action="{{ route('admin.dusun.galleries.store', $dusun->id) }}" class="flex gap-2">
+        <form method="POST" action="{{ route('admin.dusun.galleries.store', $dusun->id) }}" enctype="multipart/form-data" class="flex gap-2 items-end">
             @csrf
-            <input type="text" name="image_url" placeholder="URL Gambar" required class="flex-1 px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+            <div class="flex-1">
+                <input type="file" name="image_url" accept="image/*" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                @error('image_url') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
+            </div>
             <button type="submit" class="px-4 py-2 bg-emerald-700 text-white rounded-lg text-sm hover:bg-emerald-800 transition">Tambah</button>
         </form>
     </div>

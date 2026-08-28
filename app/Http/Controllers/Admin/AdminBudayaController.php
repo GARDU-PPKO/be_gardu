@@ -7,6 +7,7 @@ use App\Models\Budaya;
 use App\Models\BudayaSchedule;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class AdminBudayaController extends Controller
@@ -27,11 +28,12 @@ class AdminBudayaController extends Controller
             'judul' => 'required|string|max:200',
             'kategori' => 'required|string|max:100',
             'deskripsi' => 'required|string',
-            'gambar' => 'required|string|max:255',
+            'gambar' => 'required|image|max:2048',
             'span_grid' => 'nullable|integer|min:1',
             'is_active' => 'boolean',
         ]);
 
+        $data['gambar'] = Storage::url($request->file('gambar')->store('budaya', 'public'));
         $data['created_by'] = $request->user()->id;
         Budaya::create($data);
 
@@ -50,10 +52,17 @@ class AdminBudayaController extends Controller
             'judul' => 'required|string|max:200',
             'kategori' => 'required|string|max:100',
             'deskripsi' => 'required|string',
-            'gambar' => 'required|string|max:255',
+            'gambar' => 'nullable|image|max:2048',
             'span_grid' => 'nullable|integer|min:1',
             'is_active' => 'boolean',
         ]);
+
+        if ($request->hasFile('gambar')) {
+            $this->deleteOldImage($budaya->gambar);
+            $data['gambar'] = Storage::url($request->file('gambar')->store('budaya', 'public'));
+        } else {
+            unset($data['gambar']);
+        }
 
         $budaya->update($data);
         return redirect()->route('admin.budaya.index')->with('success', 'Budaya berhasil diupdate');

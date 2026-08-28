@@ -10,22 +10,41 @@ return new class extends Migration
     {
         Schema::create('bookings', function (Blueprint $table) {
             $table->id();
-            $table->string('kode_booking', 20)->unique();
-            $table->string('nama_pemesan', 200);
-            $table->string('no_wa_pemesan', 20);
-            $table->string('email', 200)->nullable();
-            $table->string('kota_asal', 100);
-            $table->text('catatan')->nullable();
-            $table->foreignId('package_id')->constrained('tour_packages');
-            $table->date('tanggal');
+            $table->string('booking_code', 20)->unique();
+            $table->string('nama_lengkap', 100);
+            $table->string('no_whatsapp', 20);
+            $table->string('alamat', 255)->nullable();
+            $table->string('kontak_darurat_nama', 100)->nullable();
+            $table->string('kontak_darurat_telp', 20)->nullable();
+            $table->text('notes')->nullable();
+            $table->integer('jumlah_peserta')->default(1);
+            $table->date('tanggal_kunjungan');
+            $table->foreignId('paket_wisata_id')->constrained('paket_wisata');
             $table->string('sesi', 50);
-            $table->integer('jumlah_peserta');
             $table->decimal('total_harga', 12, 2);
-            $table->enum('status', ['pending', 'confirmed', 'cancelled'])->default('pending');
-            $table->string('bukti_bayar', 255)->nullable();
-            $table->text('raw_wa_text');
-            $table->foreignId('created_by')->constrained('users');
+            $table->string('bukti_pembayaran_path', 255)->nullable();
+            $table->decimal('nominal_transfer', 12, 2)->nullable();
+            $table->string('metode_pembayaran', 50)->nullable();
+            $table->enum('status', [
+                'PENDING_PAYMENT',
+                'PENDING_VERIFY',
+                'CONFIRMED',
+                'REJECTED',
+                'EXPIRED',
+                'COMPLETED',
+                'CANCELLED',
+            ])->default('PENDING_PAYMENT');
+            $table->string('rejected_reason', 255)->nullable();
+            $table->foreignUuid('verified_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('verified_at')->nullable();
+            $table->text('raw_wa_text')->nullable();
+            $table->foreignUuid('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
+            $table->softDeletes();
+
+            $table->index('status');
+            $table->index('tanggal_kunjungan');
+            $table->index('paket_wisata_id');
         });
     }
 
