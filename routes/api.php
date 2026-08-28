@@ -10,6 +10,7 @@ use App\Http\Controllers\Public\SettingController;
 use App\Http\Controllers\Public\TourPackageController;
 use App\Http\Controllers\Public\UmkmProductController;
 use App\Http\Controllers\Public\VillageStatController;
+use App\Http\Controllers\Public\VisitorStatController;
 use App\Http\Controllers\Api\FonnteWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -38,6 +39,9 @@ Route::get('budaya/{id}', [BudayaController::class, 'show']);
 
 Route::get('village-stats', [VillageStatController::class, 'index']);
 Route::get('settings', [SettingController::class, 'index']);
+
+Route::get('visitor-stats', [VisitorStatController::class, 'index']);
+Route::post('visitor-stats/track', [VisitorStatController::class, 'track']);
 
 // Public booking flow (tanpa login)
 Route::get('bookings', [BookingController::class, 'history']);
