@@ -9,9 +9,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('username', 100)->unique()->nullable()->after('id');
-            $table->string('nama', 200)->nullable()->after('name');
-            $table->enum('role', ['superadmin', 'admin'])->default('admin')->after('email');
+            if (!Schema::hasColumn('users', 'username')) {
+                $table->string('username', 100)->unique()->nullable()->after('id');
+            }
+            if (!Schema::hasColumn('users', 'nama')) {
+                $table->string('nama', 200)->nullable()->after('name');
+            }
+            if (!Schema::hasColumn('users', 'role')) {
+                $table->enum('role', ['superadmin', 'admin'])->default('admin')->after('email');
+            }
         });
     }
 

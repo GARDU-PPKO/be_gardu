@@ -8,6 +8,7 @@ use App\Http\Controllers\Public\TourPackageController;
 use App\Http\Controllers\Public\UmkmProductController;
 use App\Http\Controllers\Public\VillageProfileController;
 use App\Http\Controllers\Public\VillageStatController;
+use App\Http\Controllers\Public\VisitorStatController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('dusun', [DusunController::class, 'index']);
@@ -26,3 +27,6 @@ Route::get('budaya/{id}', [BudayaController::class, 'show']);
 Route::get('village-profile', [VillageProfileController::class, 'index']);
 Route::get('village-stats', [VillageStatController::class, 'index']);
 Route::get('settings', [SettingController::class, 'index']);
+
+Route::get('visitor-stats', [VisitorStatController::class, 'index']);
+Route::post('visitor-stats/track', [VisitorStatController::class, 'track']);
