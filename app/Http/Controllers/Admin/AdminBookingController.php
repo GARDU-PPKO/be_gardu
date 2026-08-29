@@ -15,6 +15,10 @@ use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Intervention\Image\Laravel\Facades\Image;
 use OpenSpout\Common\Entity\Row;
+use OpenSpout\Common\Entity\Style\CellAlignment;
+use OpenSpout\Common\Entity\Style\Color;
+use OpenSpout\Common\Entity\Style\Style;
+use OpenSpout\Writer\XLSX\Entity\SheetView;
 use OpenSpout\Writer\XLSX\Writer;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -292,27 +296,73 @@ class AdminBookingController extends Controller
         $writer = new Writer;
         $writer->openToFile($path);
 
-        $writer->addRow(Row::fromValues([
-            'Kode Booking', 'Nama Pemesan', 'No. WA', 'Email', 'Alamat',
-            'Paket', 'Tanggal Kunjungan', 'Sesi', 'Jumlah Peserta', 'Total Harga',
-            'Status', 'Catatan', 'Tanggal Booking',
-        ]));
+        $sheet = $writer->getCurrentSheet();
 
+        // 1. Pembekuan Baris Header (Freeze Header Row 1)
+        $sheet->setSheetView(new SheetView(freezeRow: 2, freezeColumn: 'A'));
+
+        // 2. Atur Lebar Kolom yang Rapi dan Proporsional (Auto-fit Column Widths)
+        $sheet->setColumnWidth(22, 1);  // A: Kode Booking
+        $sheet->setColumnWidth(25, 2);  // B: Nama Pemesan
+        $sheet->setColumnWidth(18, 3);  // C: No. WA
+        $sheet->setColumnWidth(24, 4);  // D: Email
+        $sheet->setColumnWidth(22, 5);  // E: Alamat
+        $sheet->setColumnWidth(25, 6);  // F: Paket Wisata
+        $sheet->setColumnWidth(20, 7);  // G: Tanggal Kunjungan
+        $sheet->setColumnWidth(18, 8);  // H: Sesi
+        $sheet->setColumnWidth(16, 9);  // I: Jumlah Peserta
+        $sheet->setColumnWidth(22, 10); // J: Total Harga (Rp)
+        $sheet->setColumnWidth(20, 11); // K: Status
+        $sheet->setColumnWidth(30, 12); // L: Catatan
+        $sheet->setColumnWidth(22, 13); // M: Tanggal Booking
+
+        // 3. Style Baris Header (Bold, Warna Teks Putih, Background Emerald)
+        $headerStyle = new Style(
+            fontBold: true,
+            fontSize: 11,
+            fontColor: Color::WHITE,
+            fontName: 'Calibri',
+            cellAlignment: CellAlignment::CENTER,
+            backgroundColor: '047857',
+        );
+
+        $writer->addRow(Row::fromValues([
+            'Kode Booking',
+            'Nama Pemesan',
+            'No. WhatsApp',
+            'Email',
+            'Alamat / Kota Asal',
+            'Paket Wisata',
+            'Tanggal Kunjungan',
+            'Sesi Kunjungan',
+            'Jumlah Peserta',
+            'Total Harga (Rp)',
+            'Status',
+            'Catatan',
+            'Tanggal Transaksi',
+        ], $headerStyle));
+
+        // 4. Data Rows dengan Formatting Rapi
         foreach ($bookings as $b) {
+            $statusLabel = strtoupper(str_replace('_', ' ', $b->status));
+            $totalHarga = 'Rp ' . number_format((float) $b->total_harga, 0, ',', '.');
+            $tglKunjungan = $b->tanggal_kunjungan ? $b->tanggal_kunjungan->format('d/m/Y') : '-';
+            $tglBooking = $b->created_at ? $b->created_at->format('d/m/Y H:i') : '-';
+
             $writer->addRow(Row::fromValues([
                 $b->booking_code,
                 $b->nama_lengkap,
                 $b->no_whatsapp,
-                $b->email ?? '',
-                $b->alamat ?? '',
-                $b->paketWisata?->nama ?? '',
-                $b->tanggal_kunjungan ? $b->tanggal_kunjungan->format('Y-m-d') : '',
-                $b->sesi,
-                $b->jumlah_peserta,
-                $b->total_harga,
-                $b->status,
-                $b->notes ?? '',
-                $b->created_at->format('Y-m-d H:i'),
+                $b->email ?: '-',
+                $b->alamat ?: '-',
+                $b->paketWisata?->nama ?: '-',
+                $tglKunjungan,
+                $b->sesi ?: '-',
+                $b->jumlah_peserta . ' Orang',
+                $totalHarga,
+                $statusLabel,
+                $b->notes ?: '-',
+                $tglBooking,
             ]));
         }
 
