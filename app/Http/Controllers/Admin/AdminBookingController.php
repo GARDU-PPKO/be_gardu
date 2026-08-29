@@ -357,13 +357,13 @@ class AdminBookingController extends Controller
             $totalPeserta += $peserta;
             $totalNilaiTransaksi += $harga;
 
-            $status = strtolower($b->status ?? '');
-            if (in_array($status, [Booking::STATUS_CONFIRMED, Booking::STATUS_COMPLETED])) {
+            $status = strtoupper((string) ($b->status ?? ''));
+            if (in_array($status, [Booking::STATUS_CONFIRMED, Booking::STATUS_COMPLETED, 'CONFIRMED', 'COMPLETED'])) {
                 $countConfirmed++;
                 $totalPendapatanConfirmed += $harga;
-            } elseif (str_contains($status, 'pending')) {
+            } elseif (str_contains($status, 'PENDING')) {
                 $countPending++;
-            } elseif (str_contains($status, 'reject') || str_contains($status, 'cancel') || str_contains($status, 'expired')) {
+            } elseif (in_array($status, [Booking::STATUS_REJECTED, Booking::STATUS_CANCELLED, Booking::STATUS_EXPIRED, 'REJECTED', 'CANCELLED', 'EXPIRED']) || str_contains($status, 'REJECT') || str_contains($status, 'CANCEL')) {
                 $countCancelledOrRejected++;
             }
 
