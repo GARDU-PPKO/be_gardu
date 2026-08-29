@@ -321,32 +321,67 @@ class AdminBookingController extends Controller
         $sheet->setColumnWidth(30, 13); // M: Catatan
         $sheet->setColumnWidth(22, 14); // N: Tanggal Transaksi
 
-        // 3. Style Definitions
-        $titleStyle = new Style(fontBold: true, fontSize: 14, fontColor: '047857', fontName: 'Calibri');
-        $subtitleStyle = new Style(fontItalic: true, fontSize: 10, fontColor: '475569', fontName: 'Calibri');
-        
-        $sectionBannerStyle = new Style(
-            fontBold: true,
-            fontSize: 11,
-            fontColor: Color::WHITE,
-            fontName: 'Calibri',
-            backgroundColor: '065F46' // Dark Emerald
-        );
+        // 3. Style Definitions (Menggunakan fluent methods agar kompatibel di semua versi OpenSpout/PHP)
+        $titleStyle = (new Style())
+            ->withFontBold(true)
+            ->withFontSize(14)
+            ->withFontColor('047857')
+            ->withFontName('Calibri');
 
-        $headerStyle = new Style(
-            fontBold: true,
-            fontSize: 11,
-            fontColor: Color::WHITE,
-            fontName: 'Calibri',
-            cellAlignment: CellAlignment::CENTER,
-            backgroundColor: '047857' // Emerald-700
-        );
+        $subtitleStyle = (new Style())
+            ->withFontItalic(true)
+            ->withFontSize(10)
+            ->withFontColor('475569')
+            ->withFontName('Calibri');
 
-        $totalRowStyle = new Style(fontBold: true, fontSize: 11, fontColor: '0F172A', fontName: 'Calibri', backgroundColor: 'E2E8F0');
-        $summaryTitleStyle = new Style(fontBold: true, fontSize: 11, fontColor: Color::WHITE, fontName: 'Calibri', cellAlignment: CellAlignment::CENTER, backgroundColor: '047857');
-        $summaryHeaderSubStyle = new Style(fontBold: true, fontSize: 10, fontColor: '0F172A', fontName: 'Calibri', cellAlignment: CellAlignment::CENTER, backgroundColor: 'D1FAE5');
-        $summaryItemStyle = new Style(fontSize: 10, fontColor: '1E293B', fontName: 'Calibri');
-        $summaryItemBoldStyle = new Style(fontBold: true, fontSize: 10, fontColor: '0F172A', fontName: 'Calibri');
+        $sectionBannerStyle = (new Style())
+            ->withFontBold(true)
+            ->withFontSize(11)
+            ->withFontColor(Color::WHITE)
+            ->withFontName('Calibri')
+            ->withBackgroundColor('065F46'); // Dark Emerald
+
+        $headerStyle = (new Style())
+            ->withFontBold(true)
+            ->withFontSize(11)
+            ->withFontColor(Color::WHITE)
+            ->withFontName('Calibri')
+            ->withCellAlignment(CellAlignment::CENTER)
+            ->withBackgroundColor('047857'); // Emerald-700
+
+        $totalRowStyle = (new Style())
+            ->withFontBold(true)
+            ->withFontSize(11)
+            ->withFontColor('0F172A')
+            ->withFontName('Calibri')
+            ->withBackgroundColor('E2E8F0');
+
+        $summaryTitleStyle = (new Style())
+            ->withFontBold(true)
+            ->withFontSize(11)
+            ->withFontColor(Color::WHITE)
+            ->withFontName('Calibri')
+            ->withCellAlignment(CellAlignment::CENTER)
+            ->withBackgroundColor('047857');
+
+        $summaryHeaderSubStyle = (new Style())
+            ->withFontBold(true)
+            ->withFontSize(10)
+            ->withFontColor('0F172A')
+            ->withFontName('Calibri')
+            ->withCellAlignment(CellAlignment::CENTER)
+            ->withBackgroundColor('D1FAE5');
+
+        $summaryItemStyle = (new Style())
+            ->withFontSize(10)
+            ->withFontColor('1E293B')
+            ->withFontName('Calibri');
+
+        $summaryItemBoldStyle = (new Style())
+            ->withFontBold(true)
+            ->withFontSize(10)
+            ->withFontColor('0F172A')
+            ->withFontName('Calibri');
 
         // Helper format baris booking
         $formatBookingRow = function ($b) {
