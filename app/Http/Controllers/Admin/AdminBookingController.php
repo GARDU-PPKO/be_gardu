@@ -442,8 +442,32 @@ class AdminBookingController extends Controller
                 $countCancelledOrRejected++;
             }
 
+            // Format No. WA agar Excel mengenalinya sebagai nomor kontak internasional (hilang tanda segitiga hijau)
+            $rawWa = preg_replace('/[^\d]/', '', (string) $b->no_whatsapp);
+            if (str_starts_with($rawWa, '0')) {
+                $formattedWa = '+62 ' . substr($rawWa, 1);
+            } elseif (str_starts_with($rawWa, '62')) {
+                $formattedWa = '+62 ' . substr($rawWa, 2);
+            } elseif ($rawWa) {
+                $formattedWa = '+' . $rawWa;
+            } else {
+                $formattedWa = '-';
+            }
+
             $writer->addRow(Row::fromValues([
-                $b->booking_code, $b->nama_lengkap, $b->no_whatsapp, $b->email ?: '-', $b->alamat ?: '-', $b->paketWisata?->nama ?: '-', $b->tanggal_kunjungan?->format('d/m/Y') ?: '-', $b->sesi ?: '-', $peserta . ' Orang', 'Rp ' . number_format($harga, 0, ',', '.'), strtoupper(str_replace('_', ' ', $b->status)), $b->notes ?: '-', $b->created_at?->format('d/m/Y H:i') ?: '-',
+                $b->booking_code,
+                $b->nama_lengkap,
+                $formattedWa,
+                $b->email ?: '-',
+                $b->alamat ?: '-',
+                $b->paketWisata?->nama ?: '-',
+                $b->tanggal_kunjungan?->format('d/m/Y') ?: '-',
+                $b->sesi ?: '-',
+                $peserta . ' Orang',
+                'Rp ' . number_format($harga, 0, ',', '.'),
+                strtoupper(str_replace('_', ' ', $b->status)),
+                $b->notes ?: '-',
+                $b->created_at?->format('d/m/Y H:i') ?: '-',
             ]));
         }
 
