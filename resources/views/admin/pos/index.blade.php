@@ -278,7 +278,7 @@
             </div>
             <div>
                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">No. WhatsApp</label>
-                <input type="text" id="visitorPhoneInput" placeholder="08xxxxxxxxxx" inputmode="numeric" autocomplete="off"
+                <input type="text" id="visitorPhoneInput" placeholder="08xxxxxxxxxx" inputmode="numeric" maxlength="15" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 15)" autocomplete="off"
                        class="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-600 focus:outline-none transition">
             </div>
             <div class="grid grid-cols-2 gap-2">
