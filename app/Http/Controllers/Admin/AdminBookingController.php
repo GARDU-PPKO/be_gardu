@@ -326,7 +326,7 @@ class AdminBookingController extends Controller
             backgroundColor: '047857',
         );
 
-        $writer->addRow(Row::fromValues([
+        $writer->addRow(Row::fromValuesWithStyle([
             'Kode Booking',
             'Nama Pemesan',
             'No. WhatsApp',
