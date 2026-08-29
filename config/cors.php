@@ -1,9 +1,9 @@
 <?php
 
 return [
-    'paths' => ['api/*'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie'],
     'allowed_methods' => ['*'],
-    'allowed_origins' => [env('APP_URL', 'http://localhost'), 'http://localhost:5173', 'http://localhost:5174', 'http://127.0.0.1:5173', 'https://fe-gardu.vercel.app', 'https://gardu.site'],
+    'allowed_origins' => ['*'],
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
     'exposed_headers' => [],
