@@ -127,16 +127,24 @@ class HomeController extends Controller
             ? (float) ($tiers->first()?->harga_per_orang ?? 0)
             : (float) ($p->harga_paket ?? 0);
 
+        $tierList = $tiers->map(fn ($t) => [
+            'id' => $t->id,
+            'min_peserta' => (int) $t->min_peserta,
+            'harga_per_orang' => (float) $t->harga_per_orang,
+        ])->values()->all();
+
         return [
             'id' => $p->id,
             'nama' => $p->nama,
             'deskripsi' => $p->deskripsi,
+            'tipe_harga' => $p->tipe_harga,
             'harga' => $harga,
             'satuan' => $isPerOrang ? 'orang' : 'paket',
+            'kapasitas_per_unit' => $p->kapasitas_per_unit,
             'tag' => $p->tag,
             'durasi' => $p->durasi,
             'min_participants' => $minParticipants,
-            'max_participants' => $isPerOrang ? ($tiers->last()?->min_peserta ?? $minParticipants) : ($p->kapasitas_per_unit ?? $minParticipants),
+            'max_participants' => $isPerOrang ? null : $p->kapasitas_per_unit,
             'gambar' => $p->gambar,
             'is_active' => (bool) $p->aktif,
             'includes' => collect($p->fasilitas ?? [])
@@ -148,6 +156,7 @@ class HomeController extends Controller
                     'urutan' => $i + 1,
                 ])
                 ->values(),
+            'tiers' => $tierList,
         ];
     }
 }
