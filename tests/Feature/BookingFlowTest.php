@@ -291,4 +291,15 @@ class BookingFlowTest extends TestCase
             ->assertJsonPath('data.payment_info.qris_image', '/storage/qris.png')
             ->assertJsonPath('data.payment_info.batas_waktu_jam', 24);
     }
+
+    public function test_admin_dapat_export_booking_ke_excel(): void
+    {
+        $user = \App\Models\User::factory()->create();
+        $this->createBooking();
+
+        $response = $this->actingAs($user)->get(route('admin.bookings.export'));
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
 }
