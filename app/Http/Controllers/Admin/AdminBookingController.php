@@ -368,16 +368,17 @@ class AdminBookingController extends Controller
 
     public function export()
     {
-        $bookings = Booking::with('paketWisata:id,nama')->orderBy('created_at', 'desc')->get();
+        $bookings = Booking::with(['paketWisata:id,nama', 'addOns'])->orderBy('created_at', 'desc')->get();
 
         $dataCount = $bookings->count();
         $totalRowIndex = 5 + $dataCount;
         $summaryTitleRowIndex = $totalRowIndex + 3;
 
         $options = new Options();
+        // Merge judul banner & total & header ringkasan
         $options->mergeCells(0, 1, 6, 1);
         $options->mergeCells(0, 2, 6, 2);
-        $options->mergeCells(0, $totalRowIndex, 7, $totalRowIndex);
+        $options->mergeCells(0, $totalRowIndex, 8, $totalRowIndex);
         $options->mergeCells(0, $summaryTitleRowIndex, 2, $summaryTitleRowIndex);
 
         $path = tempnam(sys_get_temp_dir(), 'bookings') . '.xlsx';
@@ -386,22 +387,26 @@ class AdminBookingController extends Controller
 
         $sheet = $writer->getCurrentSheet();
 
+        // 1. Pembekuan Baris (Freeze Rows 1-4 sehingga Judul & Header Tabel Tetap di Atas)
         $sheet->setSheetView(new SheetView(freezeRow: 5, freezeColumn: 'A'));
 
-        $sheet->setColumnWidth(30, 1);
-        $sheet->setColumnWidth(26, 2);
-        $sheet->setColumnWidth(38, 3);
-        $sheet->setColumnWidth(26, 4);
-        $sheet->setColumnWidth(22, 5);
-        $sheet->setColumnWidth(26, 6);
-        $sheet->setColumnWidth(20, 7);
-        $sheet->setColumnWidth(18, 8);
-        $sheet->setColumnWidth(16, 9);
-        $sheet->setColumnWidth(22, 10);
-        $sheet->setColumnWidth(20, 11);
-        $sheet->setColumnWidth(30, 12);
-        $sheet->setColumnWidth(22, 13);
+        // 2. Atur Lebar Kolom yang Rapi dan Proporsional
+        $sheet->setColumnWidth(30, 1);  // A: Kode Booking / Indikator Ringkasan
+        $sheet->setColumnWidth(26, 2);  // B: Nama Pemesan / Nilai Ringkasan
+        $sheet->setColumnWidth(38, 3);  // C: No. WA / Keterangan Status Ringkasan
+        $sheet->setColumnWidth(26, 4);  // D: Email
+        $sheet->setColumnWidth(22, 5);  // E: Alamat
+        $sheet->setColumnWidth(26, 6);  // F: Paket Wisata
+        $sheet->setColumnWidth(30, 7);  // G: Add-ons / Layanan Tambahan
+        $sheet->setColumnWidth(20, 8);  // H: Tanggal Kunjungan
+        $sheet->setColumnWidth(18, 9);  // I: Sesi
+        $sheet->setColumnWidth(16, 10); // J: Jumlah Peserta
+        $sheet->setColumnWidth(22, 11); // K: Total Harga (Rp)
+        $sheet->setColumnWidth(20, 12); // L: Status
+        $sheet->setColumnWidth(30, 13); // M: Catatan
+        $sheet->setColumnWidth(22, 14); // N: Tanggal Transaksi
 
+        // 3. Style Definitions
         $titleStyle = new Style(fontBold: true, fontSize: 14, fontColor: '047857', fontName: 'Calibri');
         $subtitleStyle = new Style(fontItalic: true, fontSize: 10, fontColor: '475569', fontName: 'Calibri');
         $headerStyle = new Style(fontBold: true, fontSize: 11, fontColor: Color::WHITE, fontName: 'Calibri', cellAlignment: CellAlignment::CENTER, backgroundColor: '047857');
@@ -411,14 +416,30 @@ class AdminBookingController extends Controller
         $summaryItemStyle = new Style(fontSize: 10, fontColor: '1E293B', fontName: 'Calibri');
         $summaryItemBoldStyle = new Style(fontBold: true, fontSize: 10, fontColor: '0F172A', fontName: 'Calibri');
 
+        // 4. Baris Judul & Informasi Laporan (Header Banner Atas)
         $writer->addRow(Row::fromValuesWithStyle(['LAPORAN REKAPITULASI PEMESANAN WISATA - DESA GETAS'], $titleStyle));
         $writer->addRow(Row::fromValuesWithStyle(['Waktu Ekspor: ' . now()->format('d/m/Y H:i') . ' WIB  |  Total Data: ' . $dataCount . ' Transaksi'], $subtitleStyle));
         $writer->addRow(Row::fromValues([]));
 
+        // 5. Header Tabel Utama (Baris 4)
         $writer->addRow(Row::fromValuesWithStyle([
-            'Kode Booking', 'Nama Pemesan', 'No. WhatsApp', 'Email', 'Alamat / Kota Asal', 'Paket Wisata', 'Tanggal Kunjungan', 'Sesi Kunjungan', 'Jumlah Peserta', 'Total Harga (Rp)', 'Status', 'Catatan', 'Tanggal Transaksi',
+            'Kode Booking',
+            'Nama Pemesan',
+            'No. WhatsApp',
+            'Email',
+            'Alamat / Kota Asal',
+            'Paket Wisata',
+            'Add-ons / Layanan Tambahan',
+            'Tanggal Kunjungan',
+            'Sesi Kunjungan',
+            'Jumlah Peserta',
+            'Total Harga (Rp)',
+            'Status',
+            'Catatan',
+            'Tanggal Transaksi',
         ], $headerStyle));
 
+        // 6. Data Rows & Akumulasi Statistik
         $totalPeserta = 0;
         $totalNilaiTransaksi = 0;
         $totalPendapatanConfirmed = 0;
@@ -454,6 +475,11 @@ class AdminBookingController extends Controller
                 $formattedWa = '-';
             }
 
+            // Format Add-ons
+            $addonsText = $b->addOns->isNotEmpty()
+                ? $b->addOns->map(fn ($a) => $a->nama . ($a->pivot?->qty > 1 ? " ({$a->pivot->qty}x)" : ''))->join(', ')
+                : '-';
+
             $writer->addRow(Row::fromValues([
                 $b->booking_code,
                 $b->nama_lengkap,
@@ -461,6 +487,7 @@ class AdminBookingController extends Controller
                 $b->email ?: '-',
                 $b->alamat ?: '-',
                 $b->paketWisata?->nama ?: '-',
+                $addonsText,
                 $b->tanggal_kunjungan?->format('d/m/Y') ?: '-',
                 $b->sesi ?: '-',
                 $peserta . ' Orang',
@@ -471,12 +498,28 @@ class AdminBookingController extends Controller
             ]));
         }
 
+        // 7. Baris Total Tabel
         $writer->addRow(Row::fromValuesWithStyle([
-            'TOTAL KESELURUHAN', '', '', '', '', '', '', '', $totalPeserta . ' Orang', 'Rp ' . number_format($totalNilaiTransaksi, 0, ',', '.'), '', '', '',
+            'TOTAL KESELURUHAN',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            $totalPeserta . ' Orang',
+            'Rp ' . number_format($totalNilaiTransaksi, 0, ',', '.'),
+            '',
+            '',
+            '',
         ], $totalRowStyle));
 
+        // 8. Bagian Tabel Kesimpulan & Ringkasan Laporan
         $writer->addRow(Row::fromValues([]));
         $writer->addRow(Row::fromValues([]));
+
         $writer->addRow(Row::fromValuesWithStyle(['RINGKASAN & KESIMPULAN LAPORAN', '', ''], $summaryTitleStyle));
         $writer->addRow(Row::fromValuesWithStyle(['INDIKATOR / PARAMETER', 'JUMLAH / NILAI', 'KETERANGAN STATUS'], $summaryHeaderSubStyle));
         $writer->addRow(Row::fromValuesWithStyle(['Total Seluruh Pemesanan', $dataCount . ' Transaksi', 'Seluruh data pemesanan yang masuk'], $summaryItemStyle));
