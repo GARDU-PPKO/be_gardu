@@ -321,67 +321,16 @@ class AdminBookingController extends Controller
         $sheet->setColumnWidth(30, 13); // M: Catatan
         $sheet->setColumnWidth(22, 14); // N: Tanggal Transaksi
 
-        // 3. Style Definitions (Menggunakan fluent methods agar kompatibel di semua versi OpenSpout/PHP)
-        $titleStyle = (new Style())
-            ->withFontBold(true)
-            ->withFontSize(14)
-            ->withFontColor('047857')
-            ->withFontName('Calibri');
-
-        $subtitleStyle = (new Style())
-            ->withFontItalic(true)
-            ->withFontSize(10)
-            ->withFontColor('475569')
-            ->withFontName('Calibri');
-
-        $sectionBannerStyle = (new Style())
-            ->withFontBold(true)
-            ->withFontSize(11)
-            ->withFontColor(Color::WHITE)
-            ->withFontName('Calibri')
-            ->withBackgroundColor('065F46'); // Dark Emerald
-
-        $headerStyle = (new Style())
-            ->withFontBold(true)
-            ->withFontSize(11)
-            ->withFontColor(Color::WHITE)
-            ->withFontName('Calibri')
-            ->withCellAlignment(CellAlignment::CENTER)
-            ->withBackgroundColor('047857'); // Emerald-700
-
-        $totalRowStyle = (new Style())
-            ->withFontBold(true)
-            ->withFontSize(11)
-            ->withFontColor('0F172A')
-            ->withFontName('Calibri')
-            ->withBackgroundColor('E2E8F0');
-
-        $summaryTitleStyle = (new Style())
-            ->withFontBold(true)
-            ->withFontSize(11)
-            ->withFontColor(Color::WHITE)
-            ->withFontName('Calibri')
-            ->withCellAlignment(CellAlignment::CENTER)
-            ->withBackgroundColor('047857');
-
-        $summaryHeaderSubStyle = (new Style())
-            ->withFontBold(true)
-            ->withFontSize(10)
-            ->withFontColor('0F172A')
-            ->withFontName('Calibri')
-            ->withCellAlignment(CellAlignment::CENTER)
-            ->withBackgroundColor('D1FAE5');
-
-        $summaryItemStyle = (new Style())
-            ->withFontSize(10)
-            ->withFontColor('1E293B')
-            ->withFontName('Calibri');
-
-        $summaryItemBoldStyle = (new Style())
-            ->withFontBold(true)
-            ->withFontSize(10)
-            ->withFontColor('0F172A')
-            ->withFontName('Calibri');
+        // 3. Style Definitions (Universal helper yang adaptif untuk segala versi OpenSpout di server & local)
+        $titleStyle = $this->makeExportStyle(bold: true, fontSize: 14, fontColor: '047857', fontName: 'Calibri');
+        $subtitleStyle = $this->makeExportStyle(italic: true, fontSize: 10, fontColor: '475569', fontName: 'Calibri');
+        $sectionBannerStyle = $this->makeExportStyle(bold: true, fontSize: 11, fontColor: Color::WHITE, fontName: 'Calibri', backgroundColor: '065F46');
+        $headerStyle = $this->makeExportStyle(bold: true, fontSize: 11, fontColor: Color::WHITE, fontName: 'Calibri', alignment: CellAlignment::CENTER, backgroundColor: '047857');
+        $totalRowStyle = $this->makeExportStyle(bold: true, fontSize: 11, fontColor: '0F172A', fontName: 'Calibri', backgroundColor: 'E2E8F0');
+        $summaryTitleStyle = $this->makeExportStyle(bold: true, fontSize: 11, fontColor: Color::WHITE, fontName: 'Calibri', alignment: CellAlignment::CENTER, backgroundColor: '047857');
+        $summaryHeaderSubStyle = $this->makeExportStyle(bold: true, fontSize: 10, fontColor: '0F172A', fontName: 'Calibri', alignment: CellAlignment::CENTER, backgroundColor: 'D1FAE5');
+        $summaryItemStyle = $this->makeExportStyle(fontSize: 10, fontColor: '1E293B', fontName: 'Calibri');
+        $summaryItemBoldStyle = $this->makeExportStyle(bold: true, fontSize: 10, fontColor: '0F172A', fontName: 'Calibri');
 
         // Helper format baris booking
         $formatBookingRow = function ($b) {
@@ -512,5 +461,73 @@ class AdminBookingController extends Controller
         $writer->close();
 
         return response()->download($path, 'bookings-export-' . now()->format('Y-m-d') . '.xlsx')->deleteFileAfterSend(true);
+    }
+
+    private function makeExportStyle(
+        bool $bold = false,
+        bool $italic = false,
+        int $fontSize = 11,
+        string $fontColor = Color::BLACK,
+        string $fontName = 'Calibri',
+        ?CellAlignment $alignment = null,
+        ?string $backgroundColor = null
+    ): Style {
+        if (class_exists('\OpenSpout\Common\Entity\Style\StyleBuilder')) {
+            $b = new \OpenSpout\Common\Entity\Style\StyleBuilder();
+            if ($bold && method_exists($b, 'setFontBold')) $b->setFontBold();
+            if ($italic && method_exists($b, 'setFontItalic')) $b->setFontItalic();
+            if (method_exists($b, 'setFontSize')) $b->setFontSize($fontSize);
+            if (method_exists($b, 'setFontColor')) $b->setFontColor($fontColor);
+            if (method_exists($b, 'setFontName')) $b->setFontName($fontName);
+            if ($alignment && method_exists($b, 'setCellAlignment')) $b->setCellAlignment($alignment);
+            if ($backgroundColor && method_exists($b, 'setBackgroundColor')) $b->setBackgroundColor($backgroundColor);
+            return $b->build();
+        }
+
+        $style = new Style();
+
+        if (method_exists($style, 'withFontBold')) {
+            if ($bold) $style = $style->withFontBold(true);
+            if ($italic) $style = $style->withFontItalic(true);
+            if ($fontSize !== 11) $style = $style->withFontSize($fontSize);
+            if ($fontColor !== Color::BLACK) $style = $style->withFontColor($fontColor);
+            if ($fontName !== 'Calibri') $style = $style->withFontName($fontName);
+            if ($alignment) $style = $style->withCellAlignment($alignment);
+            if ($backgroundColor) $style = $style->withBackgroundColor($backgroundColor);
+            return $style;
+        }
+
+        if (method_exists($style, 'setFontBold')) {
+            if ($bold) $style->setFontBold(true);
+            if ($italic) $style->setFontItalic(true);
+            $style->setFontSize($fontSize);
+            $style->setFontColor($fontColor);
+            $style->setFontName($fontName);
+            if ($alignment && method_exists($style, 'setCellAlignment')) $style->setCellAlignment($alignment);
+            if ($backgroundColor && method_exists($style, 'setBackgroundColor')) $style->setBackgroundColor($backgroundColor);
+            return $style;
+        }
+
+        try {
+            $ref = new \ReflectionClass(Style::class);
+            $ctor = $ref->getConstructor();
+            if ($ctor && count($ctor->getParameters()) > 0) {
+                $args = [];
+                foreach ($ctor->getParameters() as $param) {
+                    $name = $param->getName();
+                    if ($name === 'fontBold') $args[] = $bold;
+                    elseif ($name === 'fontItalic') $args[] = $italic;
+                    elseif ($name === 'fontSize') $args[] = $fontSize;
+                    elseif ($name === 'fontColor') $args[] = $fontColor;
+                    elseif ($name === 'fontName') $args[] = $fontName;
+                    elseif ($name === 'cellAlignment') $args[] = $alignment;
+                    elseif ($name === 'backgroundColor') $args[] = $backgroundColor;
+                    else $args[] = $param->isDefaultValueAvailable() ? $param->getDefaultValue() : null;
+                }
+                return $ref->newInstanceArgs($args);
+            }
+        } catch (\Throwable) {}
+
+        return new Style();
     }
 }
