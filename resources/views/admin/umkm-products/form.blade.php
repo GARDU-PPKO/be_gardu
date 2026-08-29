@@ -35,7 +35,7 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">No. WA Penjual *</label>
-                <input type="text" name="no_wa_penjual" value="{{ old('no_wa_penjual', $product->no_wa_penjual ?? '') }}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+                <input type="text" name="no_wa_penjual" value="{{ old('no_wa_penjual', $product->no_wa_penjual ?? '') }}" placeholder="Contoh: 081234567890" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
                 @error('no_wa_penjual') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
             <div>

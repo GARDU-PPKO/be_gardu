@@ -278,7 +278,7 @@
             </div>
             <div>
                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">No. WhatsApp</label>
-                <input type="text" id="visitorPhoneInput" placeholder="628xxxxxxxxxx" inputmode="numeric" autocomplete="off"
+                <input type="text" id="visitorPhoneInput" placeholder="08xxxxxxxxxx" inputmode="numeric" autocomplete="off"
                        class="w-full px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-600 focus:outline-none transition">
             </div>
             <div class="grid grid-cols-2 gap-2">
@@ -654,7 +654,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (!/^(0|62)[0-9]{8,15}$/.test(phone)) {
-            visitorErrorText.textContent = 'Nomor WhatsApp tidak valid (contoh: 628xxxx).';
+            visitorErrorText.textContent = 'Nomor WhatsApp tidak valid (contoh: 08xxxxxxxxxx).';
             visitorErrorText.classList.remove('hidden');
             return;
         }
