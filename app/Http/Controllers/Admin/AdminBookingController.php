@@ -324,10 +324,10 @@ class AdminBookingController extends Controller
         // 3. Style Definitions (Universal helper yang adaptif untuk segala versi OpenSpout di server & local)
         $titleStyle = $this->makeExportStyle(bold: true, fontSize: 14, fontColor: '047857', fontName: 'Calibri');
         $subtitleStyle = $this->makeExportStyle(italic: true, fontSize: 10, fontColor: '475569', fontName: 'Calibri');
-        $sectionBannerStyle = $this->makeExportStyle(bold: true, fontSize: 11, fontColor: Color::WHITE, fontName: 'Calibri', backgroundColor: '065F46');
-        $headerStyle = $this->makeExportStyle(bold: true, fontSize: 11, fontColor: Color::WHITE, fontName: 'Calibri', alignment: CellAlignment::CENTER, backgroundColor: '047857');
+        $sectionBannerStyle = $this->makeExportStyle(bold: true, fontSize: 11, fontColor: 'FFFFFF', fontName: 'Calibri', backgroundColor: '065F46');
+        $headerStyle = $this->makeExportStyle(bold: true, fontSize: 11, fontColor: 'FFFFFF', fontName: 'Calibri', alignment: CellAlignment::CENTER, backgroundColor: '047857');
         $totalRowStyle = $this->makeExportStyle(bold: true, fontSize: 11, fontColor: '0F172A', fontName: 'Calibri', backgroundColor: 'E2E8F0');
-        $summaryTitleStyle = $this->makeExportStyle(bold: true, fontSize: 11, fontColor: Color::WHITE, fontName: 'Calibri', alignment: CellAlignment::CENTER, backgroundColor: '047857');
+        $summaryTitleStyle = $this->makeExportStyle(bold: true, fontSize: 11, fontColor: 'FFFFFF', fontName: 'Calibri', alignment: CellAlignment::CENTER, backgroundColor: '047857');
         $summaryHeaderSubStyle = $this->makeExportStyle(bold: true, fontSize: 10, fontColor: '0F172A', fontName: 'Calibri', alignment: CellAlignment::CENTER, backgroundColor: 'D1FAE5');
         $summaryItemStyle = $this->makeExportStyle(fontSize: 10, fontColor: '1E293B', fontName: 'Calibri');
         $summaryItemBoldStyle = $this->makeExportStyle(bold: true, fontSize: 10, fontColor: '0F172A', fontName: 'Calibri');
@@ -467,19 +467,24 @@ class AdminBookingController extends Controller
         bool $bold = false,
         bool $italic = false,
         int $fontSize = 11,
-        string $fontColor = Color::BLACK,
+        mixed $fontColor = '000000',
         string $fontName = 'Calibri',
-        ?CellAlignment $alignment = null,
+        mixed $alignment = null,
         ?string $backgroundColor = null
-    ): Style {
+    ): object {
+        $fontColorStr = is_object($fontColor) && property_exists($fontColor, 'value') ? (string) $fontColor->value : (string) $fontColor;
+
         if (class_exists('\OpenSpout\Common\Entity\Style\StyleBuilder')) {
             $b = new \OpenSpout\Common\Entity\Style\StyleBuilder();
             if ($bold && method_exists($b, 'setFontBold')) $b->setFontBold();
             if ($italic && method_exists($b, 'setFontItalic')) $b->setFontItalic();
             if (method_exists($b, 'setFontSize')) $b->setFontSize($fontSize);
-            if (method_exists($b, 'setFontColor')) $b->setFontColor($fontColor);
+            if (method_exists($b, 'setFontColor')) $b->setFontColor($fontColorStr);
             if (method_exists($b, 'setFontName')) $b->setFontName($fontName);
-            if ($alignment && method_exists($b, 'setCellAlignment')) $b->setCellAlignment($alignment);
+            if ($alignment && method_exists($b, 'setCellAlignment')) {
+                $alignVal = is_object($alignment) && property_exists($alignment, 'value') ? (string) $alignment->value : (string) $alignment;
+                $b->setCellAlignment($alignVal);
+            }
             if ($backgroundColor && method_exists($b, 'setBackgroundColor')) $b->setBackgroundColor($backgroundColor);
             return $b->build();
         }
@@ -490,9 +495,16 @@ class AdminBookingController extends Controller
             if ($bold) $style = $style->withFontBold(true);
             if ($italic) $style = $style->withFontItalic(true);
             if ($fontSize !== 11) $style = $style->withFontSize($fontSize);
-            if ($fontColor !== Color::BLACK) $style = $style->withFontColor($fontColor);
+            if ($fontColorStr !== '000000') $style = $style->withFontColor($fontColorStr);
             if ($fontName !== 'Calibri') $style = $style->withFontName($fontName);
-            if ($alignment) $style = $style->withCellAlignment($alignment);
+            if ($alignment) {
+                if ($alignment instanceof CellAlignment) {
+                    $style = $style->withCellAlignment($alignment);
+                } elseif (enum_exists(CellAlignment::class) && is_string($alignment)) {
+                    $enumVal = CellAlignment::tryFrom($alignment) ?? CellAlignment::CENTER;
+                    $style = $style->withCellAlignment($enumVal);
+                }
+            }
             if ($backgroundColor) $style = $style->withBackgroundColor($backgroundColor);
             return $style;
         }
@@ -501,9 +513,12 @@ class AdminBookingController extends Controller
             if ($bold) $style->setFontBold(true);
             if ($italic) $style->setFontItalic(true);
             $style->setFontSize($fontSize);
-            $style->setFontColor($fontColor);
+            $style->setFontColor($fontColorStr);
             $style->setFontName($fontName);
-            if ($alignment && method_exists($style, 'setCellAlignment')) $style->setCellAlignment($alignment);
+            if ($alignment && method_exists($style, 'setCellAlignment')) {
+                $alignVal = is_object($alignment) && property_exists($alignment, 'value') ? (string) $alignment->value : (string) $alignment;
+                $style->setCellAlignment($alignVal);
+            }
             if ($backgroundColor && method_exists($style, 'setBackgroundColor')) $style->setBackgroundColor($backgroundColor);
             return $style;
         }
@@ -518,7 +533,7 @@ class AdminBookingController extends Controller
                     if ($name === 'fontBold') $args[] = $bold;
                     elseif ($name === 'fontItalic') $args[] = $italic;
                     elseif ($name === 'fontSize') $args[] = $fontSize;
-                    elseif ($name === 'fontColor') $args[] = $fontColor;
+                    elseif ($name === 'fontColor') $args[] = $fontColorStr;
                     elseif ($name === 'fontName') $args[] = $fontName;
                     elseif ($name === 'cellAlignment') $args[] = $alignment;
                     elseif ($name === 'backgroundColor') $args[] = $backgroundColor;
