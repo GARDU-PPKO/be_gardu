@@ -269,18 +269,96 @@ class AdminBookingController extends Controller
         return $data;
     }
 
-    private function buildConfirmMessage(Booking $booking): string
+    public function reject(Request $request, Booking $booking, FonnteService $fonnte): RedirectResponse
     {
-        return "Halo {$booking->nama_lengkap},\n\n"
-            . "Kabar baik! Booking dengan kode *{$booking->booking_code}* telah *dikonfirmasi* ✅\n\n"
-            . "📋 Kode Booking: {$booking->booking_code}\n"
-            . "🏕️ Paket: {$booking->paketWisata?->nama}\n"
-            . "📅 Tanggal: {$booking->tanggal_kunjungan->format('d-m-Y')}\n\n"
-            . "Silahkan datang sesuai jadwal booking Anda.\n\n"
+        $request->validate(['reason' => 'required|string|max:500']);
+
+        $booking->update([
+            'status' => Booking::STATUS_REJECTED,
+            'rejected_reason' => $request->input('reason'),
+            'verified_at' => now(),
+            'verified_by' => auth()->id(),
+        ]);
+
+        BookingLog::log($booking->id, 'reject', 'Booking ditolak: ' . $request->input('reason'));
+
+        $msg = $this->buildRejectedMessage($booking);
+        $fonnte->sendMessage($booking->no_whatsapp, $msg);
+
+        return redirect()->route('admin.bookings.show', $booking)
+            ->with('success', 'Booking ditolak dan notifikasi WhatsApp terkirim.');
+    }
+
+    public function destroy(Booking $booking): RedirectResponse
+    {
+        $booking->delete();
+
+        return redirect()->route('admin.bookings.index')
+            ->with('success', 'Booking berhasil dihapus (soft delete).');
+    }
+
+    public function restore(int $id): RedirectResponse
+    {
+        $booking = Booking::onlyTrashed()->findOrFail($id);
+        $booking->restore();
+
+        return redirect()->route('admin.bookings.index', ['status' => 'deleted'])
+            ->with('success', 'Booking berhasil dipulihkan.');
+    }
+
+    public function resendWhatsApp(Booking $booking, FonnteService $fonnte): RedirectResponse
+    {
+        $msg = match ($booking->status) {
+            Booking::STATUS_CONFIRMED => $this->buildConfirmedMessage($booking),
+            Booking::STATUS_REJECTED => $this->buildRejectedMessage($booking),
+            default => null,
+        };
+
+        if (! $msg) {
+            return redirect()->route('admin.bookings.show', $booking)
+                ->with('error', 'Status booking tidak mendukung pengiriman ulang WA.');
+        }
+
+        $res = $fonnte->sendMessage($booking->no_whatsapp, $msg);
+
+        return redirect()->route('admin.bookings.show', $booking)
+            ->with('success', 'Notifikasi WhatsApp berhasil dikirim ulang.');
+    }
+
+    public function downloadPdf(Booking $booking): StreamedResponse
+    {
+        $booking->load(['paketWisata', 'addons']);
+        $pdf = app('dompdf.wrapper')->loadView('pdf.booking-ticket', compact('booking'));
+
+        return response()->streamDownload(
+            fn () => print($pdf->output()),
+            "Tiket-{$booking->booking_code}.pdf",
+            ['Content-Type' => 'application/pdf']
+        );
+    }
+
+    private function buildConfirmedMessage(Booking $booking): string
+    {
+        $paket = $booking->paketWisata?->nama ?? '-';
+        $tgl = $booking->tanggal_kunjungan ? $booking->tanggal_kunjungan->format('d/m/Y') : '-';
+        $total = number_format($booking->total_harga, 0, ',', '.');
+        $ticketUrl = route('booking.ticket', $booking->booking_code);
+
+        return "Halo {$booking->nama_lengkap}! 👋\n\n"
+            . "Pembayaran booking wisata Anda di *Desa Wisata Getas* telah *TERKONFIRMASI* ✅\n\n"
+            . "📋 *Detail Booking:*\n"
+            . "• Kode Booking: *{$booking->booking_code}*\n"
+            . "• Paket: {$paket}\n"
+            . "• Tanggal: {$tgl}\n"
+            . "• Sesi: {$booking->sesi}\n"
+            . "• Peserta: {$booking->jumlah_peserta} orang\n"
+            . "• Total: Rp {$total}\n\n"
+            . "🎟️ *E-Tiket Anda:*\n{$ticketUrl}\n\n"
+            . "Tunjukkan e-tiket ini kepada petugas saat kedatangan.\n"
             . "Sampai jumpa di Desa Wisata Getas! 🌿";
     }
 
-    private function buildRejectMessage(Booking $booking): string
+    private function buildRejectedMessage(Booking $booking): string
     {
         return "Halo {$booking->nama_lengkap},\n\n"
             . "Mohon maaf, bukti pembayaran untuk booking dengan kode *{$booking->booking_code}* *tidak dapat kami verifikasi* ❌\n\n"
@@ -292,106 +370,55 @@ class AdminBookingController extends Controller
     {
         $bookings = Booking::with('paketWisata:id,nama')->orderBy('created_at', 'desc')->get();
 
+        $dataCount = $bookings->count();
+        $totalRowIndex = 5 + $dataCount;
+        $summaryTitleRowIndex = $totalRowIndex + 3;
+
+        $options = new Options();
+        $options->mergeCells(0, 1, 6, 1);
+        $options->mergeCells(0, 2, 6, 2);
+        $options->mergeCells(0, $totalRowIndex, 7, $totalRowIndex);
+        $options->mergeCells(0, $summaryTitleRowIndex, 2, $summaryTitleRowIndex);
+
         $path = tempnam(sys_get_temp_dir(), 'bookings') . '.xlsx';
-        $writer = new Writer;
+        $writer = new Writer($options);
         $writer->openToFile($path);
 
         $sheet = $writer->getCurrentSheet();
 
-        // 1. Pembekuan Baris (Freeze Rows 1-4 sehingga Judul & Header Tabel Tetap di Atas)
         $sheet->setSheetView(new SheetView(freezeRow: 5, freezeColumn: 'A'));
 
-        // 2. Atur Lebar Kolom yang Rapi dan Proporsional (Auto-fit Column Widths)
-        $sheet->setColumnWidth(22, 1);  // A: Kode Booking
-        $sheet->setColumnWidth(25, 2);  // B: Nama Pemesan
-        $sheet->setColumnWidth(18, 3);  // C: No. WA
-        $sheet->setColumnWidth(24, 4);  // D: Email
-        $sheet->setColumnWidth(22, 5);  // E: Alamat
-        $sheet->setColumnWidth(25, 6);  // F: Paket Wisata
-        $sheet->setColumnWidth(20, 7);  // G: Tanggal Kunjungan
-        $sheet->setColumnWidth(18, 8);  // H: Sesi
-        $sheet->setColumnWidth(16, 9);  // I: Jumlah Peserta
-        $sheet->setColumnWidth(22, 10); // J: Total Harga (Rp)
-        $sheet->setColumnWidth(20, 11); // K: Status
-        $sheet->setColumnWidth(30, 12); // L: Catatan
-        $sheet->setColumnWidth(22, 13); // M: Tanggal Booking
+        $sheet->setColumnWidth(30, 1);
+        $sheet->setColumnWidth(26, 2);
+        $sheet->setColumnWidth(38, 3);
+        $sheet->setColumnWidth(26, 4);
+        $sheet->setColumnWidth(22, 5);
+        $sheet->setColumnWidth(26, 6);
+        $sheet->setColumnWidth(20, 7);
+        $sheet->setColumnWidth(18, 8);
+        $sheet->setColumnWidth(16, 9);
+        $sheet->setColumnWidth(22, 10);
+        $sheet->setColumnWidth(20, 11);
+        $sheet->setColumnWidth(30, 12);
+        $sheet->setColumnWidth(22, 13);
 
-        // 3. Style Definitions
-        $titleStyle = new Style(
-            fontBold: true,
-            fontSize: 14,
-            fontColor: '047857',
-            fontName: 'Calibri',
-        );
+        $titleStyle = new Style(fontBold: true, fontSize: 14, fontColor: '047857', fontName: 'Calibri');
+        $subtitleStyle = new Style(fontItalic: true, fontSize: 10, fontColor: '475569', fontName: 'Calibri');
+        $headerStyle = new Style(fontBold: true, fontSize: 11, fontColor: Color::WHITE, fontName: 'Calibri', cellAlignment: CellAlignment::CENTER, backgroundColor: '047857');
+        $totalRowStyle = new Style(fontBold: true, fontSize: 11, fontColor: '0F172A', fontName: 'Calibri', backgroundColor: 'E2E8F0');
+        $summaryTitleStyle = new Style(fontBold: true, fontSize: 11, fontColor: Color::WHITE, fontName: 'Calibri', cellAlignment: CellAlignment::CENTER, backgroundColor: '047857');
+        $summaryHeaderSubStyle = new Style(fontBold: true, fontSize: 10, fontColor: '0F172A', fontName: 'Calibri', cellAlignment: CellAlignment::CENTER, backgroundColor: 'D1FAE5');
+        $summaryItemStyle = new Style(fontSize: 10, fontColor: '1E293B', fontName: 'Calibri');
+        $summaryItemBoldStyle = new Style(fontBold: true, fontSize: 10, fontColor: '0F172A', fontName: 'Calibri');
 
-        $subtitleStyle = new Style(
-            fontItalic: true,
-            fontSize: 10,
-            fontColor: '475569',
-            fontName: 'Calibri',
-        );
-
-        $headerStyle = new Style(
-            fontBold: true,
-            fontSize: 11,
-            fontColor: Color::WHITE,
-            fontName: 'Calibri',
-            cellAlignment: CellAlignment::CENTER,
-            backgroundColor: '047857',
-        );
-
-        $totalRowStyle = new Style(
-            fontBold: true,
-            fontSize: 11,
-            fontColor: '0F172A',
-            fontName: 'Calibri',
-            backgroundColor: 'E2E8F0',
-        );
-
-        $summaryHeaderStyle = new Style(
-            fontBold: true,
-            fontSize: 11,
-            fontColor: Color::WHITE,
-            fontName: 'Calibri',
-            backgroundColor: '047857',
-        );
-
-        $summaryItemStyle = new Style(
-            fontBold: true,
-            fontSize: 10,
-            fontColor: '1E293B',
-            fontName: 'Calibri',
-        );
-
-        // 4. Baris Judul & Informasi Laporan (Header Banner Atas)
-        $writer->addRow(Row::fromValuesWithStyle([
-            'LAPORAN REKAPITULASI PEMESANAN WISATA - DESA GETAS',
-        ], $titleStyle));
+        $writer->addRow(Row::fromValuesWithStyle(['LAPORAN REKAPITULASI PEMESANAN WISATA - DESA GETAS'], $titleStyle));
+        $writer->addRow(Row::fromValuesWithStyle(['Waktu Ekspor: ' . now()->format('d/m/Y H:i') . ' WIB  |  Total Data: ' . $dataCount . ' Transaksi'], $subtitleStyle));
+        $writer->addRow(Row::fromValues([]));
 
         $writer->addRow(Row::fromValuesWithStyle([
-            'Waktu Ekspor: ' . now()->format('d/m/Y H:i') . ' WIB  |  Total Data: ' . $bookings->count() . ' Transaksi',
-        ], $subtitleStyle));
-
-        $writer->addRow(Row::fromValues([])); // Baris Spasi Kosong
-
-        // 5. Header Tabel Utama (Baris 4)
-        $writer->addRow(Row::fromValuesWithStyle([
-            'Kode Booking',
-            'Nama Pemesan',
-            'No. WhatsApp',
-            'Email',
-            'Alamat / Kota Asal',
-            'Paket Wisata',
-            'Tanggal Kunjungan',
-            'Sesi Kunjungan',
-            'Jumlah Peserta',
-            'Total Harga (Rp)',
-            'Status',
-            'Catatan',
-            'Tanggal Transaksi',
+            'Kode Booking', 'Nama Pemesan', 'No. WhatsApp', 'Email', 'Alamat / Kota Asal', 'Paket Wisata', 'Tanggal Kunjungan', 'Sesi Kunjungan', 'Jumlah Peserta', 'Total Harga (Rp)', 'Status', 'Catatan', 'Tanggal Transaksi',
         ], $headerStyle));
 
-        // 6. Data Rows & Akumulasi Statistik
         $totalPeserta = 0;
         $totalNilaiTransaksi = 0;
         $totalPendapatanConfirmed = 0;
@@ -406,7 +433,7 @@ class AdminBookingController extends Controller
             $totalNilaiTransaksi += $harga;
 
             $status = strtolower($b->status ?? '');
-            if ($status === 'confirmed' || $status === 'completed') {
+            if (in_array($status, [Booking::STATUS_CONFIRMED, Booking::STATUS_COMPLETED])) {
                 $countConfirmed++;
                 $totalPendapatanConfirmed += $harga;
             } elseif (str_contains($status, 'pending')) {
@@ -415,78 +442,26 @@ class AdminBookingController extends Controller
                 $countCancelledOrRejected++;
             }
 
-            $statusLabel = strtoupper(str_replace('_', ' ', $b->status));
-            $totalHargaFormatted = 'Rp ' . number_format($harga, 0, ',', '.');
-            $tglKunjungan = $b->tanggal_kunjungan ? $b->tanggal_kunjungan->format('d/m/Y') : '-';
-            $tglBooking = $b->created_at ? $b->created_at->format('d/m/Y H:i') : '-';
-
             $writer->addRow(Row::fromValues([
-                $b->booking_code,
-                $b->nama_lengkap,
-                $b->no_whatsapp,
-                $b->email ?: '-',
-                $b->alamat ?: '-',
-                $b->paketWisata?->nama ?: '-',
-                $tglKunjungan,
-                $b->sesi ?: '-',
-                $peserta . ' Orang',
-                $totalHargaFormatted,
-                $statusLabel,
-                $b->notes ?: '-',
-                $tglBooking,
+                $b->booking_code, $b->nama_lengkap, $b->no_whatsapp, $b->email ?: '-', $b->alamat ?: '-', $b->paketWisata?->nama ?: '-', $b->tanggal_kunjungan?->format('d/m/Y') ?: '-', $b->sesi ?: '-', $peserta . ' Orang', 'Rp ' . number_format($harga, 0, ',', '.'), strtoupper(str_replace('_', ' ', $b->status)), $b->notes ?: '-', $b->created_at?->format('d/m/Y H:i') ?: '-',
             ]));
         }
 
-        // 7. Baris Total Tabel
         $writer->addRow(Row::fromValuesWithStyle([
-            'TOTAL KESELURUHAN',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            $totalPeserta . ' Orang',
-            'Rp ' . number_format($totalNilaiTransaksi, 0, ',', '.'),
-            '',
-            '',
-            '',
+            'TOTAL KESELURUHAN', '', '', '', '', '', '', '', $totalPeserta . ' Orang', 'Rp ' . number_format($totalNilaiTransaksi, 0, ',', '.'), '', '', '',
         ], $totalRowStyle));
 
-        // 8. Bagian Kesimpulan & Ringkasan Laporan
-        $writer->addRow(Row::fromValues([])); // Baris Pemisah
-        $writer->addRow(Row::fromValues([])); // Baris Pemisah
-
-        $writer->addRow(Row::fromValuesWithStyle([
-            'RINGKASAN & KESIMPULAN LAPORAN',
-            '',
-        ], $summaryHeaderStyle));
-
-        $writer->addRow(Row::fromValuesWithStyle([
-            'Total Seluruh Pemesanan',
-            $bookings->count() . ' Transaksi',
-        ], $summaryItemStyle));
-
-        $writer->addRow(Row::fromValuesWithStyle([
-            'Total Pengunjung (Peserta)',
-            $totalPeserta . ' Orang',
-        ], $summaryItemStyle));
-
-        $writer->addRow(Row::fromValuesWithStyle([
-            'Pendapatan Terkonfirmasi (Confirmed)',
-            'Rp ' . number_format($totalPendapatanConfirmed, 0, ',', '.'),
-        ], $summaryItemStyle));
-
-        $writer->addRow(Row::fromValuesWithStyle([
-            'Estimasi Nilai Seluruh Transaksi',
-            'Rp ' . number_format($totalNilaiTransaksi, 0, ',', '.'),
-        ], $summaryItemStyle));
-
-        $writer->addRow(Row::fromValuesWithStyle([
-            'Rincian Status Pemesanan',
-            "Terkonfirmasi: {$countConfirmed}  |  Menunggu (Pending): {$countPending}  |  Batal/Ditolak: {$countCancelledOrRejected}",
-        ], $summaryItemStyle));
+        $writer->addRow(Row::fromValues([]));
+        $writer->addRow(Row::fromValues([]));
+        $writer->addRow(Row::fromValuesWithStyle(['RINGKASAN & KESIMPULAN LAPORAN', '', ''], $summaryTitleStyle));
+        $writer->addRow(Row::fromValuesWithStyle(['INDIKATOR / PARAMETER', 'JUMLAH / NILAI', 'KETERANGAN STATUS'], $summaryHeaderSubStyle));
+        $writer->addRow(Row::fromValuesWithStyle(['Total Seluruh Pemesanan', $dataCount . ' Transaksi', 'Seluruh data pemesanan yang masuk'], $summaryItemStyle));
+        $writer->addRow(Row::fromValuesWithStyle(['Total Pengunjung (Peserta)', $totalPeserta . ' Orang', 'Akumulasi seluruh peserta wisata'], $summaryItemStyle));
+        $writer->addRow(Row::fromValuesWithStyle(['Pendapatan Terkonfirmasi', 'Rp ' . number_format($totalPendapatanConfirmed, 0, ',', '.'), 'Pemesanan status Confirmed / Lunas'], $summaryItemBoldStyle));
+        $writer->addRow(Row::fromValuesWithStyle(['Estimasi Nilai Seluruh Transaksi', 'Rp ' . number_format($totalNilaiTransaksi, 0, ',', '.'), 'Total nilai pesanan (semua status)'], $summaryItemStyle));
+        $writer->addRow(Row::fromValuesWithStyle(['Pemesanan Terkonfirmasi', $countConfirmed . ' Booking', 'Pembayaran valid & siap berkunjung'], $summaryItemStyle));
+        $writer->addRow(Row::fromValuesWithStyle(['Pemesanan Menunggu (Pending)', $countPending . ' Booking', 'Menunggu bukti / verifikasi admin'], $summaryItemStyle));
+        $writer->addRow(Row::fromValuesWithStyle(['Pemesanan Batal / Ditolak', $countCancelledOrRejected . ' Booking', 'Dibatalkan pemesan atau ditolak admin'], $summaryItemStyle));
 
         $writer->close();
 
