@@ -65,17 +65,20 @@ class BookingController extends Controller
 
         $data = $request->validate([
             'package_id' => 'required|integer|exists:paket_wisata,id',
-            'customer_name' => 'required|string|max:100',
+            'customer_name' => 'required|string|min:3|max:100',
             'phone' => [
                 'required', 'string',
                 function (string $attribute, mixed $value, \Closure $fail): void {
-                    if (! preg_match('/^(0|62)[0-9]{8,15}$/', $value)) {
-                        $fail('The phone field must be a valid WhatsApp number.');
+                    $trimmed = trim($value);
+                    $isValidPrefix = str_starts_with($trimmed, '08') || str_starts_with($trimmed, '628') || str_starts_with($trimmed, '+628');
+                    $digitsOnly = preg_replace('/\D/', '', $trimmed);
+                    if (! $isValidPrefix || strlen($digitsOnly) < 10 || strlen($digitsOnly) > 15) {
+                        $fail('Nomor WhatsApp harus diawali 08 (contoh: 081234567890).');
                     }
                 },
             ],
             'email' => 'nullable|email|max:150',
-            'kontak_darurat' => 'nullable|string|max:20',
+            'kontak_darurat' => 'nullable|string|min:3|max:100',
             'date' => 'required|date|after_or_equal:today',
             'session_time' => 'required|string|max:100',
             'participants' => 'required|integer|min:1',
@@ -455,16 +458,20 @@ class BookingController extends Controller
         }
 
         $data = $request->validate([
-            'customer_name' => 'nullable|string|max:100',
+            'customer_name' => 'nullable|string|min:3|max:100',
             'phone' => [
                 'nullable', 'string',
                 function (string $attribute, mixed $value, \Closure $fail): void {
-                    if (! preg_match('/^(0|62)[0-9]{8,15}$/', $value)) {
-                        $fail('The phone field must be a valid WhatsApp number.');
+                    $trimmed = trim($value);
+                    if ($trimmed === '') return;
+                    $isValidPrefix = str_starts_with($trimmed, '08') || str_starts_with($trimmed, '628') || str_starts_with($trimmed, '+628');
+                    $digitsOnly = preg_replace('/\D/', '', $trimmed);
+                    if (! $isValidPrefix || strlen($digitsOnly) < 10 || strlen($digitsOnly) > 15) {
+                        $fail('Nomor WhatsApp harus diawali 08 (contoh: 081234567890).');
                     }
                 },
             ],
-            'kontak_darurat' => 'nullable|string|max:20',
+            'kontak_darurat' => 'nullable|string|min:3|max:100',
         ]);
 
         if (! $request->filled('customer_name') && ! $request->filled('phone') && ! $request->filled('kontak_darurat')) {
