@@ -305,10 +305,7 @@ class AdminBookingController extends Controller
 
         $sheet = $writer->getCurrentSheet();
 
-        // 1. Pembekuan Baris (Freeze Rows 1-5 sehingga Judul & Header Tabel Tetap di Atas)
-        $sheet->setSheetView(new SheetView(freezeRow: 6, freezeColumn: 'A'));
-
-        // 2. Atur Lebar Kolom yang Rapi dan Proporsional
+        // 1. Atur Lebar Kolom yang Rapi dan Proporsional
         $sheet->setColumnWidth(30, 1);  // A: Kode Booking / Indikator Ringkasan
         $sheet->setColumnWidth(26, 2);  // B: Nama Pemesan / Nilai Ringkasan
         $sheet->setColumnWidth(38, 3);  // C: No. WA / Keterangan Status Ringkasan
