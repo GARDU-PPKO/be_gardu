@@ -289,39 +289,62 @@ class AdminBookingController extends Controller
         $totalRow2Index = $table2HeaderIndex + $confirmedCount + 1;
         $summaryTitleIndex = $totalRow2Index + 3;
 
-        $options = new Options();
-        // Merge cell judul & banner seksi & total row
-        $options->mergeCells(0, 1, 6, 1);
-        $options->mergeCells(0, 2, 6, 2);
-        $options->mergeCells(0, 4, 6, 4);
-        $options->mergeCells(0, $totalRow1Index, 8, $totalRow1Index);
-        $options->mergeCells(0, $table2BannerIndex, 6, $table2BannerIndex);
-        $options->mergeCells(0, $totalRow2Index, 8, $totalRow2Index);
-        $options->mergeCells(0, $summaryTitleIndex, 2, $summaryTitleIndex);
+        // 1. Inisialisasi Options (Merge Cells jika didukung)
+        $options = null;
+        if (class_exists(Options::class)) {
+            try {
+                $options = new Options();
+                if (method_exists($options, 'mergeCells')) {
+                    $options->mergeCells(0, 1, 6, 1);
+                    $options->mergeCells(0, 2, 6, 2);
+                    $options->mergeCells(0, 4, 6, 4);
+                    $options->mergeCells(0, $totalRow1Index, 8, $totalRow1Index);
+                    $options->mergeCells(0, $table2BannerIndex, 6, $table2BannerIndex);
+                    $options->mergeCells(0, $totalRow2Index, 8, $totalRow2Index);
+                    $options->mergeCells(0, $summaryTitleIndex, 2, $summaryTitleIndex);
+                }
+            } catch (\Throwable) {
+                $options = null;
+            }
+        }
 
         $path = tempnam(sys_get_temp_dir(), 'bookings') . '.xlsx';
-        $writer = new Writer($options);
+        
+        // 2. Inisialisasi Writer yang kompatibel di semua versi
+        if ($options !== null) {
+            try {
+                $writer = new Writer($options);
+            } catch (\Throwable) {
+                $writer = new Writer();
+            }
+        } else {
+            $writer = new Writer();
+        }
+
         $writer->openToFile($path);
 
-        $sheet = $writer->getCurrentSheet();
+        // 3. Atur Lebar Kolom jika didukung
+        try {
+            $sheet = method_exists($writer, 'getCurrentSheet') ? $writer->getCurrentSheet() : null;
+            if ($sheet && method_exists($sheet, 'setColumnWidth')) {
+                $sheet->setColumnWidth(30, 1);  // A: Kode Booking / Indikator Ringkasan
+                $sheet->setColumnWidth(26, 2);  // B: Nama Pemesan / Nilai Ringkasan
+                $sheet->setColumnWidth(38, 3);  // C: No. WA / Keterangan Status Ringkasan
+                $sheet->setColumnWidth(26, 4);  // D: Email
+                $sheet->setColumnWidth(22, 5);  // E: Alamat
+                $sheet->setColumnWidth(26, 6);  // F: Paket Wisata
+                $sheet->setColumnWidth(30, 7);  // G: Add-ons / Layanan Tambahan
+                $sheet->setColumnWidth(20, 8);  // H: Tanggal Kunjungan
+                $sheet->setColumnWidth(18, 9);  // I: Sesi
+                $sheet->setColumnWidth(16, 10); // J: Jumlah Peserta
+                $sheet->setColumnWidth(22, 11); // K: Total Harga (Rp)
+                $sheet->setColumnWidth(20, 12); // L: Status
+                $sheet->setColumnWidth(30, 13); // M: Catatan
+                $sheet->setColumnWidth(22, 14); // N: Tanggal Transaksi
+            }
+        } catch (\Throwable) {}
 
-        // 1. Atur Lebar Kolom yang Rapi dan Proporsional
-        $sheet->setColumnWidth(30, 1);  // A: Kode Booking / Indikator Ringkasan
-        $sheet->setColumnWidth(26, 2);  // B: Nama Pemesan / Nilai Ringkasan
-        $sheet->setColumnWidth(38, 3);  // C: No. WA / Keterangan Status Ringkasan
-        $sheet->setColumnWidth(26, 4);  // D: Email
-        $sheet->setColumnWidth(22, 5);  // E: Alamat
-        $sheet->setColumnWidth(26, 6);  // F: Paket Wisata
-        $sheet->setColumnWidth(30, 7);  // G: Add-ons / Layanan Tambahan
-        $sheet->setColumnWidth(20, 8);  // H: Tanggal Kunjungan
-        $sheet->setColumnWidth(18, 9);  // I: Sesi
-        $sheet->setColumnWidth(16, 10); // J: Jumlah Peserta
-        $sheet->setColumnWidth(22, 11); // K: Total Harga (Rp)
-        $sheet->setColumnWidth(20, 12); // L: Status
-        $sheet->setColumnWidth(30, 13); // M: Catatan
-        $sheet->setColumnWidth(22, 14); // N: Tanggal Transaksi
-
-        // 3. Style Definitions (Universal helper yang adaptif untuk segala versi OpenSpout di server & local)
+        // 4. Definisi Style Universal (100% aman untuk semua versi library)
         $titleStyle = $this->makeExportStyle(bold: true, fontSize: 14, fontColor: '047857', fontName: 'Calibri');
         $subtitleStyle = $this->makeExportStyle(italic: true, fontSize: 10, fontColor: '475569', fontName: 'Calibri');
         $sectionBannerStyle = $this->makeExportStyle(bold: true, fontSize: 11, fontColor: 'FFFFFF', fontName: 'Calibri', backgroundColor: '065F46');
@@ -332,7 +355,7 @@ class AdminBookingController extends Controller
         $summaryItemStyle = $this->makeExportStyle(fontSize: 10, fontColor: '1E293B', fontName: 'Calibri');
         $summaryItemBoldStyle = $this->makeExportStyle(bold: true, fontSize: 10, fontColor: '0F172A', fontName: 'Calibri');
 
-        // Helper format baris booking
+        // Helper format data satu baris booking
         $formatBookingRow = function ($b) {
             $peserta = (int) $b->jumlah_peserta;
             $harga = (float) $b->total_harga;
@@ -370,14 +393,14 @@ class AdminBookingController extends Controller
             ];
         };
 
-        // 4. Header Banner Laporan (Atas)
-        $writer->addRow(Row::fromValuesWithStyle(['LAPORAN REKAPITULASI PEMESANAN WISATA - DESA GETAS'], $titleStyle));
-        $writer->addRow(Row::fromValuesWithStyle(['Waktu Ekspor: ' . now()->format('d/m/Y H:i') . ' WIB  |  Total Data: ' . $dataCount . ' Transaksi', '', '', '', '', '', ''], $subtitleStyle));
-        $writer->addRow(Row::fromValues([]));
+        // 5. Header Banner Laporan (Atas)
+        $writer->addRow($this->makeExportRow(['LAPORAN REKAPITULASI PEMESANAN WISATA - DESA GETAS'], $titleStyle));
+        $writer->addRow($this->makeExportRow(['Waktu Ekspor: ' . now()->format('d/m/Y H:i') . ' WIB  |  Total Data: ' . $dataCount . ' Transaksi', '', '', '', '', '', ''], $subtitleStyle));
+        $writer->addRow($this->makeExportRow([]));
 
         // ── TABEL 1: DAFTAR SELURUH PEMESANAN (ALL DATA) ──
-        $writer->addRow(Row::fromValuesWithStyle(['1. DAFTAR SELURUH PEMESANAN (SEMUA STATUS)', '', '', '', '', '', ''], $sectionBannerStyle));
-        $writer->addRow(Row::fromValuesWithStyle([
+        $writer->addRow($this->makeExportRow(['1. DAFTAR SELURUH PEMESANAN (SEMUA STATUS)', '', '', '', '', '', ''], $sectionBannerStyle));
+        $writer->addRow($this->makeExportRow([
             'Kode Booking', 'Nama Pemesan', 'No. WhatsApp', 'Email', 'Alamat / Kota Asal', 'Paket Wisata', 'Add-ons / Layanan Tambahan', 'Tanggal Kunjungan', 'Sesi Kunjungan', 'Jumlah Peserta', 'Total Harga (Rp)', 'Status', 'Catatan', 'Tanggal Transaksi',
         ], $headerStyle));
 
@@ -404,11 +427,11 @@ class AdminBookingController extends Controller
                 $countCancelledOrRejected++;
             }
 
-            $writer->addRow(Row::fromValues($formatBookingRow($b)));
+            $writer->addRow($this->makeExportRow($formatBookingRow($b)));
         }
 
         // Total Tabel 1
-        $writer->addRow(Row::fromValuesWithStyle([
+        $writer->addRow($this->makeExportRow([
             'TOTAL KESELURUHAN (ALL DATA)', '', '', '', '', '', '', '', '',
             $totalPesertaAll . ' Orang',
             'Rp ' . number_format($totalNilaiAll, 0, ',', '.'),
@@ -416,28 +439,28 @@ class AdminBookingController extends Controller
         ], $totalRowStyle));
 
         // ── TABEL 2: DAFTAR PEMESANAN TERKONFIRMASI (CONFIRMED) ──
-        $writer->addRow(Row::fromValues([]));
-        $writer->addRow(Row::fromValues([]));
+        $writer->addRow($this->makeExportRow([]));
+        $writer->addRow($this->makeExportRow([]));
 
-        $writer->addRow(Row::fromValuesWithStyle(['2. DAFTAR PEMESANAN TERKONFIRMASI (CONFIRMED / SIAP DILAYANI)', '', '', '', '', '', ''], $sectionBannerStyle));
-        $writer->addRow(Row::fromValuesWithStyle([
+        $writer->addRow($this->makeExportRow(['2. DAFTAR PEMESANAN TERKONFIRMASI (CONFIRMED / SIAP DILAYANI)', '', '', '', '', '', ''], $sectionBannerStyle));
+        $writer->addRow($this->makeExportRow([
             'Kode Booking', 'Nama Pemesan', 'No. WhatsApp', 'Email', 'Alamat / Kota Asal', 'Paket Wisata', 'Add-ons / Layanan Tambahan', 'Tanggal Kunjungan', 'Sesi Kunjungan', 'Jumlah Peserta', 'Total Harga (Rp)', 'Status', 'Catatan', 'Tanggal Transaksi',
         ], $headerStyle));
 
         $totalPesertaConfirmed = 0;
         if ($confirmedBookings->isEmpty()) {
-            $writer->addRow(Row::fromValues([
+            $writer->addRow($this->makeExportRow([
                 '-', 'Belum ada pemesanan terkonfirmasi', '-', '-', '-', '-', '-', '-', '-', '0 Orang', 'Rp 0', '-', '-', '-',
             ]));
         } else {
             foreach ($confirmedBookings as $b) {
                 $totalPesertaConfirmed += (int) $b->jumlah_peserta;
-                $writer->addRow(Row::fromValues($formatBookingRow($b)));
+                $writer->addRow($this->makeExportRow($formatBookingRow($b)));
             }
         }
 
         // Total Tabel 2
-        $writer->addRow(Row::fromValuesWithStyle([
+        $writer->addRow($this->makeExportRow([
             'TOTAL PEMESANAN TERKONFIRMASI', '', '', '', '', '', '', '', '',
             $totalPesertaConfirmed . ' Orang',
             'Rp ' . number_format($totalPendapatanConfirmed, 0, ',', '.'),
@@ -445,22 +468,54 @@ class AdminBookingController extends Controller
         ], $totalRowStyle));
 
         // ── TABEL 3: REKAPITULASI & KESIMPULAN (REKAP) ──
-        $writer->addRow(Row::fromValues([]));
-        $writer->addRow(Row::fromValues([]));
+        $writer->addRow($this->makeExportRow([]));
+        $writer->addRow($this->makeExportRow([]));
 
-        $writer->addRow(Row::fromValuesWithStyle(['3. RINGKASAN & KESIMPULAN LAPORAN', '', ''], $summaryTitleStyle));
-        $writer->addRow(Row::fromValuesWithStyle(['INDIKATOR / PARAMETER', 'JUMLAH / NILAI', 'KETERANGAN STATUS'], $summaryHeaderSubStyle));
-        $writer->addRow(Row::fromValuesWithStyle(['Total Seluruh Pemesanan', $dataCount . ' Transaksi', 'Semua data pemesanan yang tercatat'], $summaryItemStyle));
-        $writer->addRow(Row::fromValuesWithStyle(['Total Pengunjung (Peserta)', $totalPesertaAll . ' Orang', 'Akumulasi seluruh peserta wisata'], $summaryItemStyle));
-        $writer->addRow(Row::fromValuesWithStyle(['Pendapatan Terkonfirmasi', 'Rp ' . number_format($totalPendapatanConfirmed, 0, ',', '.'), 'Pemesanan status Confirmed / Lunas'], $summaryItemBoldStyle));
-        $writer->addRow(Row::fromValuesWithStyle(['Estimasi Nilai Seluruh Transaksi', 'Rp ' . number_format($totalNilaiAll, 0, ',', '.'), 'Total nilai pesanan (semua status)'], $summaryItemStyle));
-        $writer->addRow(Row::fromValuesWithStyle(['Pemesanan Terkonfirmasi', $countConfirmed . ' Booking', 'Pembayaran valid & siap berkunjung'], $summaryItemStyle));
-        $writer->addRow(Row::fromValuesWithStyle(['Pemesanan Menunggu (Pending)', $countPending . ' Booking', 'Menunggu bukti / verifikasi admin'], $summaryItemStyle));
-        $writer->addRow(Row::fromValuesWithStyle(['Pemesanan Batal / Ditolak', $countCancelledOrRejected . ' Booking', 'Dibatalkan pemesan atau ditolak admin'], $summaryItemStyle));
+        $writer->addRow($this->makeExportRow(['3. RINGKASAN & KESIMPULAN LAPORAN', '', ''], $summaryTitleStyle));
+        $writer->addRow($this->makeExportRow(['INDIKATOR / PARAMETER', 'JUMLAH / NILAI', 'KETERANGAN STATUS'], $summaryHeaderSubStyle));
+        $writer->addRow($this->makeExportRow(['Total Seluruh Pemesanan', $dataCount . ' Transaksi', 'Semua data pemesanan yang tercatat'], $summaryItemStyle));
+        $writer->addRow($this->makeExportRow(['Total Pengunjung (Peserta)', $totalPesertaAll . ' Orang', 'Akumulasi seluruh peserta wisata'], $summaryItemStyle));
+        $writer->addRow($this->makeExportRow(['Pendapatan Terkonfirmasi', 'Rp ' . number_format($totalPendapatanConfirmed, 0, ',', '.'), 'Pemesanan status Confirmed / Lunas'], $summaryItemBoldStyle));
+        $writer->addRow($this->makeExportRow(['Estimasi Nilai Seluruh Transaksi', 'Rp ' . number_format($totalNilaiAll, 0, ',', '.'), 'Total nilai pesanan (semua status)'], $summaryItemStyle));
+        $writer->addRow($this->makeExportRow(['Pemesanan Terkonfirmasi', $countConfirmed . ' Booking', 'Pembayaran valid & siap berkunjung'], $summaryItemStyle));
+        $writer->addRow($this->makeExportRow(['Pemesanan Menunggu (Pending)', $countPending . ' Booking', 'Menunggu bukti / verifikasi admin'], $summaryItemStyle));
+        $writer->addRow($this->makeExportRow(['Pemesanan Batal / Ditolak', $countCancelledOrRejected . ' Booking', 'Dibatalkan pemesan atau ditolak admin'], $summaryItemStyle));
 
         $writer->close();
 
         return response()->download($path, 'bookings-export-' . now()->format('Y-m-d') . '.xlsx')->deleteFileAfterSend(true);
+    }
+
+    private function makeExportRow(array $values, mixed $style = null): Row
+    {
+        if ($style !== null && method_exists(Row::class, 'fromValuesWithStyle')) {
+            try {
+                return Row::fromValuesWithStyle($values, $style);
+            } catch (\Throwable) {}
+        }
+
+        if (class_exists('\OpenSpout\Common\Creator\WriterEntityFactory')) {
+            try {
+                if ($style !== null) {
+                    return \OpenSpout\Common\Creator\WriterEntityFactory::createRowFromArray($values, $style);
+                }
+                return \OpenSpout\Common\Creator\WriterEntityFactory::createRowFromArray($values);
+            } catch (\Throwable) {}
+        }
+
+        try {
+            $row = Row::fromValues($values);
+            if ($style !== null) {
+                if (method_exists($row, 'withStyle')) {
+                    $row = $row->withStyle($style);
+                } elseif (method_exists($row, 'setStyle')) {
+                    $row->setStyle($style);
+                }
+            }
+            return $row;
+        } catch (\Throwable) {}
+
+        return Row::fromValues($values);
     }
 
     private function makeExportStyle(
@@ -475,52 +530,58 @@ class AdminBookingController extends Controller
         $fontColorStr = is_object($fontColor) && property_exists($fontColor, 'value') ? (string) $fontColor->value : (string) $fontColor;
 
         if (class_exists('\OpenSpout\Common\Entity\Style\StyleBuilder')) {
-            $b = new \OpenSpout\Common\Entity\Style\StyleBuilder();
-            if ($bold && method_exists($b, 'setFontBold')) $b->setFontBold();
-            if ($italic && method_exists($b, 'setFontItalic')) $b->setFontItalic();
-            if (method_exists($b, 'setFontSize')) $b->setFontSize($fontSize);
-            if (method_exists($b, 'setFontColor')) $b->setFontColor($fontColorStr);
-            if (method_exists($b, 'setFontName')) $b->setFontName($fontName);
-            if ($alignment && method_exists($b, 'setCellAlignment')) {
-                $alignVal = is_object($alignment) && property_exists($alignment, 'value') ? (string) $alignment->value : (string) $alignment;
-                $b->setCellAlignment($alignVal);
-            }
-            if ($backgroundColor && method_exists($b, 'setBackgroundColor')) $b->setBackgroundColor($backgroundColor);
-            return $b->build();
+            try {
+                $b = new \OpenSpout\Common\Entity\Style\StyleBuilder();
+                if ($bold && method_exists($b, 'setFontBold')) $b->setFontBold();
+                if ($italic && method_exists($b, 'setFontItalic')) $b->setFontItalic();
+                if (method_exists($b, 'setFontSize')) $b->setFontSize($fontSize);
+                if (method_exists($b, 'setFontColor')) $b->setFontColor($fontColorStr);
+                if (method_exists($b, 'setFontName')) $b->setFontName($fontName);
+                if ($alignment && method_exists($b, 'setCellAlignment')) {
+                    $alignVal = is_object($alignment) && property_exists($alignment, 'value') ? (string) $alignment->value : (string) $alignment;
+                    $b->setCellAlignment($alignVal);
+                }
+                if ($backgroundColor && method_exists($b, 'setBackgroundColor')) $b->setBackgroundColor($backgroundColor);
+                return $b->build();
+            } catch (\Throwable) {}
         }
 
         $style = new Style();
 
         if (method_exists($style, 'withFontBold')) {
-            if ($bold) $style = $style->withFontBold(true);
-            if ($italic) $style = $style->withFontItalic(true);
-            if ($fontSize !== 11) $style = $style->withFontSize($fontSize);
-            if ($fontColorStr !== '000000') $style = $style->withFontColor($fontColorStr);
-            if ($fontName !== 'Calibri') $style = $style->withFontName($fontName);
-            if ($alignment) {
-                if ($alignment instanceof CellAlignment) {
-                    $style = $style->withCellAlignment($alignment);
-                } elseif (enum_exists(CellAlignment::class) && is_string($alignment)) {
-                    $enumVal = CellAlignment::tryFrom($alignment) ?? CellAlignment::CENTER;
-                    $style = $style->withCellAlignment($enumVal);
+            try {
+                if ($bold) $style = $style->withFontBold(true);
+                if ($italic) $style = $style->withFontItalic(true);
+                if ($fontSize !== 11) $style = $style->withFontSize($fontSize);
+                if ($fontColorStr !== '000000') $style = $style->withFontColor($fontColorStr);
+                if ($fontName !== 'Calibri') $style = $style->withFontName($fontName);
+                if ($alignment) {
+                    if ($alignment instanceof CellAlignment) {
+                        $style = $style->withCellAlignment($alignment);
+                    } elseif (enum_exists(CellAlignment::class) && is_string($alignment)) {
+                        $enumVal = CellAlignment::tryFrom($alignment) ?? CellAlignment::CENTER;
+                        $style = $style->withCellAlignment($enumVal);
+                    }
                 }
-            }
-            if ($backgroundColor) $style = $style->withBackgroundColor($backgroundColor);
-            return $style;
+                if ($backgroundColor) $style = $style->withBackgroundColor($backgroundColor);
+                return $style;
+            } catch (\Throwable) {}
         }
 
         if (method_exists($style, 'setFontBold')) {
-            if ($bold) $style->setFontBold(true);
-            if ($italic) $style->setFontItalic(true);
-            $style->setFontSize($fontSize);
-            $style->setFontColor($fontColorStr);
-            $style->setFontName($fontName);
-            if ($alignment && method_exists($style, 'setCellAlignment')) {
-                $alignVal = is_object($alignment) && property_exists($alignment, 'value') ? (string) $alignment->value : (string) $alignment;
-                $style->setCellAlignment($alignVal);
-            }
-            if ($backgroundColor && method_exists($style, 'setBackgroundColor')) $style->setBackgroundColor($backgroundColor);
-            return $style;
+            try {
+                if ($bold) $style->setFontBold(true);
+                if ($italic) $style->setFontItalic(true);
+                $style->setFontSize($fontSize);
+                $style->setFontColor($fontColorStr);
+                $style->setFontName($fontName);
+                if ($alignment && method_exists($style, 'setCellAlignment')) {
+                    $alignVal = is_object($alignment) && property_exists($alignment, 'value') ? (string) $alignment->value : (string) $alignment;
+                    $style->setCellAlignment($alignVal);
+                }
+                if ($backgroundColor && method_exists($style, 'setBackgroundColor')) $style->setBackgroundColor($backgroundColor);
+                return $style;
+            } catch (\Throwable) {}
         }
 
         try {
