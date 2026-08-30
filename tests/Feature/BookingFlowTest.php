@@ -302,4 +302,51 @@ class BookingFlowTest extends TestCase
         $response->assertOk();
         $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }
+
+    public function test_admin_dapat_export_booking_bulanan(): void
+    {
+        $user = \App\Models\User::factory()->create();
+        $this->createBooking();
+
+        $response = $this->actingAs($user)->get(route('admin.bookings.export', [
+            'period_type' => 'monthly',
+            'month' => now()->month,
+            'year' => now()->year,
+        ]));
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
+
+    public function test_admin_dapat_export_booking_tahunan(): void
+    {
+        $user = \App\Models\User::factory()->create();
+        $this->createBooking();
+
+        $response = $this->actingAs($user)->get(route('admin.bookings.export', [
+            'period_type' => 'yearly',
+            'year' => now()->year,
+        ]));
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
+
+    public function test_admin_dapat_export_booking_rentang_kustom(): void
+    {
+        $user = \App\Models\User::factory()->create();
+        $this->createBooking();
+
+        $response = $this->actingAs($user)->get(route('admin.bookings.export', [
+            'period_type' => 'custom',
+            'start_date' => now()->subDays(5)->format('Y-m-d'),
+            'end_date' => now()->addDays(5)->format('Y-m-d'),
+            'date_basis' => 'tanggal_kunjungan',
+            'status' => 'confirmed_completed',
+        ]));
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
 }
+

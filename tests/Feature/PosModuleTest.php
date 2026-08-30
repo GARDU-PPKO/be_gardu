@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AddOn;
 use App\Models\Booking;
 use App\Models\BookingSession;
 use App\Models\PaketWisata;
@@ -13,6 +14,7 @@ use App\Models\UmkmProduct;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+
 
 class PosModuleTest extends TestCase
 {
@@ -349,4 +351,44 @@ class PosModuleTest extends TestCase
         $response->assertSee('POS-TEST-12345');
         $response->assertSee('DESA WISATA GETAS');
     }
+
+    public function test_pos_checkout_with_addon(): void
+    {
+        $makan = AddOn::create([
+            'nama' => 'Makan Siang Prasmanan',
+            'tipe_harga' => 'per_orang',
+            'harga' => 25000,
+            'aktif' => true,
+        ]);
+
+        $payload = [
+            'items' => [
+                [
+                    'item_type' => 'addon',
+                    'item_id' => (string) $makan->id,
+                    'quantity' => 4,
+                ],
+            ],
+            'paid_amount' => 100000,
+            'payment_method' => 'cash',
+        ];
+
+        $response = $this->actingAs($this->user)->postJson(route('admin.pos.checkout'), $payload);
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true]);
+
+        $transaction = PosTransaction::latest('id')->first();
+        $this->assertNotNull($transaction);
+        $this->assertEquals(100000, (float) $transaction->total_amount);
+
+        $this->assertDatabaseHas('pos_transaction_items', [
+            'transaction_id' => $transaction->id,
+            'item_type' => 'addon',
+            'item_id' => (string) $makan->id,
+            'quantity' => 4,
+            'subtotal' => 100000,
+        ]);
+    }
 }
+

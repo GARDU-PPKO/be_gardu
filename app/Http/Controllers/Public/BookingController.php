@@ -205,15 +205,16 @@ class BookingController extends Controller
                 continue;
             }
 
-            $qty = $model->tipe_harga === 'per_orang'
-                ? $participants
-                : (int) ($addOn['quantity'] ?? $addOn['qty'] ?? 1);
+            $qty = isset($addOn['quantity'])
+                ? (int) $addOn['quantity']
+                : (isset($addOn['qty']) ? (int) $addOn['qty'] : ($model->tipe_harga === 'per_orang' ? $participants : 1));
 
             if ($qty < 1) {
                 $errors["addons.{$index}.quantity"] = ['Quantity minimal 1.'];
 
                 continue;
             }
+
 
             $subtotal = (float) $model->harga * $qty;
             $total += $subtotal;

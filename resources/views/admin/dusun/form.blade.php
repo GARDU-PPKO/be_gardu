@@ -25,21 +25,6 @@
                 @error('rw') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Jumlah RT *</label>
-                <input type="number" name="jumlah_rt" value="{{ old('jumlah_rt', $dusun->jumlah_rt ?? '') }}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
-                @error('jumlah_rt') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Jumlah Penduduk *</label>
-                <input type="number" name="jumlah_penduduk" value="{{ old('jumlah_penduduk', $dusun->jumlah_penduduk ?? '') }}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
-                @error('jumlah_penduduk') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Luas Wilayah *</label>
-                <input type="text" name="luas_wilayah" value="{{ old('luas_wilayah', $dusun->luas_wilayah ?? '') }}" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
-                @error('luas_wilayah') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-            </div>
-            <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Hero Image {{ $dusun ? '' : '*' }}</label>
                 @if(!empty($dusun->hero_img))
                     <img src="{{ $dusun->hero_img }}" alt="Hero image saat ini" class="w-full h-32 object-cover rounded-lg border border-gray-200 mb-2">
@@ -55,7 +40,7 @@
                 <input type="file" name="thumbnail" accept="image/*" {{ $dusun ? '' : 'required' }} class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
                 @error('thumbnail') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
-            <div class="flex items-center gap-2 pt-6">
+            <div class="flex items-center gap-2 pt-2 sm:col-span-2">
                 <input type="checkbox" name="is_active" value="1" id="is_active" {{ old('is_active', $dusun->is_active ?? true) ? 'checked' : '' }} class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
                 <label for="is_active" class="text-sm font-medium text-gray-700">Aktif</label>
             </div>
@@ -79,38 +64,8 @@
         </div>
     </form>
 
-    {{-- Galeri --}}
-    @if($dusun)
-    <div class="bg-white rounded-xl shadow-sm p-6 space-y-4">
-        <h3 class="font-bold text-gray-800">Galeri</h3>
-
-        @if($dusun->galleries->count() > 0)
-        <div class="space-y-2">
-            @foreach($dusun->galleries as $gallery)
-            <div class="flex items-center gap-2 text-sm">
-                <span class="text-gray-600 flex-1 truncate">{{ $gallery->image_url }}</span>
-                <form method="POST" action="{{ route('admin.dusun.galleries.destroy', [$dusun->id, $gallery->id]) }}" onsubmit="return confirm('Yakin hapus?')">
-                    @csrf @method('DELETE')
-                    <button type="submit" class="text-red-600 hover:text-red-800 text-xs">Hapus</button>
-                </form>
-            </div>
-            @endforeach
-        </div>
-        @else
-        <p class="text-gray-400 text-sm">Belum ada galeri</p>
-        @endif
-
-        <form method="POST" action="{{ route('admin.dusun.galleries.store', $dusun->id) }}" enctype="multipart/form-data" class="flex gap-2 items-end">
-            @csrf
-            <div class="flex-1">
-                <input type="file" name="image_url" accept="image/*" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
-                @error('image_url') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-            </div>
-            <button type="submit" class="px-4 py-2 bg-emerald-700 text-white rounded-lg text-sm hover:bg-emerald-800 transition">Tambah</button>
-        </form>
-    </div>
-
     {{-- Keunggulan --}}
+    @if($dusun)
     <div class="bg-white rounded-xl shadow-sm p-6 space-y-4">
         <h3 class="font-bold text-gray-800">Keunggulan</h3>
 

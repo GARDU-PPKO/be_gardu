@@ -42,15 +42,13 @@ class DusunController extends Controller
             'id' => $d->id,
             'nama' => $d->nama,
             'rw' => $d->rw,
-            'jumlah_rt' => $d->jumlah_rt,
-            'jumlah_penduduk' => $d->jumlah_penduduk,
-            'luas_wilayah' => $d->luas_wilayah,
             'deskripsi' => $d->deskripsi,
             'thumbnail' => $d->thumbnail,
             'hero_img' => $d->hero_img,
             'is_active' => (bool) $d->is_active,
         ];
     }
+
 
     private function detailShape(Dusun $d): array
     {

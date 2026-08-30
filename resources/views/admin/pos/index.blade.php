@@ -25,49 +25,6 @@
 <body class="h-full font-sans antialiased bg-slate-100 text-slate-800 select-none overflow-hidden">
 
 <div class="h-screen flex flex-col p-2 sm:p-3 md:p-4 gap-2 md:gap-3 bg-slate-100" id="posContainer">
-    <a href="{{ route('admin.dashboard') }}" title="Kembali ke Dashboard"
-   class="fixed top-3 left-3 z-40 w-9 h-9 rounded-full bg-slate-900/90 hover:bg-slate-700 text-white flex items-center justify-center shadow-md border border-slate-700 transition active:scale-95">
-    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-    </svg>
-</a>
-    <!-- Top Bar Navigation (Clean Header) -->
-    <!-- <header class="bg-slate-900 text-white rounded-xl px-3 sm:px-4 py-2 sm:py-2.5 shadow-sm flex items-center justify-between flex-shrink-0">
-        <div class="flex items-center gap-2.5">
-            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 flex-shrink-0">
-                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-            </div>
-            <div class="flex items-center gap-2">
-                <h1 class="font-bold text-xs sm:text-sm md:text-base leading-none text-white tracking-tight">
-                    Terminal POS
-                </h1>
-                <span class="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 whitespace-nowrap hidden xs:inline-block">TABLET</span>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-1.5 sm:gap-2">
-            <span class="hidden lg:inline-block text-xs text-slate-300 mr-1">
-                Kasir: <strong class="text-white">{{ auth()->user()->nama ?? auth()->user()->name ?? 'Super Admin' }}</strong>
-            </span>
-
-            <a href="{{ route('admin.pos.transactions.index') }}" class="px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition border border-slate-700 flex items-center gap-1">
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                <span class="hidden sm:inline">Riwayat</span>
-            </a>
-
-            <a href="{{ route('admin.pos.products.index') }}" class="px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition border border-slate-700 flex items-center gap-1">
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-                <span class="hidden sm:inline">Produk</span>
-            </a>
-
-            <a href="{{ route('admin.dashboard') }}" class="px-2.5 py-1.5 text-xs font-medium text-rose-300 hover:text-white bg-rose-950/60 hover:bg-rose-900 rounded-lg transition border border-rose-800/50 flex items-center gap-1 shadow-xs">
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                <span class="hidden sm:inline">Kembali ke Admin</span>
-                <span class="sm:hidden">Keluar</span>
-            </a>
-        </div>
-    </header> -->
-
     <!-- Main Tablet Workspace: Side-by-Side 2 Columns (Flex Row) -->
     <div class="flex-1 flex flex-col lg:flex-row gap-2.5 md:gap-3 min-h-0 overflow-hidden">
         
@@ -77,11 +34,19 @@
             <!-- Category Filter & Search Header (Clean Flex Wrap Layout) -->
             <div class="p-2 sm:p-2.5 border-b border-slate-200 bg-white flex flex-col gap-2 flex-shrink-0">
                 
-                <!-- Row 1: Search Input (Full Width on catalog header) -->
-                <div class="relative w-full">
-                    <input type="text" id="searchInput" placeholder="Cari nama produk atau SKU..." 
-                           class="w-full pl-8 pr-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 text-xs focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white transition">
-                    <svg width="14" height="14" class="text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <!-- Row 1: Back Button & Search Input in ONE Flex Row -->
+                <div class="flex items-center gap-2 w-full">
+                    <a href="{{ route('admin.dashboard') }}" title="Kembali ke Dashboard"
+                       class="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center shadow-xs transition active:scale-95">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                    </a>
+                    <div class="relative flex-1">
+                        <input type="text" id="searchInput" placeholder="Cari nama produk, paket, atau SKU..." 
+                               class="w-full pl-8 pr-3 py-1.5 sm:py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 text-xs focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white transition">
+                        <svg width="14" height="14" class="text-slate-400 absolute left-2.5 top-2.5 sm:top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
                 </div>
 
                 <!-- Row 2: Category Filter Pills (Flex Wrap so ALL pills wrap and 100% visible without clipping) -->
@@ -92,11 +57,14 @@
                     <button type="button" class="type-btn px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium transition bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200" data-type="paket_wisata">
                         Paket Wisata ({{ $catalog->where('type', 'paket_wisata')->count() }})
                     </button>
-                    <button type="button" class="type-btn px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium transition bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200" data-type="umkm_product">
-                        Produk UMKM ({{ $catalog->where('type', 'umkm_product')->count() }})
+                    <button type="button" class="type-btn px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium transition bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200" data-type="addon">
+                        Add-On ({{ $catalog->where('type', 'addon')->count() }})
                     </button>
                     <button type="button" class="type-btn px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium transition bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200" data-type="pos_product">
                         Produk POS ({{ $catalog->where('type', 'pos_product')->count() }})
+                    </button>
+                    <button type="button" class="type-btn px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium transition bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200" data-type="umkm_product">
+                        Produk UMKM ({{ $catalog->where('type', 'umkm_product')->count() }})
                     </button>
                 </div>
             </div>
@@ -106,6 +74,7 @@
                 @forelse($catalog as $item)
                     @php
                         $isPaket = $item['type'] === 'paket_wisata';
+                        $isAddon = $item['type'] === 'addon';
                         $stock = $item['stock'];
                     @endphp
                     <div class="product-card group bg-white border border-slate-200 hover:border-emerald-600 hover:shadow-md transition cursor-pointer rounded-xl p-2.5 flex flex-col justify-between relative overflow-hidden active:scale-[0.98]"
@@ -128,13 +97,17 @@
                                 </div>
                             @endif
 
-                            @if(!$isPaket)
-                                <span class="absolute top-1.5 right-1.5 px-2 py-0.5 rounded text-[10px] font-bold backdrop-blur-md shadow-xs {{ $stock > 10 ? 'bg-slate-900/80 text-white' : ($stock > 0 ? 'bg-amber-600/90 text-white' : 'bg-rose-600/90 text-white') }}">
-                                    Stok: {{ $stock }}
-                                </span>
-                            @else
+                            @if($isPaket)
                                 <span class="absolute top-1.5 right-1.5 px-2 py-0.5 rounded text-[10px] font-bold backdrop-blur-md shadow-xs bg-emerald-700/90 text-white">
                                     Paket Wisata
+                                </span>
+                            @elseif($isAddon)
+                                <span class="absolute top-1.5 right-1.5 px-2 py-0.5 rounded text-[10px] font-bold backdrop-blur-md shadow-xs bg-indigo-700/90 text-white">
+                                    Add-On
+                                </span>
+                            @else
+                                <span class="absolute top-1.5 right-1.5 px-2 py-0.5 rounded text-[10px] font-bold backdrop-blur-md shadow-xs {{ $stock > 10 ? 'bg-slate-900/80 text-white' : ($stock > 0 ? 'bg-amber-600/90 text-white' : 'bg-rose-600/90 text-white') }}">
+                                    Stok: {{ $stock }}
                                 </span>
                             @endif
                         </div>
@@ -155,15 +128,16 @@
                                     Rp {{ number_format($item['price'], 0, ',', '.') }}
                                     @if($item['type'] === 'paket_wisata')
                                         <span class="text-[9px] text-slate-400 font-semibold">/{{ $item['is_per_orang'] ? 'orang' : 'paket' }}</span>
+                                    @elseif($item['type'] === 'addon')
+                                        <span class="text-[9px] text-slate-400 font-semibold">/{{ $item['is_per_orang'] ? 'orang' : 'unit' }}</span>
                                     @endif
                                 </span>
                             </div>
                         </div>
                     </div>
                 @empty
-                    <div class="col-span-full py-12 text-center text-slate-400">
-                        <svg width="36" height="36" class="mx-auto mb-2 text-slate-300 stroke-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
-                        <p class="text-xs font-semibold">Belum ada item yang aktif.</p>
+                    <div class="col-span-full text-center py-12 text-slate-400 text-xs sm:text-sm">
+                        Belum ada item katalog yang aktif.
                     </div>
                 @endforelse
             </div>
@@ -444,15 +418,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const stock = parseInt(card.dataset.stock);
             const minPax = parseInt(card.dataset.minParticipants || '1', 10);
             const isPaket = type === 'paket_wisata';
+            const isAddon = type === 'addon';
 
-            if (!isPaket && stock <= 0) {
+            if (!isPaket && !isAddon && stock <= 0) {
                 alert('Stok produk habis!');
                 return;
             }
 
             const existingIndex = cart.findIndex(item => item.type === type && item.id === id);
             if (existingIndex > -1) {
-                if (!isPaket && cart[existingIndex].quantity + 1 > stock) {
+                if (!isPaket && !isAddon && cart[existingIndex].quantity + 1 > stock) {
                     alert('Jumlah melebihi stok yang tersedia (' + stock + ')');
                     return;
                 }
@@ -495,7 +470,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="flex-1 min-w-0 pr-1.5">
                     <h5 class="font-bold text-slate-900 truncate text-xs">${item.name}</h5>
                     <div class="text-slate-500 text-[10px] mt-0.5">
-                        ${item.isPaket ? '<span class="text-emerald-700 font-bold uppercase text-[9px]">Paket Wisata</span> ' + (item.minParticipants > 1 ? '<span class="text-slate-400 text-[9px]">(min ' + item.minParticipants + ' org)</span> ' : '') : ''}
+                        ${item.isPaket ? '<span class="text-emerald-700 font-bold uppercase text-[9px]">Paket Wisata</span> ' + (item.minParticipants > 1 ? '<span class="text-slate-400 text-[9px]">(min ' + item.minParticipants + ' org)</span> ' : '') : (item.type === 'addon' ? '<span class="text-indigo-700 font-bold uppercase text-[9px]">Add-On</span> ' : '')}
                         Rp ${formatRupiah(item.price)} x ${item.quantity} = <strong class="text-emerald-700 font-extrabold">Rp ${formatRupiah(subtotal)}</strong>
                     </div>
                 </div>
@@ -519,7 +494,7 @@ document.addEventListener('DOMContentLoaded', function() {
     cartItemsList.addEventListener('click', (e) => {
         if (e.target.classList.contains('increase-btn')) {
             const index = parseInt(e.target.dataset.index);
-            if (!cart[index].isPaket && cart[index].quantity + 1 > cart[index].stock) {
+            if (!cart[index].isPaket && cart[index].type !== 'addon' && cart[index].quantity + 1 > cart[index].stock) {
                 alert('Stok produk tidak mencukupi');
                 return;
             }
@@ -547,6 +522,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     clearCartBtn.addEventListener('click', () => {
+
         if (cart.length > 0 && confirm('Kosongkan semua item dari keranjang?')) {
             cart = [];
             renderCart();

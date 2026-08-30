@@ -15,9 +15,6 @@
                 <tr class="text-left text-gray-500 border-b bg-gray-50">
                     <th class="p-4 font-semibold">Nama</th>
                     <th class="p-4 font-semibold">RW</th>
-                    <th class="p-4 font-semibold">Jumlah RT</th>
-                    <th class="p-4 font-semibold">Penduduk</th>
-                    <th class="p-4 font-semibold">Luas Wilayah</th>
                     <th class="p-4 font-semibold">Status</th>
                     <th class="p-4 font-semibold">Aksi</th>
                 </tr>
@@ -25,11 +22,8 @@
             <tbody>
                 @forelse($dusunList as $dusun)
                 <tr class="border-b border-gray-100 hover:bg-gray-50">
-                    <td class="p-4">{{ $dusun->nama }}</td>
+                    <td class="p-4 font-medium text-gray-900">{{ $dusun->nama }}</td>
                     <td class="p-4">{{ $dusun->rw }}</td>
-                    <td class="p-4">{{ $dusun->jumlah_rt }}</td>
-                    <td class="p-4">{{ $dusun->jumlah_penduduk }}</td>
-                    <td class="p-4">{{ $dusun->luas_wilayah }}</td>
                     <td class="p-4">
                         <span class="px-2 py-1 text-xs rounded-full {{ $dusun->is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
                             {{ $dusun->is_active ? 'Aktif' : 'Nonaktif' }}
@@ -45,7 +39,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="7" class="p-8 text-center text-gray-400">Belum ada dusun</td></tr>
+                <tr><td colspan="4" class="p-8 text-center text-gray-400">Belum ada dusun</td></tr>
                 @endforelse
             </tbody>
         </table>

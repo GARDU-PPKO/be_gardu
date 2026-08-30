@@ -28,6 +28,9 @@ class AdminSettingController extends Controller
             'deskripsi' => 'nullable|string|max:255',
         ]);
 
+        $nullableKeys = ['sosmed_fb', 'sosmed_yt', 'sosmed_web', 'sosmed_ig', 'sosmed_tiktok', 'hero_image'];
+        $isNullable = in_array($setting->key, $nullableKeys);
+
         if ($setting->key === 'qris_image') {
             if ($request->hasFile('value')) {
                 $request->validate(['value' => 'image|max:2048']);
@@ -36,6 +39,9 @@ class AdminSettingController extends Controller
             } elseif ($request->filled('value')) {
                 $data['value'] = $request->input('value');
             }
+        } elseif ($isNullable) {
+            $request->validate(['value' => 'nullable|string|max:500']);
+            $data['value'] = $request->input('value') ?? '';
         } else {
             $request->validate(['value' => 'required|string']);
             $data['value'] = $request->input('value');
@@ -44,4 +50,5 @@ class AdminSettingController extends Controller
         $setting->update($data);
         return redirect()->route('admin.settings.index')->with('success', 'Pengaturan berhasil diupdate');
     }
+
 }

@@ -28,11 +28,12 @@
                 </div>
                 @else
                 <div class="col-span-2">
-                    <span class="text-gray-500 block mb-1">Value *</span>
-                    <textarea name="value" rows="3" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">{{ old('value', $setting->value) }}</textarea>
+                    <span class="text-gray-500 block mb-1">Value {{ in_array($setting->key, ['sosmed_fb', 'sosmed_yt', 'sosmed_web', 'sosmed_ig', 'sosmed_tiktok', 'hero_image']) ? '(Opsional)' : '*' }}</span>
+                    <textarea name="value" rows="3" {{ in_array($setting->key, ['sosmed_fb', 'sosmed_yt', 'sosmed_web', 'sosmed_ig', 'sosmed_tiktok', 'hero_image']) ? '' : 'required' }} class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">{{ old('value', $setting->value) }}</textarea>
                     @error('value') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
                 @endif
+
                 <div class="col-span-2">
                     <span class="text-gray-500 block mb-1">Deskripsi</span>
                     <input type="text" name="deskripsi" value="{{ old('deskripsi', $setting->deskripsi) }}" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">

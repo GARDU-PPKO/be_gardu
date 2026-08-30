@@ -270,9 +270,87 @@ class AdminBookingController extends Controller
         return $data;
     }
 
-    public function export()
+    public function export(Request $request)
     {
-        $bookings = Booking::with(['paketWisata:id,nama', 'addOns'])->orderBy('created_at', 'desc')->get();
+        $periodType = $request->input('period_type', 'all');
+        $dateBasis = $request->input('date_basis', 'created_at');
+        if (! in_array($dateBasis, ['created_at', 'tanggal_kunjungan'])) {
+            $dateBasis = 'created_at';
+        }
+
+        $statusFilter = $request->input('status', 'all');
+
+        $indonesianMonths = [
+            1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+            5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
+        ];
+
+        $query = Booking::with(['paketWisata:id,nama', 'addOns'])->orderBy($dateBasis, 'desc');
+
+        $periodLabel = 'Semua Waktu (All-Time)';
+        $filenameSuffix = 'semua-waktu';
+
+        if ($periodType === 'monthly') {
+            $month = (int) $request->input('month', now()->month);
+            $year = (int) $request->input('year', now()->year);
+            if ($month >= 1 && $month <= 12 && $year > 2000) {
+                $startDate = \Carbon\Carbon::createFromDate($year, $month, 1)->startOfMonth();
+                $endDate = $startDate->copy()->endOfMonth();
+
+                if ($dateBasis === 'tanggal_kunjungan') {
+                    $query->whereBetween('tanggal_kunjungan', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')]);
+                } else {
+                    $query->whereBetween('created_at', [$startDate->startOfDay(), $endDate->endOfDay()]);
+                }
+
+                $monthName = $indonesianMonths[$month] ?? "Bulan $month";
+                $periodLabel = "Bulan {$monthName} {$year}";
+                $filenameSuffix = Str::slug("rekap-{$monthName}-{$year}");
+            }
+        } elseif ($periodType === 'yearly') {
+            $year = (int) $request->input('year', now()->year);
+            if ($year > 2000) {
+                $startDate = \Carbon\Carbon::createFromDate($year, 1, 1)->startOfYear();
+                $endDate = $startDate->copy()->endOfYear();
+
+                if ($dateBasis === 'tanggal_kunjungan') {
+                    $query->whereBetween('tanggal_kunjungan', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')]);
+                } else {
+                    $query->whereBetween('created_at', [$startDate->startOfDay(), $endDate->endOfDay()]);
+                }
+
+                $periodLabel = "Tahun {$year}";
+                $filenameSuffix = "rekap-tahun-{$year}";
+            }
+        } elseif ($periodType === 'custom') {
+            $startRaw = $request->input('start_date');
+            $endRaw = $request->input('end_date');
+            if ($startRaw && $endRaw) {
+                $startDate = \Carbon\Carbon::parse($startRaw)->startOfDay();
+                $endDate = \Carbon\Carbon::parse($endRaw)->endOfDay();
+
+                if ($dateBasis === 'tanggal_kunjungan') {
+                    $query->whereBetween('tanggal_kunjungan', [$startDate->format('Y-m-d'), $endDate->format('Y-m-d')]);
+                } else {
+                    $query->whereBetween('created_at', [$startDate, $endDate]);
+                }
+
+                $periodLabel = $startDate->format('d/m/Y') . ' s/d ' . $endDate->format('d/m/Y');
+                $filenameSuffix = "rekap-" . $startDate->format('Ymd') . "-sd-" . $endDate->format('Ymd');
+            }
+        }
+
+        // Status Filter
+        if ($statusFilter && $statusFilter !== 'all') {
+            if ($statusFilter === 'confirmed_completed') {
+                $query->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_COMPLETED, 'CONFIRMED', 'COMPLETED']);
+            } else {
+                $query->where('status', $statusFilter);
+            }
+        }
+
+        $bookings = $query->get();
 
         $confirmedBookings = $bookings->filter(function ($b) {
             $status = strtoupper((string) ($b->status ?? ''));
@@ -286,7 +364,7 @@ class AdminBookingController extends Controller
         $totalRow1Index = 5 + $dataCount + 1;
         $table2BannerIndex = $totalRow1Index + 3;
         $table2HeaderIndex = $table2BannerIndex + 1;
-        $totalRow2Index = $table2HeaderIndex + $confirmedCount + 1;
+        $totalRow2Index = $table2HeaderIndex + ($confirmedCount ?: 1) + 1;
         $summaryTitleIndex = $totalRow2Index + 3;
 
         // 1. Inisialisasi Options (Merge Cells jika didukung)
@@ -296,7 +374,7 @@ class AdminBookingController extends Controller
                 $options = new Options();
                 if (method_exists($options, 'mergeCells')) {
                     $options->mergeCells(0, 1, 6, 1);
-                    $options->mergeCells(0, 2, 6, 2);
+                    $options->mergeCells(0, 2, 8, 2);
                     $options->mergeCells(0, 4, 6, 4);
                     $options->mergeCells(0, $totalRow1Index, 8, $totalRow1Index);
                     $options->mergeCells(0, $table2BannerIndex, 6, $table2BannerIndex);
@@ -371,9 +449,14 @@ class AdminBookingController extends Controller
                 $formattedWa = '-';
             }
 
-            $addonsText = $b->addOns->isNotEmpty()
-                ? $b->addOns->map(fn ($a) => $a->nama . ($a->pivot?->qty > 1 ? " ({$a->pivot->qty}x)" : ''))->join(', ')
-                : '-';
+            $addOnSummary = '-';
+            if ($b->addOns && $b->addOns->isNotEmpty()) {
+                $addOnSummary = $b->addOns->map(function ($a) {
+                    $qty = $a->pivot->qty ?? 1;
+                    $satuan = $a->satuan ?? 'pax';
+                    return "{$a->nama} ({$qty} {$satuan})";
+                })->implode(', ');
+            }
 
             return [
                 $b->booking_code,
@@ -381,9 +464,9 @@ class AdminBookingController extends Controller
                 $formattedWa,
                 $b->email ?: '-',
                 $b->alamat ?: '-',
-                $b->paketWisata?->nama ?: '-',
-                $addonsText,
-                $b->tanggal_kunjungan?->format('d/m/Y') ?: '-',
+                $b->paketWisata->nama ?? 'Paket Kustom / Terhapus',
+                $addOnSummary,
+                $b->tanggal_kunjungan ? $b->tanggal_kunjungan->format('d/m/Y') : '-',
                 $b->sesi ?: '-',
                 $peserta . ' Orang',
                 'Rp ' . number_format($harga, 0, ',', '.'),
@@ -394,12 +477,18 @@ class AdminBookingController extends Controller
         };
 
         // 5. Header Banner Laporan (Atas)
+        $basisLabel = $dateBasis === 'tanggal_kunjungan' ? 'Tanggal Kunjungan Wisata' : 'Tanggal Transaksi / Pemesanan';
+        $statusLabel = $statusFilter === 'all' ? 'Semua Status' : ($statusFilter === 'confirmed_completed' ? 'Terkonfirmasi & Selesai' : strtoupper(str_replace('_', ' ', $statusFilter)));
+
         $writer->addRow($this->makeExportRow(['LAPORAN REKAPITULASI PEMESANAN WISATA - DESA GETAS'], $titleStyle));
-        $writer->addRow($this->makeExportRow(['Waktu Ekspor: ' . now()->format('d/m/Y H:i') . ' WIB  |  Total Data: ' . $dataCount . ' Transaksi', '', '', '', '', '', ''], $subtitleStyle));
+        $writer->addRow($this->makeExportRow([
+            "Periode: {$periodLabel}  |  Basis: {$basisLabel}  |  Filter: {$statusLabel}  |  Total: {$dataCount} Data  |  Ekspor: " . now()->format('d/m/Y H:i') . ' WIB',
+            '', '', '', '', '', '', '', '',
+        ], $subtitleStyle));
         $writer->addRow($this->makeExportRow([]));
 
-        // ── TABEL 1: DAFTAR SELURUH PEMESANAN (ALL DATA) ──
-        $writer->addRow($this->makeExportRow(['1. DAFTAR SELURUH PEMESANAN (SEMUA STATUS)', '', '', '', '', '', ''], $sectionBannerStyle));
+        // ── TABEL 1: DAFTAR SELURUH PEMESANAN (SESUAI FILTER) ──
+        $writer->addRow($this->makeExportRow(['1. DAFTAR PEMESANAN (' . strtoupper($periodLabel) . ')', '', '', '', '', '', ''], $sectionBannerStyle));
         $writer->addRow($this->makeExportRow([
             'Kode Booking', 'Nama Pemesan', 'No. WhatsApp', 'Email', 'Alamat / Kota Asal', 'Paket Wisata', 'Add-ons / Layanan Tambahan', 'Tanggal Kunjungan', 'Sesi Kunjungan', 'Jumlah Peserta', 'Total Harga (Rp)', 'Status', 'Catatan', 'Tanggal Transaksi',
         ], $headerStyle));
@@ -411,28 +500,34 @@ class AdminBookingController extends Controller
         $countPending = 0;
         $countCancelledOrRejected = 0;
 
-        foreach ($bookings as $b) {
-            $peserta = (int) $b->jumlah_peserta;
-            $harga = (float) $b->total_harga;
-            $totalPesertaAll += $peserta;
-            $totalNilaiAll += $harga;
+        if ($bookings->isEmpty()) {
+            $writer->addRow($this->makeExportRow([
+                '-', 'Tidak ada data pemesanan pada periode ini', '-', '-', '-', '-', '-', '-', '-', '0 Orang', 'Rp 0', '-', '-', '-',
+            ]));
+        } else {
+            foreach ($bookings as $b) {
+                $peserta = (int) $b->jumlah_peserta;
+                $harga = (float) $b->total_harga;
+                $totalPesertaAll += $peserta;
+                $totalNilaiAll += $harga;
 
-            $status = strtoupper((string) ($b->status ?? ''));
-            if (in_array($status, [Booking::STATUS_CONFIRMED, Booking::STATUS_COMPLETED, 'CONFIRMED', 'COMPLETED'])) {
-                $countConfirmed++;
-                $totalPendapatanConfirmed += $harga;
-            } elseif (str_contains($status, 'PENDING')) {
-                $countPending++;
-            } elseif (in_array($status, [Booking::STATUS_REJECTED, Booking::STATUS_CANCELLED, Booking::STATUS_EXPIRED, 'REJECTED', 'CANCELLED', 'EXPIRED']) || str_contains($status, 'REJECT') || str_contains($status, 'CANCEL')) {
-                $countCancelledOrRejected++;
+                $status = strtoupper((string) ($b->status ?? ''));
+                if (in_array($status, [Booking::STATUS_CONFIRMED, Booking::STATUS_COMPLETED, 'CONFIRMED', 'COMPLETED'])) {
+                    $countConfirmed++;
+                    $totalPendapatanConfirmed += $harga;
+                } elseif (str_contains($status, 'PENDING')) {
+                    $countPending++;
+                } elseif (in_array($status, [Booking::STATUS_REJECTED, Booking::STATUS_CANCELLED, Booking::STATUS_EXPIRED, 'REJECTED', 'CANCELLED', 'EXPIRED']) || str_contains($status, 'REJECT') || str_contains($status, 'CANCEL')) {
+                    $countCancelledOrRejected++;
+                }
+
+                $writer->addRow($this->makeExportRow($formatBookingRow($b)));
             }
-
-            $writer->addRow($this->makeExportRow($formatBookingRow($b)));
         }
 
         // Total Tabel 1
         $writer->addRow($this->makeExportRow([
-            'TOTAL KESELURUHAN (ALL DATA)', '', '', '', '', '', '', '', '',
+            'TOTAL KESELURUHAN (PERIODE INI)', '', '', '', '', '', '', '', '',
             $totalPesertaAll . ' Orang',
             'Rp ' . number_format($totalNilaiAll, 0, ',', '.'),
             '', '', '',
@@ -450,7 +545,7 @@ class AdminBookingController extends Controller
         $totalPesertaConfirmed = 0;
         if ($confirmedBookings->isEmpty()) {
             $writer->addRow($this->makeExportRow([
-                '-', 'Belum ada pemesanan terkonfirmasi', '-', '-', '-', '-', '-', '-', '-', '0 Orang', 'Rp 0', '-', '-', '-',
+                '-', 'Belum ada pemesanan terkonfirmasi pada periode ini', '-', '-', '-', '-', '-', '-', '-', '0 Orang', 'Rp 0', '-', '-', '-',
             ]));
         } else {
             foreach ($confirmedBookings as $b) {
@@ -473,7 +568,7 @@ class AdminBookingController extends Controller
 
         $writer->addRow($this->makeExportRow(['3. RINGKASAN & KESIMPULAN LAPORAN', '', ''], $summaryTitleStyle));
         $writer->addRow($this->makeExportRow(['INDIKATOR / PARAMETER', 'JUMLAH / NILAI', 'KETERANGAN STATUS'], $summaryHeaderSubStyle));
-        $writer->addRow($this->makeExportRow(['Total Seluruh Pemesanan', $dataCount . ' Transaksi', 'Semua data pemesanan yang tercatat'], $summaryItemStyle));
+        $writer->addRow($this->makeExportRow(['Total Seluruh Pemesanan', $dataCount . ' Transaksi', "Semua pemesanan pada periode: {$periodLabel}"], $summaryItemStyle));
         $writer->addRow($this->makeExportRow(['Total Pengunjung (Peserta)', $totalPesertaAll . ' Orang', 'Akumulasi seluruh peserta wisata'], $summaryItemStyle));
         $writer->addRow($this->makeExportRow(['Pendapatan Terkonfirmasi', 'Rp ' . number_format($totalPendapatanConfirmed, 0, ',', '.'), 'Pemesanan status Confirmed / Lunas'], $summaryItemBoldStyle));
         $writer->addRow($this->makeExportRow(['Estimasi Nilai Seluruh Transaksi', 'Rp ' . number_format($totalNilaiAll, 0, ',', '.'), 'Total nilai pesanan (semua status)'], $summaryItemStyle));
@@ -483,7 +578,9 @@ class AdminBookingController extends Controller
 
         $writer->close();
 
-        return response()->download($path, 'bookings-export-' . now()->format('Y-m-d') . '.xlsx')->deleteFileAfterSend(true);
+        $finalFilename = "bookings-{$filenameSuffix}-" . now()->format('Ymd-His') . '.xlsx';
+
+        return response()->download($path, $finalFilename)->deleteFileAfterSend(true);
     }
 
     private function makeExportRow(array $values, mixed $style = null): Row

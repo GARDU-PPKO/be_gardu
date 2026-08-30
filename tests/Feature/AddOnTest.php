@@ -104,9 +104,10 @@ class AddOnTest extends TestCase
             'session_time' => 'Pagi (08.00 - 11.00)',
             'participants' => 8,
             'addons' => [
-                ['id' => $makan->id, 'quantity' => 1],
+                ['id' => $makan->id],
             ],
         ]);
+
 
         $response->assertCreated();
 
