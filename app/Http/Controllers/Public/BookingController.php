@@ -205,15 +205,16 @@ class BookingController extends Controller
                 continue;
             }
 
-            $qty = $model->tipe_harga === 'per_orang'
-                ? $participants
-                : (int) ($addOn['quantity'] ?? $addOn['qty'] ?? 1);
+            $qty = isset($addOn['quantity'])
+                ? (int) $addOn['quantity']
+                : (isset($addOn['qty']) ? (int) $addOn['qty'] : ($model->tipe_harga === 'per_orang' ? $participants : 1));
 
             if ($qty < 1) {
                 $errors["addons.{$index}.quantity"] = ['Quantity minimal 1.'];
 
                 continue;
             }
+
 
             $subtotal = (float) $model->harga * $qty;
             $total += $subtotal;
@@ -247,22 +248,23 @@ class BookingController extends Controller
 
     private function buildPaymentInstructionMessage(Booking $booking): string
     {
-        $feUrl = Setting::getValue('fe_url') ?: url('/');
+        $feUrl = Setting::getValue('fe_url') ?: config('app.frontend_url', 'http://localhost:5173');
         $paymentUrl = rtrim($feUrl, '/') . "/payment/{$booking->booking_code}";
         $batasWaktu = $booking->expired_at?->format('d-m-Y H:i') ?? '24 jam';
 
-        return "Halo {$booking->nama_lengkap}! 👋\n\n"
-            . "Terima kasih sudah booking di Desa Wisata Getas.\n\n"
-            . "📋 Kode Booking: {$booking->booking_code}\n"
-            . "🏕️ Paket: {$booking->paketWisata?->nama}\n"
-            . "📅 Tanggal: {$booking->tanggal_kunjungan->format('d-m-Y')}\n"
-            . "👥 Jumlah Peserta: {$booking->jumlah_peserta}\n"
-            . "💰 Total Bayar: Rp" . number_format((float) $booking->total_harga, 0, ',', '.') . "\n\n"
-            . "Silahkan selesaikan pembayaran melalui link berikut:\n"
-            . "🔗 {$paymentUrl}\n\n"
-            . "⏰ Batas waktu pembayaran: *" . self::PAYMENT_DEADLINE_HOURS . " jam* dari sekarang (sampai {$batasWaktu}).\n"
-            . "Jika melewati batas waktu, booking akan otomatis dibatalkan.\n\n"
-            . "Terima kasih! 🙏";
+        return "Halo *{$booking->nama_lengkap}*,\n\n"
+            . "Terima kasih telah melakukan pemesanan wisata di *Desa Wisata Getas* ✨\n\n"
+            . "*Detail Pemesanan Anda:*\n"
+            . "• Kode Booking: *{$booking->booking_code}*\n"
+            . "• Paket Wisata: {$booking->paketWisata?->nama}\n"
+            . "• Tanggal Kunjungan: {$booking->tanggal_kunjungan->format('d-m-Y')}\n"
+            . "• Sesi Waktu: {$booking->sesi}\n"
+            . "• Jumlah Peserta: {$booking->jumlah_peserta} orang\n"
+            . "• Total Tagihan: Rp " . number_format((float) $booking->total_harga, 0, ',', '.') . "\n\n"
+            . "Silakan selesaikan pembayaran dan unggah bukti transfer melalui tautan berikut:\n"
+            . "👉 {$paymentUrl}\n\n"
+            . "Batas waktu pembayaran: *" . self::PAYMENT_DEADLINE_HOURS . " jam* (sampai {$batasWaktu} WIB). Pesanan akan otomatis dibatalkan jika melewati batas waktu.\n\n"
+            . "Sampai jumpa di Desa Wisata Getas! 🌿✨";
     }
 
     /**
@@ -319,7 +321,7 @@ class BookingController extends Controller
     public function show(string $bookingCode): JsonResponse
     {
         $booking = Booking::where('booking_code', $bookingCode)
-            ->with(['paketWisata', 'addOns'])
+            ->with(['paketWisata', 'addOns', 'review'])
             ->first();
 
         if (! $booking) {
@@ -349,7 +351,7 @@ class BookingController extends Controller
             return ApiResponse::error('Minimal isi kode booking atau nomor WhatsApp.', 422);
         }
 
-        $query = Booking::with(['paketWisata', 'addOns']);
+        $query = Booking::with(['paketWisata', 'addOns', 'review']);
 
         if ($kode) {
             $query->where('booking_code', $kode);
@@ -522,6 +524,10 @@ class BookingController extends Controller
             'created_at' => now(),
         ]);
 
+        $fonnte = app(FonnteService::class);
+        $fonnte->send($booking->no_whatsapp, $this->buildCancelMessage($booking));
+        $fonnte->notifyAdmin("Booking {$booking->booking_code} ({$booking->nama_lengkap}) telah dibatalkan oleh pemesan.");
+
         return ApiResponse::success([
             'kode_booking' => $booking->booking_code,
             'status' => $this->publicStatus($booking->status),
@@ -623,6 +629,16 @@ class BookingController extends Controller
                 'qris_image' => Setting::getValue('qris_image'),
                 'batas_waktu_jam' => self::PAYMENT_DEADLINE_HOURS,
             ],
+            'is_visit_completed' => in_array($booking->status, [Booking::STATUS_CONFIRMED, Booking::STATUS_COMPLETED]) && ($booking->tanggal_kunjungan->isPast() || $booking->tanggal_kunjungan->isToday()),
+            'review_token' => $booking->review_token,
+            'has_reviewed' => $booking->reviewed_at !== null || $booking->review !== null,
+            'review' => $booking->review ? [
+                'id' => $booking->review->id,
+                'rating' => (int) $booking->review->rating,
+                'komentar' => $booking->review->komentar,
+                'nama_pengulas' => $booking->review->nama_pengulas,
+                'created_at' => $booking->review->created_at?->toISOString(),
+            ] : null,
             'package' => $booking->paketWisata ? [
                 'id' => $booking->paketWisata->id,
                 'nama' => $booking->paketWisata->nama,
@@ -678,10 +694,21 @@ class BookingController extends Controller
 
     private function buildUserMessage(Booking $booking): string
     {
-        return "Halo {$booking->nama_lengkap},\n\n"
-            . "Bukti pembayaran untuk booking dengan kode *{$booking->booking_code}* sudah kami terima ✅\n\n"
-            . "Saat ini bukti pembayaran sedang dalam proses verifikasi oleh admin kami. Mohon ditunggu maksimal *1x10 jam kerja* ya (bisa lebih cepat, tergantung antrian verifikasi atau kendala teknis dari pihak bank).\n\n"
-            . "Kami akan kirim kabar melalui WhatsApp ini begitu verifikasi selesai. Tidak perlu upload ulang atau booking baru.\n\n"
-            . "Terima kasih atas kesabarannya 🙏";
+        return "Halo *{$booking->nama_lengkap}*,\n\n"
+            . "Bukti pembayaran untuk booking *{$booking->booking_code}* sudah berhasil kami terima ✨\n\n"
+            . "Saat ini bukti pembayaran sedang dalam proses verifikasi oleh tim pengelola. Mohon kesediaannya menunggu maksimal *1x10 jam kerja*.\n\n"
+            . "Kami akan segera mengirimkan konfirmasi dan e-tiket resmi melalui WhatsApp setelah proses verifikasi selesai. Anda tidak perlu mengunggah ulang.\n\n"
+            . "Terima kasih atas kerja samanya 😊🌿";
+    }
+
+    private function buildCancelMessage(Booking $booking): string
+    {
+        $feUrl = Setting::getValue('fe_url') ?: config('app.frontend_url', 'http://localhost:5173');
+
+        return "Halo *{$booking->nama_lengkap}*,\n\n"
+            . "Pemesanan Anda dengan kode *{$booking->booking_code}* telah berhasil *dibatalkan* sesuai permintaan Anda.\n\n"
+            . "Jika Anda ingin merencanakan liburan kembali di lain waktu, silakan kunjungi website kami:\n"
+            . "👉 {$feUrl}\n\n"
+            . "Terima kasih dan salam hangat dari Desa Wisata Getas! 🌿✨";
     }
 }

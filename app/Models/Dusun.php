@@ -19,9 +19,6 @@ class Dusun extends Model
     protected $fillable = [
         'nama',
         'rw',
-        'jumlah_rt',
-        'jumlah_penduduk',
-        'luas_wilayah',
         'deskripsi',
         'detail',
         'hero_img',
@@ -29,6 +26,7 @@ class Dusun extends Model
         'is_active',
         'created_by',
     ];
+
 
     public function galleries(): HasMany
     {

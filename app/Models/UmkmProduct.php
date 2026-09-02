@@ -40,4 +40,13 @@ class UmkmProduct extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    public function setNoWaPenjualAttribute($value): void
+    {
+        $digits = preg_replace('/[^\d]/', '', (string) $value);
+        if (str_starts_with($digits, '0')) {
+            $digits = '62' . substr($digits, 1);
+        }
+        $this->attributes['no_wa_penjual'] = $digits;
+    }
 }

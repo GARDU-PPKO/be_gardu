@@ -126,6 +126,57 @@
     </div>
     @endif
 
+    @if($booking->status === 'CONFIRMED' || $booking->status === 'COMPLETED')
+    <div class="bg-white rounded-xl shadow-sm p-6 space-y-4 border border-emerald-100">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                    <span>⭐</span> Status Ulasan Pengunjung
+                </h3>
+                <p class="text-xs text-gray-500 mt-0.5">Kirimkan link WhatsApp ulasan kepada pengunjung setelah selesai berkunjung</p>
+            </div>
+            @if($booking->review)
+                <span class="px-3 py-1 text-xs rounded-full bg-emerald-100 text-emerald-800 font-semibold">
+                    ✓ Sudah Diulas
+                </span>
+            @elseif($booking->review_invitation_sent_at)
+                <span class="px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-800 font-semibold">
+                    Link Terkirim
+                </span>
+            @else
+                <span class="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-600 font-semibold">
+                    Belum Dikirim
+                </span>
+            @endif
+        </div>
+
+        @if($booking->review)
+        <div class="bg-emerald-50/70 border border-emerald-100 rounded-xl p-4 space-y-2">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1 text-amber-400">
+                    @for($i = 1; $i <= 5; $i++)
+                        <span>{{ $i <= $booking->review->rating ? '★' : '☆' }}</span>
+                    @endfor
+                    <span class="text-xs font-bold text-gray-700 ml-1">({{ $booking->review->rating }}/5 Bintang)</span>
+                </div>
+                <span class="text-xs text-gray-400 font-mono">{{ $booking->review->created_at?->format('d-m-Y H:i') }}</span>
+            </div>
+            <p class="text-xs text-gray-700 italic">"{{ $booking->review->komentar }}"</p>
+            <p class="text-[11px] text-gray-500">— Pengulas: <strong>{{ $booking->review->nama_pengulas }}</strong></p>
+        </div>
+        @elseif($booking->review_invitation_sent_at)
+        <div class="p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-700 space-y-1">
+            <p class="font-semibold">📲 Link ulasan telah dikirim otomatis via WhatsApp</p>
+            <p class="text-[11px] text-blue-600">Terkirim pada: <strong>{{ $booking->review_invitation_sent_at->format('d-m-Y H:i') }} WIB</strong> ke nomor <strong>{{ $booking->no_whatsapp }}</strong></p>
+        </div>
+        @else
+        <div class="p-3 bg-gray-50 border border-gray-200 rounded-xl text-xs text-gray-500">
+            ℹ️ Link ulasan akan dikirimkan otomatis ke WhatsApp pengunjung ({{ $booking->no_whatsapp }}) setelah waktu kunjungan wisata selesai.
+        </div>
+        @endif
+    </div>
+    @endif
+
     @if(!$booking->trashed())
     <form method="POST" action="{{ route('admin.bookings.destroy', $booking->id) }}" class="text-center" onsubmit="return confirm('Hapus booking ini? (soft delete, bisa di-restore dari filter Dihapus)')">
         @csrf @method('DELETE')

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -42,6 +43,9 @@ class Booking extends Model
         'nominal_transfer',
         'metode_pembayaran',
         'status',
+        'review_token',
+        'review_invitation_sent_at',
+        'reviewed_at',
         'expired_at',
         'rejected_reason',
         'verified_by',
@@ -56,6 +60,8 @@ class Booking extends Model
             'tanggal_kunjungan' => 'date',
             'total_harga' => 'decimal:2',
             'nominal_transfer' => 'decimal:2',
+            'review_invitation_sent_at' => 'datetime',
+            'reviewed_at' => 'datetime',
             'expired_at' => 'datetime',
             'verified_at' => 'datetime',
         ];
@@ -68,6 +74,20 @@ class Booking extends Model
         } while (static::withTrashed()->where('booking_code', $code)->exists());
 
         return $code;
+    }
+
+    public static function generateUniqueReviewToken(): string
+    {
+        do {
+            $token = Str::random(32);
+        } while (static::where('review_token', $token)->exists());
+
+        return $token;
+    }
+
+    public function review(): HasOne
+    {
+        return $this->hasOne(PackageReview::class, 'booking_id');
     }
 
     public function paketWisata(): BelongsTo

@@ -35,7 +35,8 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">No. WA Penjual *</label>
-                <input type="text" name="no_wa_penjual" value="{{ old('no_wa_penjual', $product->no_wa_penjual ?? '') }}" placeholder="Contoh: 081234567890" inputmode="numeric" maxlength="15" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 15)" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+                <input type="text" name="no_wa_penjual" value="{{ old('no_wa_penjual', $product->no_wa_penjual ?? '') }}" placeholder="Contoh: 081234567890 atau 6281234567890" inputmode="numeric" maxlength="15" oninput="this.value = this.value.replace(/\D/g, '').slice(0, 15)" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
+                <p class="text-[11px] text-gray-500 mt-1">💡 Boleh input 08... atau 62... (sistem otomatis mengubahnya ke format WhatsApp 62...)</p>
                 @error('no_wa_penjual') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
             <div>

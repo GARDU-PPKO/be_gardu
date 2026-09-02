@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AddOn;
 use App\Models\Booking;
 use App\Models\BookingLog;
 use App\Models\BookingSession;
@@ -20,7 +21,7 @@ use Illuminate\Support\Str;
 class AdminPosController extends Controller
 {
     /**
-     * Display POS Terminal — katalog gabungan (paket wisata, produk UMKM, produk POS).
+     * Display POS Terminal — katalog gabungan (paket wisata, produk UMKM, produk POS, add-on).
      */
     public function index(Request $request)
     {
@@ -28,11 +29,16 @@ class AdminPosController extends Controller
             ->orderBy('name', 'asc')->get();
 
         $umkmProducts = UmkmProduct::where('is_active', true)
-            ->where('stock', '>', 0)
+            ->where(function ($q) {
+                $q->whereNull('stock')->orWhere('stock', '>', 0);
+            })
             ->orderBy('nama', 'asc')->get();
 
         $paketWisata = PaketWisata::with('tiers')->where('aktif', true)
             ->orderBy('nama')->get();
+
+        $addOns = AddOn::where('aktif', true)
+            ->orderBy('urutan')->orderBy('nama')->get();
 
         $catalog = collect();
 
@@ -56,7 +62,7 @@ class AdminPosController extends Controller
                 'id' => (string) $u->id,
                 'name' => $u->nama,
                 'price' => (float) $u->harga,
-                'stock' => $u->stock,
+                'stock' => $u->stock ?? 99,
                 'image' => $u->gambar,
                 'category' => $u->kategori,
                 'sku' => $u->sku,
@@ -85,6 +91,22 @@ class AdminPosController extends Controller
             ]);
         }
 
+        foreach ($addOns as $ad) {
+            $catalog->push([
+                'type' => 'addon',
+                'id' => (string) $ad->id,
+                'name' => $ad->nama,
+                'price' => (float) $ad->harga,
+                'stock' => null,
+                'image' => $ad->gambar,
+                'category' => $ad->kategori ?? 'Add-On',
+                'sku' => null,
+                'sub_label' => 'Add-On (' . ($ad->tipe_harga === 'per_orang' ? 'Per Orang' : 'Per Unit') . ')',
+                'is_per_orang' => $ad->tipe_harga === 'per_orang',
+                'min_participants' => 1,
+            ]);
+        }
+
         $categories = PosCategory::orderBy('name', 'asc')->get();
         $sessions = BookingSession::where('is_active', true)->orderBy('id')->get();
 
@@ -98,7 +120,7 @@ class AdminPosController extends Controller
     {
         $validated = $request->validate([
             'items' => 'required|array|min:1',
-            'items.*.item_type' => 'required|in:pos_product,umkm_product,paket_wisata',
+            'items.*.item_type' => 'required|in:pos_product,umkm_product,paket_wisata,addon',
             'items.*.item_id' => 'required|string',
             'items.*.quantity' => 'required|integer|min:1',
             'paid_amount' => 'required|numeric|min:0',
@@ -109,6 +131,7 @@ class AdminPosController extends Controller
             'visit_date' => 'nullable|date_format:Y-m-d',
             'sesi' => 'nullable|string|max:50',
         ]);
+
 
         $hasPaket = collect($validated['items'])->contains('item_type', 'paket_wisata');
 
@@ -209,8 +232,28 @@ class AdminPosController extends Controller
                             'booking' => null,
                         ];
                         break;
+
+                    case 'addon':
+                        $addOn = AddOn::where('aktif', true)->find($itemData['item_id']);
+                        if (! $addOn) {
+                            throw new \Exception("Add-On tidak ditemukan.");
+                        }
+                        $subtotal = (float) $addOn->harga * $quantity;
+                        $totalAmount += $subtotal;
+                        $itemsToCreate[] = [
+                            'item_type' => 'addon',
+                            'item_id' => (string) $addOn->id,
+                            'model' => $addOn,
+                            'product_name' => $addOn->nama,
+                            'price' => (float) $addOn->harga,
+                            'quantity' => $quantity,
+                            'subtotal' => $subtotal,
+                            'booking' => null,
+                        ];
+                        break;
                 }
             }
+
 
             if ($validated['payment_method'] === 'cash' && $validated['paid_amount'] < $totalAmount) {
                 throw new \Exception("Jumlah uang dibayar (Rp " . number_format($validated['paid_amount'], 0, ',', '.') . ") kurang dari total belanja (Rp " . number_format($totalAmount, 0, ',', '.') . ").");

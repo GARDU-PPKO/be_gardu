@@ -31,11 +31,6 @@
                 <input type="file" name="gambar" accept="image/*" {{ $budaya ? '' : 'required' }} class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
                 @error('gambar') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Span Grid</label>
-                <input type="number" name="span_grid" value="{{ old('span_grid', $budaya->span_grid ?? '') }}" min="1" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 outline-none text-sm">
-                @error('span_grid') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
-            </div>
             <div class="flex items-center gap-2 pt-6">
                 <input type="checkbox" name="is_active" value="1" id="is_active" {{ old('is_active', $budaya->is_active ?? true) ? 'checked' : '' }} class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
                 <label for="is_active" class="text-sm font-medium text-gray-700">Aktif</label>

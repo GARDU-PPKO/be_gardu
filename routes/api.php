@@ -7,6 +7,7 @@ use App\Http\Controllers\Public\AddOnController;
 use App\Http\Controllers\Public\DusunController;
 use App\Http\Controllers\Public\HomeController;
 use App\Http\Controllers\Public\SettingController;
+use App\Http\Controllers\Public\ReviewController;
 use App\Http\Controllers\Public\TourPackageController;
 use App\Http\Controllers\Public\UmkmProductController;
 use App\Http\Controllers\Public\VillageStatController;
@@ -27,6 +28,11 @@ Route::get('dusun/{id}', [DusunController::class, 'show']);
 
 Route::get('tour-packages', [TourPackageController::class, 'index']);
 Route::get('tour-packages/{id}', [TourPackageController::class, 'show']);
+Route::get('tour-packages/{id}/reviews', [ReviewController::class, 'indexByPackage']);
+
+// Review submission endpoints
+Route::get('reviews/check/{token}', [ReviewController::class, 'checkToken']);
+Route::post('reviews', [ReviewController::class, 'store']);
 
 Route::get('booking-sessions', [BookingSessionController::class, 'index']);
 

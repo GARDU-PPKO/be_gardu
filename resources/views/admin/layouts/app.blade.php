@@ -52,39 +52,42 @@
                 </a>
 
                 <div class="pt-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-emerald-400">Pariwisata & Desa</div>
-                <a href="{{ route('admin.bookings.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.bookings.*') ? 'bg-emerald-800' : '' }}">
+                <a href="{{ url('admin/bookings') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->is('admin/bookings*') ? 'bg-emerald-800' : '' }}">
                     <span>📋</span> Bookings
                 </a>
-                <a href="{{ route('admin.dusun.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.dusun.*') ? 'bg-emerald-800' : '' }}">
+                <a href="{{ url('admin/reviews') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->is('admin/reviews*') ? 'bg-emerald-800' : '' }}">
+                    <span>⭐</span> Ulasan Pengunjung
+                </a>
+                <a href="{{ url('admin/dusun') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->is('admin/dusun*') ? 'bg-emerald-800' : '' }}">
                     <span>🏘️</span> Dusun
                 </a>
-                <a href="{{ route('admin.paket-wisata.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.paket-wisata.*') ? 'bg-emerald-800' : '' }}">
+                <a href="{{ url('admin/paket-wisata') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->is('admin/paket-wisata*') ? 'bg-emerald-800' : '' }}">
                     <span>🎫</span> Paket Wisata
                 </a>
-                <a href="{{ route('admin.add-ons.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.add-ons.*') ? 'bg-emerald-800' : '' }}">
+                <a href="{{ url('admin/add-ons') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->is('admin/add-ons*') ? 'bg-emerald-800' : '' }}">
                     <span>🍱</span> Add-On
                 </a>
-                <a href="{{ route('admin.booking-sessions.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.booking-sessions.*') ? 'bg-emerald-800' : '' }}">
+                <a href="{{ url('admin/booking-sessions') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->is('admin/booking-sessions*') ? 'bg-emerald-800' : '' }}">
                     <span>📅</span> Sesi Booking
                 </a>
-                <a href="{{ route('admin.umkm-products.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.umkm-products.*') ? 'bg-emerald-800' : '' }}">
+                <a href="{{ url('admin/umkm-products') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->is('admin/umkm-products*') ? 'bg-emerald-800' : '' }}">
                     <span>🛍️</span> UMKM
                 </a>
-                <a href="{{ route('admin.budaya.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.budaya.*') ? 'bg-emerald-800' : '' }}">
+                <a href="{{ url('admin/budaya') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->is('admin/budaya*') ? 'bg-emerald-800' : '' }}">
                     <span>🎭</span> Budaya
                 </a>
-                <a href="{{ route('admin.village-stats.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.village-stats.*') ? 'bg-emerald-800' : '' }}">
+                <a href="{{ url('admin/village-stats') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->is('admin/village-stats*') ? 'bg-emerald-800' : '' }}">
                     <span>📊</span> Statistik
                 </a>
-                <a href="{{ route('admin.settings.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.settings.*') ? 'bg-emerald-800' : '' }}">
+                <a href="{{ url('admin/settings') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->is('admin/settings*') ? 'bg-emerald-800' : '' }}">
                     <span>⚙️</span> Pengaturan
                 </a>
-                <a href="{{ route('admin.fonnte.device') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.fonnte.*') ? 'bg-emerald-800' : '' }}">
+                <a href="{{ url('admin/fonnte-device') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->is('admin/fonnte*') ? 'bg-emerald-800' : '' }}">
                     <span>📱</span> Status Fonnte
                 </a>
                 @if(auth()->user()->role === 'superadmin')
                 <hr class="border-emerald-700 my-2">
-                <a href="{{ route('admin.users.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.users.*') ? 'bg-emerald-800' : '' }}">
+                <a href="{{ url('admin/users') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->is('admin/users*') ? 'bg-emerald-800' : '' }}">
                     <span>👥</span> Kelola Admin
                 </a>
                 @endif

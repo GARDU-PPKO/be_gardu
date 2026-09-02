@@ -15,9 +15,6 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div><span class="text-gray-500">Nama</span><p class="font-semibold">{{ $dusun->nama }}</p></div>
             <div><span class="text-gray-500">RW</span><p class="font-semibold">{{ $dusun->rw }}</p></div>
-            <div><span class="text-gray-500">Jumlah RT</span><p>{{ $dusun->jumlah_rt }}</p></div>
-            <div><span class="text-gray-500">Jumlah Penduduk</span><p>{{ $dusun->jumlah_penduduk }}</p></div>
-            <div><span class="text-gray-500">Luas Wilayah</span><p>{{ $dusun->luas_wilayah }}</p></div>
             <div><span class="text-gray-500">Status</span>
                 <p><span class="px-2 py-1 text-xs rounded-full {{ $dusun->is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">{{ $dusun->is_active ? 'Aktif' : 'Nonaktif' }}</span></p>
             </div>
@@ -33,16 +30,6 @@
             <p class="mt-1 text-sm whitespace-pre-wrap">{{ $dusun->detail }}</p>
         </div>
 
-        @if($dusun->galleries->count() > 0)
-        <div class="pt-4 border-t">
-            <span class="text-gray-500 text-sm block mb-2">Galeri</span>
-            <div class="space-y-1">
-                @foreach($dusun->galleries as $gallery)
-                <p class="text-sm font-mono">{{ $gallery->image_url }}</p>
-                @endforeach
-            </div>
-        </div>
-        @endif
 
         @if($dusun->keunggulan->count() > 0)
         <div class="pt-4 border-t">

@@ -50,12 +50,12 @@ class BookingExpireStale extends Command
 
     private function buildExpiredMessage(Booking $booking): string
     {
-        $feUrl = Setting::getValue('fe_url') ?: url('/');
+        $feUrl = Setting::getValue('fe_url') ?: config('app.frontend_url', 'http://localhost:5173');
 
-        return "Halo {$booking->nama_lengkap},\n\n"
-            . "Booking dengan kode *{$booking->booking_code}* telah *dibatalkan otomatis* karena pembayaran tidak diselesaikan dalam batas waktu 24 jam.\n\n"
-            . "Tidak masalah! Jika masih tertarik, silahkan lakukan booking ulang melalui website kami:\n"
-            . "🔗 {$feUrl}\n\n"
-            . "Terima kasih 🙏";
+        return "Halo *{$booking->nama_lengkap}*,\n\n"
+            . "Pemesanan dengan kode *{$booking->booking_code}* telah *dibatalkan otomatis* oleh sistem karena pembayaran tidak diselesaikan dalam batas waktu.\n\n"
+            . "Jika Anda masih berminat untuk berlibur di Desa Wisata Getas, silakan lakukan pemesanan kembali melalui website kami:\n"
+            . "👉 {$feUrl}\n\n"
+            . "Terima kasih dan salam hangat dari Desa Wisata Getas! 🌿✨";
     }
 }

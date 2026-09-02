@@ -16,7 +16,12 @@ class TourPackageController extends Controller
     #[Endpoint('Daftar Paket Wisata')]
     public function index(): JsonResponse
     {
-        $packages = PaketWisata::with('tiers')
+        $withRelations = ['tiers'];
+        if (\Illuminate\Support\Facades\Schema::hasTable('package_reviews')) {
+            $withRelations[] = 'visibleReviews';
+        }
+
+        $packages = PaketWisata::with($withRelations)
             ->where('aktif', true)
             ->orderBy('nama')
             ->get();
@@ -31,7 +36,12 @@ class TourPackageController extends Controller
     #[PathParameter('id', description: 'ID paket wisata', example: '1')]
     public function show($id): JsonResponse
     {
-        $package = PaketWisata::with('tiers')->where('aktif', true)->findOrFail($id);
+        $withRelations = ['tiers'];
+        if (\Illuminate\Support\Facades\Schema::hasTable('package_reviews')) {
+            $withRelations[] = 'visibleReviews';
+        }
+
+        $package = PaketWisata::with($withRelations)->where('aktif', true)->findOrFail($id);
 
         return ApiResponse::success($this->shape($package), 'Success retrieving tour package detail');
     }
@@ -50,6 +60,12 @@ class TourPackageController extends Controller
             ? (float) ($tiers->first()?->harga_per_orang ?? 0)
             : (float) ($p->harga_paket ?? 0);
 
+        $tierList = $tiers->map(fn ($t) => [
+            'id' => $t->id,
+            'min_peserta' => (int) $t->min_peserta,
+            'harga_per_orang' => (float) $t->harga_per_orang,
+        ])->values()->all();
+
         $includes = collect($p->fasilitas ?? [])
             ->values()
             ->map(fn ($item, $i) => [
@@ -60,19 +76,38 @@ class TourPackageController extends Controller
             ])
             ->values();
 
+        $allVisibleReviews = ($p->relationLoaded('visibleReviews') && $p->visibleReviews) ? $p->visibleReviews : collect();
+        $reviewsCount = $allVisibleReviews->count();
+        $ratingAvg = $reviewsCount > 0 ? round((float) $allVisibleReviews->avg('rating'), 1) : null;
+
+        $recentReviews = $allVisibleReviews->take(10)->map(fn ($r) => [
+            'id' => $r->id,
+            'nama_pengulas' => $r->nama_pengulas,
+            'rating' => $r->rating,
+            'komentar' => $r->komentar,
+            'created_at' => $r->created_at?->toISOString(),
+            'tanggal_formatted' => $r->created_at ? $r->created_at->translatedFormat('d M Y') : '-',
+        ])->values();
+
         return [
             'id' => $p->id,
             'nama' => $p->nama,
             'deskripsi' => $p->deskripsi,
+            'tipe_harga' => $p->tipe_harga,
             'harga' => $harga,
             'satuan' => $isPerOrang ? 'orang' : 'paket',
+            'kapasitas_per_unit' => $p->kapasitas_per_unit,
             'tag' => $p->tag,
             'durasi' => $p->durasi,
             'min_participants' => $minParticipants,
-            'max_participants' => $isPerOrang ? ($tiers->last()?->min_peserta ?? $minParticipants) : ($p->kapasitas_per_unit ?? $minParticipants),
+            'max_participants' => $isPerOrang ? null : $p->kapasitas_per_unit,
             'gambar' => $p->gambar,
             'is_active' => (bool) $p->aktif,
+            'rating_avg' => $ratingAvg,
+            'reviews_count' => $reviewsCount,
+            'reviews' => $recentReviews,
             'includes' => $includes,
+            'tiers' => $tierList,
         ];
     }
 }
