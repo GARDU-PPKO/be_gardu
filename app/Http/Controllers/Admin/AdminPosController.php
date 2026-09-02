@@ -21,18 +21,12 @@ use Illuminate\Support\Str;
 class AdminPosController extends Controller
 {
     /**
-     * Display POS Terminal — katalog gabungan (paket wisata, produk UMKM, produk POS, add-on).
+     * Display POS Terminal — katalog gabungan (paket wisata, produk POS, add-on).
      */
     public function index(Request $request)
     {
         $posProducts = PosProduct::with('category')->where('is_active', true)
             ->orderBy('name', 'asc')->get();
-
-        $umkmProducts = UmkmProduct::where('is_active', true)
-            ->where(function ($q) {
-                $q->whereNull('stock')->orWhere('stock', '>', 0);
-            })
-            ->orderBy('nama', 'asc')->get();
 
         $paketWisata = PaketWisata::with('tiers')->where('aktif', true)
             ->orderBy('nama')->get();
@@ -53,20 +47,6 @@ class AdminPosController extends Controller
                 'category' => $p->category->name ?? 'Umum',
                 'sku' => $p->sku,
                 'sub_label' => 'Produk POS',
-            ]);
-        }
-
-        foreach ($umkmProducts as $u) {
-            $catalog->push([
-                'type' => 'umkm_product',
-                'id' => (string) $u->id,
-                'name' => $u->nama,
-                'price' => (float) $u->harga,
-                'stock' => $u->stock ?? 99,
-                'image' => $u->gambar,
-                'category' => $u->kategori,
-                'sku' => $u->sku,
-                'sub_label' => 'Produk UMKM',
             ]);
         }
 

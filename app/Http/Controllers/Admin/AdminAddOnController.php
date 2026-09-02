@@ -11,11 +11,73 @@ use Illuminate\View\View;
 
 class AdminAddOnController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        return view('admin.add-ons.index', [
-            'addOns' => AddOn::withTrashed()->orderBy('nama')->paginate(25),
-        ]);
+        $tab = $request->get('tab', 'active');
+        $query = AddOn::query();
+
+        if ($tab === 'trashed') {
+            $query->onlyTrashed();
+        } elseif ($tab === 'all') {
+            $query->withTrashed();
+        } else {
+            // default 'active': non-trashed items
+        }
+
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                  ->orWhere('kategori', 'like', "%{$search}%")
+                  ->orWhere('deskripsi', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('kategori')) {
+            $query->where('kategori', $request->kategori);
+        }
+
+        if ($request->filled('tipe_harga')) {
+            $query->where('tipe_harga', $request->tipe_harga);
+        }
+
+        if ($request->filled('status')) {
+            if ($request->status === 'aktif') {
+                $query->where('aktif', true);
+            } elseif ($request->status === 'nonaktif') {
+                $query->where('aktif', false);
+            }
+        }
+
+        $addOns = $query->orderBy('urutan')->orderBy('nama')->paginate(15)->withQueryString();
+
+        $totalActive = AddOn::count();
+        $totalTrashed = AddOn::onlyTrashed()->count();
+        $totalAll = AddOn::withTrashed()->count();
+        $categories = AddOn::withTrashed()->whereNotNull('kategori')->where('kategori', '!=', '')->distinct()->pluck('kategori');
+
+        return view('admin.add-ons.index', compact(
+            'addOns',
+            'tab',
+            'totalActive',
+            'totalTrashed',
+            'totalAll',
+            'categories'
+        ));
+    }
+
+    public function emptyTrash(): RedirectResponse
+    {
+        $trashed = AddOn::onlyTrashed()->get();
+        $count = $trashed->count();
+        foreach ($trashed as $addOn) {
+            if ($addOn->gambar) {
+                $this->deleteOldImage($addOn->gambar);
+            }
+            $addOn->forceDelete();
+        }
+
+        return redirect()->route('admin.add-ons.index', ['tab' => 'trashed'])->with('success', "{$count} add-on di tempat sampah berhasil dihapus permanen");
     }
 
     public function create(): View
@@ -51,9 +113,24 @@ class AdminAddOnController extends Controller
 
     public function destroy($id): RedirectResponse
     {
-        AddOn::findOrFail($id)->delete();
+        $addOn = AddOn::withTrashed()->findOrFail($id);
+        if ($addOn->gambar) {
+            $this->deleteOldImage($addOn->gambar);
+        }
+        $addOn->forceDelete();
 
-        return redirect()->route('admin.add-ons.index')->with('success', 'Add-on diarsipkan (soft delete)');
+        return redirect()->route('admin.add-ons.index')->with('success', 'Add-on berhasil dihapus permanen');
+    }
+
+    public function forceDelete($id): RedirectResponse
+    {
+        $addOn = AddOn::withTrashed()->findOrFail($id);
+        if ($addOn->gambar) {
+            $this->deleteOldImage($addOn->gambar);
+        }
+        $addOn->forceDelete();
+
+        return redirect()->route('admin.add-ons.index')->with('success', 'Add-on berhasil dihapus permanen');
     }
 
     public function restore($id): RedirectResponse

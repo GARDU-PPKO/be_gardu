@@ -54,8 +54,10 @@ Route::prefix('admin')->group(function () {
         Route::delete('paket-wisata/{id}/tiers/{tierId}', [AdminPaketWisataController::class, 'destroyTier'])->name('admin.paket-wisata.tiers.destroy');
 
         // Add-On
+        Route::delete('add-ons/trash/empty', [AdminAddOnController::class, 'emptyTrash'])->name('admin.add-ons.trash.empty');
         Route::resource('add-ons', AdminAddOnController::class)->except(['show'])->names('admin.add-ons');
         Route::post('add-ons/{id}/restore', [AdminAddOnController::class, 'restore'])->name('admin.add-ons.restore');
+        Route::delete('add-ons/{id}/force', [AdminAddOnController::class, 'forceDelete'])->name('admin.add-ons.force-delete');
 
         // Booking Sessions
         Route::get('booking-sessions', [AdminBookingSessionController::class, 'index'])->name('admin.booking-sessions.index');

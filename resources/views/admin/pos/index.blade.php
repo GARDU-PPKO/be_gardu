@@ -63,9 +63,6 @@
                     <button type="button" class="type-btn px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium transition bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200" data-type="pos_product">
                         Produk POS ({{ $catalog->where('type', 'pos_product')->count() }})
                     </button>
-                    <button type="button" class="type-btn px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium transition bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200" data-type="umkm_product">
-                        Produk UMKM ({{ $catalog->where('type', 'umkm_product')->count() }})
-                    </button>
                 </div>
             </div>
 
