@@ -59,7 +59,8 @@ class ReviewController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'token' => 'required|string',
+            'token' => 'nullable|string',
+            'booking_code' => 'nullable|string',
             'rating' => 'required|integer|min:1|max:5',
             'komentar' => 'required|string|min:3|max:2000',
             'nama_pengulas' => 'nullable|string|max:100',
@@ -71,10 +72,24 @@ class ReviewController extends Controller
             'komentar.min' => 'Komentar ulasan minimal 3 karakter.',
         ]);
 
-        $booking = Booking::with('paketWisata')->where('review_token', $validated['token'])->first();
+        $token = $validated['token'] ?? null;
+        $bookingCode = $validated['booking_code'] ?? null;
+
+        if (! $token && ! $bookingCode) {
+            return ApiResponse::error('Token ulasan atau kode booking wajib disertakan.', 422);
+        }
+
+        $query = Booking::with('paketWisata');
+        if ($token) {
+            $query->where('review_token', $token);
+        } else {
+            $query->where('booking_code', $bookingCode);
+        }
+
+        $booking = $query->first();
 
         if (! $booking) {
-            return ApiResponse::error('Tautan ulasan tidak valid atau sudah kadaluarsa.', 404);
+            return ApiResponse::error('Tautan ulasan atau kode booking tidak valid.', 404);
         }
 
         if ($booking->reviewed_at !== null || $booking->review()->exists()) {

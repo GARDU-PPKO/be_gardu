@@ -16,7 +16,12 @@ class TourPackageController extends Controller
     #[Endpoint('Daftar Paket Wisata')]
     public function index(): JsonResponse
     {
-        $packages = PaketWisata::with(['tiers', 'visibleReviews'])
+        $withRelations = ['tiers'];
+        if (\Illuminate\Support\Facades\Schema::hasTable('package_reviews')) {
+            $withRelations[] = 'visibleReviews';
+        }
+
+        $packages = PaketWisata::with($withRelations)
             ->where('aktif', true)
             ->orderBy('nama')
             ->get();
@@ -31,7 +36,12 @@ class TourPackageController extends Controller
     #[PathParameter('id', description: 'ID paket wisata', example: '1')]
     public function show($id): JsonResponse
     {
-        $package = PaketWisata::with(['tiers', 'visibleReviews'])->where('aktif', true)->findOrFail($id);
+        $withRelations = ['tiers'];
+        if (\Illuminate\Support\Facades\Schema::hasTable('package_reviews')) {
+            $withRelations[] = 'visibleReviews';
+        }
+
+        $package = PaketWisata::with($withRelations)->where('aktif', true)->findOrFail($id);
 
         return ApiResponse::success($this->shape($package), 'Success retrieving tour package detail');
     }
@@ -66,7 +76,7 @@ class TourPackageController extends Controller
             ])
             ->values();
 
-        $allVisibleReviews = $p->visibleReviews ?? collect();
+        $allVisibleReviews = ($p->relationLoaded('visibleReviews') && $p->visibleReviews) ? $p->visibleReviews : collect();
         $reviewsCount = $allVisibleReviews->count();
         $ratingAvg = $reviewsCount > 0 ? round((float) $allVisibleReviews->avg('rating'), 1) : null;
 

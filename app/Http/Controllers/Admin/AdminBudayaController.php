@@ -29,7 +29,6 @@ class AdminBudayaController extends Controller
             'kategori' => 'required|string|max:100',
             'deskripsi' => 'required|string',
             'gambar' => 'required|image|max:2048',
-            'span_grid' => 'nullable|integer|min:1',
             'is_active' => 'boolean',
         ]);
 
@@ -53,7 +52,6 @@ class AdminBudayaController extends Controller
             'kategori' => 'required|string|max:100',
             'deskripsi' => 'required|string',
             'gambar' => 'nullable|image|max:2048',
-            'span_grid' => 'nullable|integer|min:1',
             'is_active' => 'boolean',
         ]);
 

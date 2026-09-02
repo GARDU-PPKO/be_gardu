@@ -329,7 +329,6 @@ class DatabaseSeeder extends Seeder
             ['key' => 'sosmed_fb', 'value' => 'https://facebook.com/desagetas', 'deskripsi' => 'URL Facebook desa'],
             ['key' => 'sosmed_ig', 'value' => 'https://instagram.com/desagetas', 'deskripsi' => 'URL Instagram desa'],
             ['key' => 'sosmed_yt', 'value' => 'https://youtube.com/@desagetas', 'deskripsi' => 'URL YouTube desa'],
-            ['key' => 'sosmed_web', 'value' => 'https://desagetas.id', 'deskripsi' => 'URL Website desa'],
         ];
         foreach ($settings as $s) {
             Setting::firstOrCreate(['key' => $s['key']], $s);
@@ -343,14 +342,16 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($masterSessions as $tpl) {
-            BookingSession::create([
-                'sesi'        => $tpl['sesi'],
-                'jam_mulai'   => $tpl['jam_mulai'],
-                'jam_selesai' => $tpl['jam_selesai'],
-                'kuota'       => $tpl['kuota'],
-                'is_active'   => true,
-                'created_by'  => $superadmin->id,
-            ]);
+            BookingSession::updateOrCreate(
+                ['sesi' => $tpl['sesi']],
+                [
+                    'jam_mulai'   => $tpl['jam_mulai'],
+                    'jam_selesai' => $tpl['jam_selesai'],
+                    'kuota'       => $tpl['kuota'],
+                    'is_active'   => true,
+                    'created_by'  => $superadmin->id,
+                ]
+            );
         }
 
         // POS Seeder

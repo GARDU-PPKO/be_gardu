@@ -59,7 +59,15 @@ class FonnteService
         }
 
         try {
-            $response = Http::withHeaders(['Authorization' => $this->token])
+            $client = Http::withHeaders(['Authorization' => $this->token])
+                ->timeout(8)
+                ->connectTimeout(5);
+
+            if (app()->environment('local', 'testing') || ! config('app.ssl_verify', true)) {
+                $client = $client->withoutVerifying();
+            }
+
+            $response = $client
                 ->asForm()
                 ->post(self::API_URL, [
                     'target' => self::normalizeNumber($target),
@@ -75,6 +83,11 @@ class FonnteService
 
                 return false;
             }
+
+            Log::info('Fonnte berhasil mengirim pesan.', [
+                'target' => $target,
+                'response' => $response->json(),
+            ]);
 
             return true;
         } catch (\Throwable $e) {
@@ -93,22 +106,41 @@ class FonnteService
         return ['status' => $success ? 'success' : 'failed'];
     }
 
+    /**
+     * Cek status koneksi dan kuota device Fonnte.
+     *
+     * @return array{status: string, message?: string, device?: string, quota?: int, expired?: string}
+     */
     public function checkQuota(): array
     {
         if (! $this->isConfigured()) {
             return ['status' => 'skipped', 'message' => 'Token Fonnte belum dikonfigurasi'];
         }
 
-        $response = Http::withHeaders([
-            'Authorization' => $this->token,
-        ])->post('https://api.fonnte.com/device');
+        try {
+            $client = Http::withHeaders(['Authorization' => $this->token])
+                ->timeout(8)
+                ->connectTimeout(5);
 
-        if ($response->failed()) {
-            Log::error('Fonnte device check failed', ['response' => $response->body()]);
-            return ['status' => 'error', 'message' => 'Gagal mengambil data device'];
+            if (app()->environment('local', 'testing') || ! config('app.ssl_verify', true)) {
+                $client = $client->withoutVerifying();
+            }
+
+            $response = $client->post('https://api.fonnte.com/device');
+
+            if ($response->failed()) {
+                Log::error('Fonnte device check failed', ['response' => $response->body()]);
+                return ['status' => 'error', 'message' => 'Gagal mengambil data status device dari Fonnte.'];
+            }
+
+            return $response->json() ?? [];
+        } catch (\Throwable $e) {
+            Log::warning('Fonnte device check connection error', ['error' => $e->getMessage()]);
+            return [
+                'status' => 'error',
+                'message' => 'Tidak dapat terhubung ke server Fonnte (Timeout / Jaringan bermasalah). Silakan coba lagi.',
+            ];
         }
-
-        return $response->json() ?? [];
     }
 
     /**

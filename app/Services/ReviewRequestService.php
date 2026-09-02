@@ -18,8 +18,9 @@ class ReviewRequestService
      */
     public function autoSendReviewRequests(): int
     {
-        $today = now()->toDateString();
-        $currentTime = now()->format('H:i');
+        $now = Carbon::now('Asia/Jakarta');
+        $today = $now->toDateString();
+        $currentTime = $now->format('H:i');
 
         // Ambil data booking yang siap dikirimkan link ulasannya
         $eligibleBookings = Booking::with(['paketWisata'])
@@ -103,15 +104,20 @@ class ReviewRequestService
     public function buildReviewMessage(Booking $booking): string
     {
         $feUrl = rtrim(Setting::getValue('fe_url') ?: config('app.frontend_url', 'http://localhost:5173'), '/');
-        $reviewUrl = "{$feUrl}/review/{$booking->review_token}";
+        $token = $booking->review_token;
+        if (! $token) {
+            $token = Booking::generateUniqueReviewToken();
+            $booking->update(['review_token' => $token]);
+        }
+        $reviewUrl = "{$feUrl}/review/{$token}";
         $packageName = $booking->paketWisata->nama ?? 'Paket Wisata';
 
-        return "Halo *{$booking->nama_lengkap}*! 👋\n\n"
-            . "Terima kasih banyak telah berkunjung dan berpetualang di Desa Wisata Getas (*{$packageName}*)! 🌿✨\n\n"
-            . "Bagaimana kesan dan pengalaman serumu hari ini? Kami sangat menghargai ulasan dan masukan dari kamu agar kami dapat terus memberikan pelayanan terbaik.\n\n"
-            . "Yuk luangkan waktu 1 menit untuk memberikan penilaian dan ulasan melalui link berikut:\n"
+        return "Halo *{$booking->nama_lengkap}*,\n\n"
+            . "Terima kasih telah berkunjung dan berwisata di *Desa Wisata Getas* ({$packageName}) ✨\n\n"
+            . "Bagaimana pengalaman dan keseruan kunjungan Anda? Masukan dan penilaian Anda sangat berharga bagi kami untuk terus menjaga dan meningkatkan kualitas pelayanan wisata desa.\n\n"
+            . "Silakan luangkan waktu sejenak untuk memberikan penilaian dan ulasan melalui tautan berikut:\n"
             . "👉 {$reviewUrl}\n\n"
-            . "Ulasanmu sangat berarti bagi kemajuan wisata desa kami. Sampai jumpa di petualangan seru berikutnya! 🙏😊\n\n"
-            . "— *Pengelola Desa Wisata Getas*";
+            . "Ulasan Anda sangat berarti bagi kemajuan wisata desa kami. Sampai jumpa di petualangan berikutnya! 🌿✨\n\n"
+            . "— Tim Pengelola Desa Wisata Getas";
     }
 }

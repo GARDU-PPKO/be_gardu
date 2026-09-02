@@ -40,30 +40,32 @@ class BookingSessionController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        if (! $request->has('package_id') && ! $request->has('tanggal')) {
-            $sessions = BookingSession::where('is_active', true)->get();
-            return ApiResponse::success($sessions, 'Success retrieving booking sessions');
-        }
+        $tanggal = $request->get('tanggal');
+        $packageId = $request->get('package_id');
 
-        $data = $request->validate([
-            'package_id' => 'nullable|integer|exists:paket_wisata,id',
-            'tanggal' => 'required|date_format:Y-m-d',
-        ]);
-
-        $sessions = BookingSession::where('is_active', true)
-            ->orderBy('id')
+        $rawSessions = BookingSession::where('is_active', true)
+            ->orderBy('jam_mulai', 'asc')
             ->get()
-            ->map(fn (BookingSession $session) => [
+            ->unique('sesi');
+
+        $sessions = $rawSessions->map(function (BookingSession $session) use ($tanggal, $packageId) {
+            $formattedLabel = $this->sesiLabel($session);
+            $terisi = $tanggal ? $session->terisiPadaTanggal($tanggal) : 0;
+            $sisa = $tanggal ? $session->sisaPadaTanggal($tanggal) : $session->kuota;
+
+            return [
                 'id' => $session->id,
-                'package_id' => $data['package_id'] ?? null,
-                'tanggal' => $data['tanggal'],
-                'sesi' => $this->sesiLabel($session),
-                'kuota' => $session->kuota,
-                'terisi' => $session->terisiPadaTanggal($data['tanggal']),
-                'sisa_kuota' => $session->sisaPadaTanggal($data['tanggal']),
+                'package_id' => $packageId !== null ? (string) $packageId : null,
+                'tanggal' => $tanggal,
+                'sesi' => $formattedLabel,
+                'jam_mulai' => $session->jam_mulai,
+                'jam_selesai' => $session->jam_selesai,
+                'kuota' => (int) $session->kuota,
+                'terisi' => (int) $terisi,
+                'sisa_kuota' => (int) $sisa,
                 'is_active' => (bool) $session->is_active,
-            ])
-            ->values();
+            ];
+        })->values();
 
         return ApiResponse::success($sessions, 'Success retrieving booking sessions');
     }

@@ -145,33 +145,23 @@ class PackageReviewTest extends TestCase
             ->assertJsonPath('data.0.reviews_count', 2);
     }
 
-    public function test_admin_can_trigger_send_review_wa(): void
+    public function test_automatic_review_request_service_dispatches_successfully(): void
     {
-        $admin = User::create([
-            'username' => 'admin',
-            'name' => 'Admin',
-            'email' => 'admin@getas.desa',
-            'password' => bcrypt('password'),
-            'nama' => 'Admin',
-            'role' => 'admin',
-        ]);
-
         $package = $this->createPackage();
         $booking = Booking::create([
             'booking_code' => Booking::generateBookingCode(),
             'nama_lengkap' => 'Pengunjung Tes',
             'no_whatsapp' => '08123456789',
-            'tanggal_kunjungan' => now()->toDateString(),
+            'tanggal_kunjungan' => now()->subDay()->toDateString(),
             'paket_wisata_id' => $package->id,
             'sesi' => 'Pagi',
             'total_harga' => 110000,
             'status' => Booking::STATUS_CONFIRMED,
         ]);
 
-        $response = $this->actingAs($admin)
-            ->post("/admin/bookings/{$booking->id}/send-review-wa");
+        $sentCount = app(\App\Services\ReviewRequestService::class)->autoSendReviewRequests();
 
-        $response->assertRedirect();
+        $this->assertEquals(1, $sentCount);
 
         $booking->refresh();
         $this->assertNotNull($booking->review_token);

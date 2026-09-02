@@ -15,7 +15,6 @@
                 <tr class="text-left text-gray-500 border-b bg-gray-50">
                     <th class="p-4 font-semibold">Judul</th>
                     <th class="p-4 font-semibold">Kategori</th>
-                    <th class="p-4 font-semibold">Span Grid</th>
                     <th class="p-4 font-semibold">Status</th>
                     <th class="p-4 font-semibold">Aksi</th>
                 </tr>
@@ -23,11 +22,10 @@
             <tbody>
                 @forelse($budayaList as $budaya)
                 <tr class="border-b border-gray-100 hover:bg-gray-50">
-                    <td class="p-4">{{ $budaya->judul }}</td>
+                    <td class="p-4 font-medium text-gray-800">{{ $budaya->judul }}</td>
                     <td class="p-4">{{ $budaya->kategori }}</td>
-                    <td class="p-4">{{ $budaya->span_grid ?? '-' }}</td>
                     <td class="p-4">
-                        <span class="px-2 py-1 text-xs rounded-full {{ $budaya->is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                        <span class="px-2 py-1 text-xs rounded-full {{ $budaya->is_active ? 'bg-green-100 text-green-700 font-semibold' : 'bg-red-100 text-red-700 font-semibold' }}">
                             {{ $budaya->is_active ? 'Aktif' : 'Nonaktif' }}
                         </span>
                     </td>
@@ -40,7 +38,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="5" class="p-8 text-center text-gray-400">Belum ada budaya</td></tr>
+                <tr><td colspan="4" class="p-8 text-center text-gray-400">Belum ada budaya</td></tr>
                 @endforelse
             </tbody>
         </table>

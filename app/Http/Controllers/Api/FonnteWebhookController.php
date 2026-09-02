@@ -43,7 +43,7 @@ class FonnteWebhookController extends Controller
         $data = $this->extractBookingData($message);
 
         if (empty($data['nama']) || empty($data['no_wa']) || empty($data['package_name'])) {
-            $fonnte->sendMessage($phone, "Maaf, format data booking tidak lengkap.\n\nPastikan format:\nNama: ...\nNo. WA: ...\nPaket: ...\nTanggal: ...\nSesi: ...\nPeserta: ...\nTotal: ...");
+            $fonnte->sendMessage($phone, "Maaf, format data pemesanan belum lengkap.\n\nPastikan format:\nNama: ...\nNo. WA: ...\nPaket: ...\nTanggal: ...\nSesi: ...\nPeserta: ...\nTotal: ...\n\nTerima kasih. 🙏");
             return $this->error('Format data booking tidak lengkap.', 400);
         }
 
@@ -52,7 +52,7 @@ class FonnteWebhookController extends Controller
             ->first();
 
         if (!$package) {
-            $fonnte->sendMessage($phone, "Maaf, paket \"{$data['package_name']}\" tidak ditemukan. Silakan cek daftar paket wisata yang tersedia.");
+            $fonnte->sendMessage($phone, "Maaf, paket \"{$data['package_name']}\" tidak ditemukan. Silakan cek daftar paket wisata yang tersedia di website kami.\n\nTerima kasih. 🙏");
             return $this->error('Paket wisata tidak ditemukan.', 404);
         }
 
@@ -85,16 +85,17 @@ class FonnteWebhookController extends Controller
             'created_by' => $admin->id,
         ]);
 
-        $reply = "✅ *Booking Berhasil!*\n\n"
-            . "Kode Booking: *{$kodeBooking}*\n"
-            . "Paket: {$package->nama}\n"
-            . "Tanggal: " . $booking->tanggal_kunjungan->toDateString() . "\n"
-            . "Sesi: {$booking->sesi}\n"
-            . "Peserta: {$booking->jumlah_peserta} orang\n"
-            . "Total: Rp " . number_format($booking->total_harga, 0, ',', '.') . "\n\n"
-            . "Silakan transfer ke:\n"
-            . "Bank BNI 123456789 a.n. Desa Getas\n\n"
-            . "Kirimkan bukti transfer ke nomor ini untuk konfirmasi.";
+        $reply = "Halo *{$data['nama']}*,\n\n"
+            . "Pemesanan paket wisata Anda berhasil dibuat.\n\n"
+            . "*Detail Pemesanan:*\n"
+            . "• Kode Booking: *{$kodeBooking}*\n"
+            . "• Paket: {$package->nama}\n"
+            . "• Tanggal Kunjungan: " . $booking->tanggal_kunjungan->format('d-m-Y') . "\n"
+            . "• Sesi: {$booking->sesi}\n"
+            . "• Jumlah Peserta: {$booking->jumlah_peserta} orang\n"
+            . "• Total Tagihan: Rp " . number_format($booking->total_harga, 0, ',', '.') . "\n\n"
+            . "Silakan lakukan transfer dan kirimkan bukti pembayaran ke nomor ini untuk verifikasi admin.\n\n"
+            . "Terima kasih. 🙏";
 
         $fonnte->sendMessage($phone, $reply);
 

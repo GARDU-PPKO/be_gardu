@@ -32,6 +32,8 @@ class AdminBookingController extends Controller
         app(ReviewRequestService::class)->autoSendReviewRequests();
 
         $status = $request->get('status', Booking::STATUS_PENDING_VERIFY);
+        $search = trim((string) $request->get('search', ''));
+
         $valid = [
             'all',
             Booking::STATUS_PENDING_PAYMENT,
@@ -58,11 +60,21 @@ class AdminBookingController extends Controller
             $query->where('status', $status)->orderBy('created_at', 'asc');
         }
 
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('booking_code', 'like', "%{$search}%")
+                    ->orWhere('nama_lengkap', 'like', "%{$search}%")
+                    ->orWhere('no_whatsapp', 'like', "%{$search}%")
+                    ->orWhere('kontak_darurat', 'like', "%{$search}%");
+            });
+        }
+
         $bookings = $query->paginate(15)->withQueryString();
 
         return view('admin.bookings.index', [
             'bookings' => $bookings,
             'filterStatus' => $status,
+            'search' => $search,
         ]);
     }
 
@@ -200,100 +212,36 @@ class AdminBookingController extends Controller
         return back()->with('success', "Booking {$booking->booking_code} ditolak");
     }
 
-    public function sendReviewWa($id): RedirectResponse
-    {
-        $booking = Booking::with('paketWisata')->findOrFail($id);
-
-        if (! $booking->review_token) {
-            $booking->update(['review_token' => Booking::generateUniqueReviewToken()]);
-            $booking->refresh();
-        }
-
-        $booking->update([
-            'status' => Booking::STATUS_COMPLETED,
-            'review_invitation_sent_at' => now(),
-        ]);
-
-        BookingLog::create([
-            'booking_id' => $booking->id,
-            'admin_id' => auth()->id(),
-            'action' => 'review_requested',
-            'detail' => 'Link ulasan dikirimkan kepada pengunjung via WhatsApp.',
-            'created_at' => now(),
-        ]);
-
-        $message = $this->buildReviewRequestMessage($booking);
-        app(FonnteService::class)->send($booking->no_whatsapp, $message);
-
-        return back()->with('success', "Link ulasan berhasil dikirim ke WhatsApp {$booking->nama_lengkap} ({$booking->no_whatsapp})!");
-    }
-
-    public function complete($id): RedirectResponse
-    {
-        $booking = Booking::with('paketWisata')->findOrFail($id);
-
-        if (! $booking->review_token) {
-            $booking->update(['review_token' => Booking::generateUniqueReviewToken()]);
-            $booking->refresh();
-        }
-
-        $booking->update([
-            'status' => Booking::STATUS_COMPLETED,
-            'review_invitation_sent_at' => now(),
-        ]);
-
-        BookingLog::create([
-            'booking_id' => $booking->id,
-            'admin_id' => auth()->id(),
-            'action' => 'completed',
-            'detail' => 'Kunjungan diselesaikan dan link ulasan dikirim via WhatsApp.',
-            'created_at' => now(),
-        ]);
-
-        $message = $this->buildReviewRequestMessage($booking);
-        app(FonnteService::class)->send($booking->no_whatsapp, $message);
-
-        return back()->with('success', "Kunjungan {$booking->booking_code} diselesaikan & link ulasan telah dikirim!");
-    }
-
-    private function buildReviewRequestMessage(Booking $booking): string
-    {
-        $feUrl = rtrim(Setting::getValue('fe_url') ?: config('app.frontend_url', 'http://localhost:5173'), '/');
-        $reviewUrl = "{$feUrl}/review/{$booking->review_token}";
-        $packageName = $booking->paketWisata->nama ?? 'Paket Wisata';
-
-        return "Halo *{$booking->nama_lengkap}*! 👋\n\n"
-            . "Terima kasih telah berkunjung dan berpetualang di Desa Wisata Getas (*{$packageName}*)! 🌿✨\n\n"
-            . "Bagaimana kesan dan pengalaman serumu hari ini? Kami sangat menghargai ulasan dan penilaian dari kamu agar kami dapat terus meningkatkan kualitas pelayanan kami.\n\n"
-            . "Yuk bagikan rating bintang dan ulasanmu melalui tautan resmi berikut:\n"
-            . "👉 {$reviewUrl}\n\n"
-            . "Ulasanmu sangat berarti bagi kemajuan wisata desa kami. Sampai jumpa di petualangan berikutnya! 🙏😊\n\n"
-            . "— *Pengelola Desa Wisata Getas*";
-    }
-
     private function buildConfirmMessage(Booking $booking): string
     {
+        $feUrl = rtrim(Setting::getValue('fe_url') ?: config('app.frontend_url', 'http://localhost:5173'), '/');
+        $statusUrl = "{$feUrl}/cek-pesanan?kode={$booking->booking_code}";
         $packageName = $booking->paketWisata->nama ?? 'Paket Wisata';
-        $tanggal = $booking->tanggal_kunjungan ? $booking->tanggal_kunjungan->format('d/m/Y') : '-';
+        $tanggal = $booking->tanggal_kunjungan ? $booking->tanggal_kunjungan->format('d-m-Y') : '-';
 
-        return "Halo *{$booking->nama_lengkap}*! ✅\n\n"
-            . "Pembayaran booking wisata kamu telah diverifikasi dan *DIKONFIRMASI*.\n\n"
-            . "📋 *Detail Booking:*\n"
-            . "• Kode: *{$booking->booking_code}*\n"
-            . "• Paket: {$packageName}\n"
-            . "• Tanggal: {$tanggal}\n"
-            . "• Sesi: {$booking->sesi}\n"
-            . "• Jumlah Peserta: {$booking->jumlah_peserta} orang\n\n"
-            . "Silakan datang sesuai jadwal booking Anda. Tunjukkan kode booking ini saat tiba di lokasi.\n\n"
-            . "Sampai jumpa di Desa Wisata Getas! 🌿";
+        return "Halo *{$booking->nama_lengkap}*,\n\n"
+            . "Kabar baik! Pembayaran booking wisata Anda telah diverifikasi dan *DIKONFIRMASI* ✨\n\n"
+            . "*Detail Tiket Kunjungan:*\n"
+            . "• Kode Booking: *{$booking->booking_code}*\n"
+            . "• Paket Wisata: {$packageName}\n"
+            . "• Tanggal Kunjungan: {$tanggal}\n"
+            . "• Sesi Waktu: {$booking->sesi}\n"
+            . "• Jumlah Peserta: {$booking->jumlah_peserta} orang\n"
+            . "• Status Pembayaran: *Lunas* (Rp " . number_format((float) $booking->total_harga, 0, ',', '.') . ")\n\n"
+            . "E-tiket dan detail lengkap pesanan dapat Anda akses melalui tautan berikut:\n"
+            . "👉 {$statusUrl}\n\n"
+            . "Mohon simpan dan tunjukkan kode booking ini saat tiba di lokasi. Selamat menikmati petualangan dan keindahan alam di Desa Wisata Getas! 🌿✨\n\n"
+            . "Terima kasih 😊";
     }
 
     private function buildRejectMessage(Booking $booking): string
     {
-        return "Halo *{$booking->nama_lengkap}*.\n\n"
-            . "Mohon maaf, bukti pembayaran untuk booking *{$booking->booking_code}* belum dapat kami terima.\n\n"
-            . "📌 *Alasan:* {$booking->rejected_reason}\n\n"
-            . "Silakan lakukan pemesanan ulang atau hubungi admin kami untuk informasi lebih lanjut. Terima kasih.";
+        return "Halo *{$booking->nama_lengkap}*,\n\n"
+            . "Mohon maaf, bukti pembayaran untuk kode booking *{$booking->booking_code}* belum dapat kami verifikasi / *DITOLAK* ❌\n\n"
+            . "*Alasan Penolakan:*\n"
+            . "{$booking->rejected_reason}\n\n"
+            . "Silakan lakukan pemesanan ulang atau hubungi pengelola jika membutuhkan bantuan lebih lanjut.\n\n"
+            . "Terima kasih dan salam hangat dari Desa Wisata Getas 🌿";
     }
 
     public function destroy($id): RedirectResponse

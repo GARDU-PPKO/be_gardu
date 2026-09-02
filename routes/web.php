@@ -73,8 +73,6 @@ Route::prefix('admin')->group(function () {
         Route::get('bookings/{id}', [AdminBookingController::class, 'show'])->name('admin.bookings.show');
         Route::post('bookings/{id}/confirm', [AdminBookingController::class, 'confirm'])->name('admin.bookings.confirm');
         Route::post('bookings/{id}/reject', [AdminBookingController::class, 'reject'])->name('admin.bookings.reject');
-        Route::post('bookings/{id}/send-review-wa', [AdminBookingController::class, 'sendReviewWa'])->name('admin.bookings.send-review-wa');
-        Route::post('bookings/{id}/complete', [AdminBookingController::class, 'complete'])->name('admin.bookings.complete');
         Route::post('bookings/{id}/restore', [AdminBookingController::class, 'restore'])->name('admin.bookings.restore');
         Route::get('bookings/{id}/bukti', [AdminBookingController::class, 'showBukti'])->name('admin.bookings.bukti');
         Route::delete('bookings/{id}', [AdminBookingController::class, 'destroy'])->name('admin.bookings.destroy');
