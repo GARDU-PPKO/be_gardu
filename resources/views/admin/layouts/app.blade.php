@@ -55,6 +55,9 @@
                 <a href="{{ route('admin.bookings.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.bookings.*') ? 'bg-emerald-800' : '' }}">
                     <span>📋</span> Bookings
                 </a>
+                <a href="{{ route('admin.reviews.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.reviews.*') ? 'bg-emerald-800' : '' }}">
+                    <span>⭐</span> Ulasan Pengunjung
+                </a>
                 <a href="{{ route('admin.dusun.index') }}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-emerald-800 transition {{ request()->routeIs('admin.dusun.*') ? 'bg-emerald-800' : '' }}">
                     <span>🏘️</span> Dusun
                 </a>

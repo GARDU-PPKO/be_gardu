@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\AdminVillageStatsController;
 use App\Http\Controllers\Admin\AdminSettingController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminPosController;
+use App\Http\Controllers\Admin\AdminReviewController;
 use App\Http\Controllers\Admin\FonnteController;
 use Illuminate\Support\Facades\Route;
 
@@ -72,9 +73,16 @@ Route::prefix('admin')->group(function () {
         Route::get('bookings/{id}', [AdminBookingController::class, 'show'])->name('admin.bookings.show');
         Route::post('bookings/{id}/confirm', [AdminBookingController::class, 'confirm'])->name('admin.bookings.confirm');
         Route::post('bookings/{id}/reject', [AdminBookingController::class, 'reject'])->name('admin.bookings.reject');
+        Route::post('bookings/{id}/send-review-wa', [AdminBookingController::class, 'sendReviewWa'])->name('admin.bookings.send-review-wa');
+        Route::post('bookings/{id}/complete', [AdminBookingController::class, 'complete'])->name('admin.bookings.complete');
         Route::post('bookings/{id}/restore', [AdminBookingController::class, 'restore'])->name('admin.bookings.restore');
         Route::get('bookings/{id}/bukti', [AdminBookingController::class, 'showBukti'])->name('admin.bookings.bukti');
         Route::delete('bookings/{id}', [AdminBookingController::class, 'destroy'])->name('admin.bookings.destroy');
+
+        // Reviews / Ulasan
+        Route::get('reviews', [AdminReviewController::class, 'index'])->name('admin.reviews.index');
+        Route::post('reviews/{id}/toggle-visibility', [AdminReviewController::class, 'toggleVisibility'])->name('admin.reviews.toggle-visibility');
+        Route::delete('reviews/{id}', [AdminReviewController::class, 'destroy'])->name('admin.reviews.destroy');
 
         // UMKM Products
         Route::resource('umkm-products', AdminUmkmProductController::class)->except(['show'])->names('admin.umkm-products');

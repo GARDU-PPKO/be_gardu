@@ -16,7 +16,7 @@ class TourPackageController extends Controller
     #[Endpoint('Daftar Paket Wisata')]
     public function index(): JsonResponse
     {
-        $packages = PaketWisata::with('tiers')
+        $packages = PaketWisata::with(['tiers', 'visibleReviews'])
             ->where('aktif', true)
             ->orderBy('nama')
             ->get();
@@ -31,7 +31,7 @@ class TourPackageController extends Controller
     #[PathParameter('id', description: 'ID paket wisata', example: '1')]
     public function show($id): JsonResponse
     {
-        $package = PaketWisata::with('tiers')->where('aktif', true)->findOrFail($id);
+        $package = PaketWisata::with(['tiers', 'visibleReviews'])->where('aktif', true)->findOrFail($id);
 
         return ApiResponse::success($this->shape($package), 'Success retrieving tour package detail');
     }
@@ -66,6 +66,19 @@ class TourPackageController extends Controller
             ])
             ->values();
 
+        $allVisibleReviews = $p->visibleReviews ?? collect();
+        $reviewsCount = $allVisibleReviews->count();
+        $ratingAvg = $reviewsCount > 0 ? round((float) $allVisibleReviews->avg('rating'), 1) : null;
+
+        $recentReviews = $allVisibleReviews->take(10)->map(fn ($r) => [
+            'id' => $r->id,
+            'nama_pengulas' => $r->nama_pengulas,
+            'rating' => $r->rating,
+            'komentar' => $r->komentar,
+            'created_at' => $r->created_at?->toISOString(),
+            'tanggal_formatted' => $r->created_at ? $r->created_at->translatedFormat('d M Y') : '-',
+        ])->values();
+
         return [
             'id' => $p->id,
             'nama' => $p->nama,
@@ -80,6 +93,9 @@ class TourPackageController extends Controller
             'max_participants' => $isPerOrang ? null : $p->kapasitas_per_unit,
             'gambar' => $p->gambar,
             'is_active' => (bool) $p->aktif,
+            'rating_avg' => $ratingAvg,
+            'reviews_count' => $reviewsCount,
+            'reviews' => $recentReviews,
             'includes' => $includes,
             'tiers' => $tierList,
         ];

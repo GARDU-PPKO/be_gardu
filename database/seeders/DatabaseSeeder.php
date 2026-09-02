@@ -16,7 +16,7 @@ use App\Models\PaketWisata;
 use App\Models\PaketWisataTier;
 use App\Models\AddOn;
 use App\Models\UmkmProduct;
-use App\Models\VillageStat;
+use App\Models\PackageReview;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 

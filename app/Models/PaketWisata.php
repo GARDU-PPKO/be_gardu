@@ -58,6 +58,27 @@ class PaketWisata extends Model
         return $this->hasMany(Booking::class, 'paket_wisata_id');
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(PackageReview::class, 'paket_wisata_id');
+    }
+
+    public function visibleReviews(): HasMany
+    {
+        return $this->hasMany(PackageReview::class, 'paket_wisata_id')->where('is_visible', true)->latest();
+    }
+
+    public function getRatingAvgAttribute(): ?float
+    {
+        $avg = $this->reviews()->where('is_visible', true)->avg('rating');
+        return $avg !== null ? round((float) $avg, 1) : null;
+    }
+
+    public function getReviewsCountAttribute(): int
+    {
+        return $this->reviews()->where('is_visible', true)->count();
+    }
+
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
