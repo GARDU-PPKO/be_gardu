@@ -68,7 +68,12 @@ class AdminBudayaController extends Controller
 
     public function destroy($id): RedirectResponse
     {
-        Budaya::findOrFail($id)->delete();
+        $budaya = Budaya::findOrFail($id);
+        $budaya->schedules()->delete();
+        if ($budaya->gambar) {
+            $this->deleteOldImage($budaya->gambar);
+        }
+        $budaya->delete();
         return redirect()->route('admin.budaya.index')->with('success', 'Budaya berhasil dihapus');
     }
 
@@ -79,7 +84,9 @@ class AdminBudayaController extends Controller
             'nama_acara' => 'required|string|max:200',
             'hari' => 'required|string|max:50',
             'jam' => 'required|string|max:10',
+            'deskripsi' => 'nullable|string',
         ]);
+        $data['deskripsi'] = $data['deskripsi'] ?? ($data['nama_acara'] . ' - ' . $data['hari']);
 
         $budaya->schedules()->create($data);
         return redirect()->route('admin.budaya.edit', $id)->with('success', 'Jadwal berhasil ditambahkan');

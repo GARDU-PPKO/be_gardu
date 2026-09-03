@@ -42,8 +42,6 @@ Route::prefix('admin')->group(function () {
 
         // Dusun
         Route::resource('dusun', AdminDusunController::class)->names('admin.dusun');
-        Route::post('dusun/{id}/galleries', [AdminDusunController::class, 'storeGallery'])->name('admin.dusun.galleries.store');
-        Route::delete('dusun/{id}/galleries/{galleryId}', [AdminDusunController::class, 'destroyGallery'])->name('admin.dusun.galleries.destroy');
         Route::post('dusun/{id}/keunggulan', [AdminDusunController::class, 'storeKeunggulan'])->name('admin.dusun.keunggulan.store');
         Route::delete('dusun/{id}/keunggulan/{keunggulanId}', [AdminDusunController::class, 'destroyKeunggulan'])->name('admin.dusun.keunggulan.destroy');
 

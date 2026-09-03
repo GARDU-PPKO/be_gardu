@@ -65,7 +65,9 @@ class AdminBookingController extends Controller
                 $q->where('booking_code', 'like', "%{$search}%")
                     ->orWhere('nama_lengkap', 'like', "%{$search}%")
                     ->orWhere('no_whatsapp', 'like', "%{$search}%")
-                    ->orWhere('kontak_darurat', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('kontak_darurat_nama', 'like', "%{$search}%")
+                    ->orWhere('kontak_darurat_telp', 'like', "%{$search}%");
             });
         }
 

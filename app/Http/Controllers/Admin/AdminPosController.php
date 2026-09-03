@@ -12,6 +12,7 @@ use App\Models\PosCategory;
 use App\Models\PosProduct;
 use App\Models\PosTransaction;
 use App\Models\PosTransactionItem;
+use App\Models\Setting;
 use App\Models\UmkmProduct;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -90,7 +91,14 @@ class AdminPosController extends Controller
         $categories = PosCategory::orderBy('name', 'asc')->get();
         $sessions = BookingSession::where('is_active', true)->orderBy('id')->get();
 
-        return view('admin.pos.index', compact('catalog', 'categories', 'sessions'));
+        $paymentSettings = [
+            'qris_image' => Setting::getValue('qris_image') ?: Setting::getValue('qr_image'),
+            'rekening_bank' => Setting::getValue('rekening_bank') ?: 'Bank Transfer',
+            'rekening_no' => Setting::getValue('rekening_no') ?: '-',
+            'rekening_atas_nama' => Setting::getValue('rekening_atas_nama') ?: 'Pengelola Desa Wisata Getas',
+        ];
+
+        return view('admin.pos.index', compact('catalog', 'categories', 'sessions', 'paymentSettings'));
     }
 
     /**
@@ -390,16 +398,18 @@ class AdminPosController extends Controller
         $query = PosProduct::with('category');
 
         if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where('name', 'like', "%{$search}%")
-                ->orWhere('sku', 'like', "%{$search}%");
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('sku', 'like', "%{$search}%");
+            });
         }
 
         if ($request->filled('category_id')) {
             $query->where('category_id', $request->category_id);
         }
 
-        $products = $query->orderBy('name', 'asc')->paginate(15);
+        $products = $query->orderBy('name', 'asc')->paginate(15)->withQueryString();
         $categories = PosCategory::orderBy('name', 'asc')->get();
 
         return view('admin.pos.products', compact('products', 'categories'));
@@ -495,7 +505,7 @@ class AdminPosController extends Controller
             $query->where('payment_method', $request->payment_method);
         }
 
-        $transactions = $query->orderBy('created_at', 'desc')->paginate(20);
+        $transactions = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
 
         $today = date('Y-m-d');
         $todayRevenue = PosTransaction::whereDate('created_at', $today)

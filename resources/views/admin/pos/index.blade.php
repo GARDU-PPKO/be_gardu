@@ -9,8 +9,45 @@
     <style>
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .custom-scroll::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
         .pos-grid {
             grid-auto-rows: max-content !important;
+        }
+        .pay-method-btn {
+            border: 1.5px solid #cbd5e1 !important;
+            background: #ffffff !important;
+            color: #334155 !important;
+            transition: all 0.15s ease-in-out;
+        }
+        .pay-method-btn:hover {
+            border-color: #94a3b8 !important;
+            background: #f8fafc !important;
+        }
+        .pay-method-btn.active {
+            border-color: #0f172a !important;
+            background: #0f172a !important;
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+        }
+        .pay-method-btn.active svg {
+            color: #34d399 !important;
+        }
+        .pay-method-btn.active span {
+            color: #ffffff !important;
         }
         #posContainer {
             height: 100vh;
@@ -24,58 +61,57 @@
 </head>
 <body class="h-full font-sans antialiased bg-slate-100 text-slate-800 select-none overflow-hidden">
 
-<div class="h-screen flex flex-col p-2 sm:p-3 md:p-4 gap-2 md:gap-3 bg-slate-100" id="posContainer">
-    <!-- Main Tablet Workspace: Side-by-Side 2 Columns (Flex Row) -->
-    <div class="flex-1 flex flex-col lg:flex-row gap-2.5 md:gap-3 min-h-0 overflow-hidden">
+<div class="h-screen max-h-screen flex flex-col p-1.5 sm:p-2 md:p-2.5 gap-1.5 sm:gap-2 bg-slate-100 overflow-hidden" id="posContainer">
+    <!-- Main Workspace: Side-by-Side 2 Columns (Always on the Right) -->
+    <div class="flex-1 flex flex-row gap-1.5 sm:gap-2 min-h-0 w-full overflow-hidden">
         
         <!-- Left Section: Catalog (Category Pills Wrap Cleanly, Search Bar, Product Grid) -->
         <div class="flex-1 flex flex-col bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden min-w-0 min-h-0">
             
-            <!-- Category Filter & Search Header (Clean Flex Wrap Layout) -->
-            <div class="p-2 sm:p-2.5 border-b border-slate-200 bg-white flex flex-col gap-2 flex-shrink-0">
+            <!-- Category Filter & Search Header -->
+            <div class="p-2 sm:p-2.5 border-b border-slate-200 bg-white flex flex-col gap-1.5 flex-shrink-0">
                 
                 <!-- Row 1: Back Button & Search Input in ONE Flex Row -->
                 <div class="flex items-center gap-2 w-full">
                     <a href="{{ route('admin.dashboard') }}" title="Kembali ke Dashboard"
-                       class="flex-shrink-0 w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center shadow-xs transition active:scale-95">
-                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       class="flex-shrink-0 w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center shadow-xs transition active:scale-95 cursor-pointer">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                         </svg>
                     </a>
                     <div class="relative flex-1">
                         <input type="text" id="searchInput" placeholder="Cari nama produk, paket, atau SKU..." 
-                               class="w-full pl-8 pr-3 py-1.5 sm:py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 text-xs focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white transition">
-                        <svg width="14" height="14" class="text-slate-400 absolute left-2.5 top-2.5 sm:top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                               class="w-full pl-8 pr-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 text-xs focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white transition">
+                        <svg width="14" height="14" class="text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
                 </div>
 
-                <!-- Row 2: Category Filter Pills (Flex Wrap so ALL pills wrap and 100% visible without clipping) -->
-                <div class="flex flex-wrap gap-1.5 w-full py-0.5">
-                    <button type="button" class="type-btn px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-semibold transition bg-slate-900 text-white shadow-xs" data-type="all">
+                <!-- Row 2: Category Filter Pills (Single Row Horizontal Scroll) -->
+                <div class="flex items-center gap-1.5 w-full py-0.5 overflow-x-auto no-scrollbar flex-nowrap">
+                    <button type="button" class="type-btn px-2.5 py-1 rounded-lg text-[11px] font-semibold transition bg-slate-900 text-white shadow-xs whitespace-nowrap flex-shrink-0 cursor-pointer active:scale-95" data-type="all">
                         Semua ({{ $catalog->count() }})
                     </button>
-                    <button type="button" class="type-btn px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium transition bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200" data-type="paket_wisata">
+                    <button type="button" class="type-btn px-2.5 py-1 rounded-lg text-[11px] font-medium transition bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200 whitespace-nowrap flex-shrink-0 cursor-pointer active:scale-95" data-type="paket_wisata">
                         Paket Wisata ({{ $catalog->where('type', 'paket_wisata')->count() }})
                     </button>
-                    <button type="button" class="type-btn px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium transition bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200" data-type="addon">
+                    <button type="button" class="type-btn px-2.5 py-1 rounded-lg text-[11px] font-medium transition bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200 whitespace-nowrap flex-shrink-0 cursor-pointer active:scale-95" data-type="addon">
                         Add-On ({{ $catalog->where('type', 'addon')->count() }})
                     </button>
-                    <button type="button" class="type-btn px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium transition bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200" data-type="pos_product">
+                    <button type="button" class="type-btn px-2.5 py-1 rounded-lg text-[11px] font-medium transition bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200 whitespace-nowrap flex-shrink-0 cursor-pointer active:scale-95" data-type="pos_product">
                         Produk POS ({{ $catalog->where('type', 'pos_product')->count() }})
                     </button>
                 </div>
             </div>
 
-            <!-- Product Cards Catalog Grid (Entire Card Clickable to Add directly to Cart) -->
-            <div class="flex-1 p-2.5 sm:p-3 overflow-y-auto grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5 content-start bg-slate-50/70 pos-grid" id="productGrid">
+            <!-- Product Cards Catalog Grid (Minimal 3 Kolom) -->
+            <div class="flex-1 p-2 sm:p-2.5 overflow-y-auto custom-scroll grid grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-2.5 content-start bg-slate-50/70 pos-grid" id="productGrid">
                 @forelse($catalog as $item)
                     @php
                         $isPaket = $item['type'] === 'paket_wisata';
                         $isAddon = $item['type'] === 'addon';
                         $stock = $item['stock'];
                     @endphp
-                    <div class="product-card group bg-white border border-slate-200 hover:border-emerald-600 hover:shadow-md transition cursor-pointer rounded-xl p-2.5 flex flex-col justify-between relative overflow-hidden active:scale-[0.98]"
-                         style="min-height: 195px;"
+                    <div class="product-card group bg-white border border-slate-200 hover:border-emerald-600 hover:shadow-md transition-all cursor-pointer rounded-xl p-2 flex flex-col justify-between relative overflow-hidden active:scale-[0.97]"
                          data-type="{{ $item['type'] }}"
                          data-id="{{ $item['id'] }}"
                          data-name="{{ $item['name'] }}"
@@ -85,49 +121,52 @@
                          data-category="{{ $item['category'] }}">
                         
                         <!-- Image & Stock Badge -->
-                        <div class="relative w-full h-24 sm:h-28 mb-2 rounded-lg bg-slate-100 overflow-hidden border border-slate-100 flex-shrink-0">
+                        <div class="relative w-full h-16 sm:h-18 lg:h-20 mb-1.5 rounded-lg bg-slate-100 overflow-hidden border border-slate-100 flex-shrink-0">
                             @if($item['image'])
                                 <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy">
                             @else
                                 <div class="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">
-                                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                                 </div>
                             @endif
 
                             @if($isPaket)
-                                <span class="absolute top-1.5 right-1.5 px-2 py-0.5 rounded text-[10px] font-bold backdrop-blur-md shadow-xs bg-emerald-700/90 text-white">
-                                    Paket Wisata
+                                <span class="absolute top-1 right-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold backdrop-blur-md shadow-xs bg-emerald-700/90 text-white">
+                                    Paket
                                 </span>
                             @elseif($isAddon)
-                                <span class="absolute top-1.5 right-1.5 px-2 py-0.5 rounded text-[10px] font-bold backdrop-blur-md shadow-xs bg-indigo-700/90 text-white">
+                                <span class="absolute top-1 right-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold backdrop-blur-md shadow-xs bg-indigo-700/90 text-white">
                                     Add-On
                                 </span>
                             @else
-                                <span class="absolute top-1.5 right-1.5 px-2 py-0.5 rounded text-[10px] font-bold backdrop-blur-md shadow-xs {{ $stock > 10 ? 'bg-slate-900/80 text-white' : ($stock > 0 ? 'bg-amber-600/90 text-white' : 'bg-rose-600/90 text-white') }}">
+                                <span class="absolute top-1 right-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold backdrop-blur-md shadow-xs {{ $stock > 10 ? 'bg-slate-900/80 text-white' : ($stock > 0 ? 'bg-amber-600/90 text-white' : 'bg-rose-600/90 text-white') }}">
                                     Stok: {{ $stock }}
                                 </span>
                             @endif
                         </div>
 
                         <!-- Card Body (Category, Title, Prominent Price Tag) -->
-                        <div class="flex-1 flex flex-col justify-between">
+                        <div class="flex-1 flex flex-col justify-between min-h-0">
                             <div>
-                                <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider truncate">
+                                <div class="text-[9px] font-bold text-slate-400 uppercase tracking-wider truncate">
                                     {{ $item['sub_label'] }} • {{ $item['category'] }}
                                 </div>
-                                <h4 class="font-bold text-slate-900 text-xs sm:text-sm leading-snug line-clamp-2 mt-0.5 group-hover:text-emerald-700 transition-colors" title="{{ $item['name'] }}">
+                                <h4 class="font-bold text-slate-900 text-xs leading-snug line-clamp-2 mt-0.5 group-hover:text-emerald-700 transition-colors" title="{{ $item['name'] }}">
                                     {{ $item['name'] }}
                                 </h4>
                             </div>
 
-                            <div class="pt-2 border-t border-slate-100 mt-2 flex items-center justify-between">
-                                <span class="text-emerald-700 font-black text-xs sm:text-sm md:text-base">
+                            <div class="pt-1.5 border-t border-slate-100 mt-1.5 flex items-center justify-between">
+                                <span class="text-emerald-700 font-black text-xs sm:text-sm">
                                     Rp {{ number_format($item['price'], 0, ',', '.') }}
                                     @if($item['type'] === 'paket_wisata')
-                                        <span class="text-[9px] text-slate-400 font-semibold">/{{ $item['is_per_orang'] ? 'orang' : 'paket' }}</span>
+                                        <span class="text-[8px] text-slate-400 font-semibold">/{{ $item['is_per_orang'] ? 'org' : 'pkt' }}</span>
                                     @elseif($item['type'] === 'addon')
-                                        <span class="text-[9px] text-slate-400 font-semibold">/{{ $item['is_per_orang'] ? 'orang' : 'unit' }}</span>
+                                        <span class="text-[8px] text-slate-400 font-semibold">/{{ $item['is_per_orang'] ? 'org' : 'unt' }}</span>
                                     @endif
+                                </span>
+                                <span class="w-5 h-5 rounded-full bg-emerald-50 text-emerald-700 group-hover:bg-emerald-700 group-hover:text-white flex items-center justify-center text-xs font-bold transition-colors shadow-2xs">
+                                    +
                                 </span>
                             </div>
                         </div>
@@ -140,97 +179,145 @@
             </div>
         </div>
 
-        <!-- Right Section: Fixed Side Cart & Payment (Side-by-Side on Tablet) -->
-        <div class="w-full h-[45%] min-h-0 lg:w-96 lg:h-auto flex flex-col bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden flex-shrink-0">
+        <!-- Right Section: Fixed Side Cart & Payment (Always on the Right) -->
+        <div class="w-[260px] sm:w-[280px] md:w-[295px] lg:w-[325px] xl:w-96 h-full min-h-0 flex flex-col bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden flex-shrink-0">
             
-            <!-- Cart Header -->
-            <div class="p-2.5 px-3 border-b border-slate-200 bg-slate-900 text-white flex items-center justify-between flex-shrink-0">
+            <!-- Cart Header (Fixed Top) -->
+            <div class="py-2 px-3 border-b border-slate-200 bg-slate-900 text-white flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center gap-1.5">
-                    <svg width="16" height="16" class="text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"></path></svg>
+                    <svg width="15" height="15" class="text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"></path></svg>
                     <h3 class="font-bold text-xs sm:text-sm">Keranjang</h3>
                 </div>
-                <button type="button" id="clearCartBtn" class="px-2 py-0.5 text-[10px] font-medium text-rose-300 hover:text-white hover:bg-rose-900/40 rounded transition border border-rose-800/40">
+                <button type="button" id="clearCartBtn" class="px-2.5 py-1 text-[11px] font-semibold text-rose-300 hover:text-white hover:bg-rose-900/50 rounded-lg transition border border-rose-800/50 active:scale-95 cursor-pointer">
                     Kosongkan
                 </button>
             </div>
 
-            <!-- Cart Scroll Area: Items + Checkout in one scrollable container -->
-            <div class="flex-1 overflow-y-auto min-h-0 flex flex-col">
-
-            <!-- Cart Items Container -->
-            <div class="flex-1 p-2.5 space-y-1.5 bg-slate-50/50" id="cartItemsList">
-                <div id="emptyCartMessage" class="h-full flex flex-col items-center justify-center text-center py-8 text-slate-400">
-                    <svg width="32" height="32" class="text-slate-300 mb-1.5 stroke-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-                    <p class="text-xs font-semibold text-slate-600">Keranjang Kosong</p>
+            <!-- Cart Items Container (Scrollable Middle Area ONLY) -->
+            <div class="flex-1 p-2 space-y-1.5 bg-slate-50/50 overflow-y-auto min-h-0 custom-scroll flex flex-col" id="cartItemsList">
+                <div id="emptyCartMessage" class="flex-1 flex flex-col items-center justify-center text-center p-3 text-slate-400 my-auto select-none">
+                    <div class="w-10 h-10 rounded-full bg-slate-200/70 flex items-center justify-center mb-1.5 text-slate-400">
+                        <svg width="20" height="20" class="stroke-[1.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                    </div>
+                    <p class="text-xs font-bold text-slate-700">Keranjang Kosong</p>
                     <p class="text-[10px] text-slate-400 mt-0.5">Sentuh produk untuk menambahkan</p>
                 </div>
             </div>
 
-            <!-- Checkout & Payment Panel -->
-            <div class="p-2.5 sm:p-3 border-t border-slate-200 bg-white space-y-2">
+            <!-- Checkout & Payment Panel (Fixed at Bottom - ALWAYS VISIBLE!) -->
+            <div class="p-2 sm:p-2.5 border-t border-slate-200 bg-white space-y-1 sm:space-y-1.5 flex-shrink-0 shadow-xs">
                 
-                <!-- Totals -->
-                <div class="space-y-1 text-xs">
-                    <div class="flex justify-between text-slate-500 text-[11px]">
-                        <span>Total Items:</span>
-                        <span id="cartTotalItems" class="font-bold text-slate-800">0 item</span>
+                <!-- Totals: 1 clean concise row -->
+                <div class="flex items-baseline justify-between pb-1 border-b border-slate-100">
+                    <div>
+                        <span class="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total Tagihan</span>
+                        <span id="cartTotalItems" class="ml-1 text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">0 item</span>
                     </div>
-                    <div class="flex justify-between items-baseline pt-1 border-t border-slate-100">
-                        <span class="text-slate-800 font-bold text-xs sm:text-sm">Total Tagihan:</span>
-                        <span id="cartTotalAmount" class="text-emerald-700 font-extrabold text-lg sm:text-xl">Rp 0</span>
-                    </div>
+                    <div id="cartTotalAmount" class="text-emerald-700 font-black text-base sm:text-lg tracking-tight">Rp 0</div>
                 </div>
 
                 <!-- Payment Method Selector Tabs -->
                 <div>
-                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Metode Pembayaran</label>
-                    <div class="grid grid-cols-3 gap-1" id="paymentMethodContainer">
-                        <button type="button" class="pay-method-btn px-1.5 py-1 rounded-md border border-slate-900 bg-slate-900 text-white font-bold text-[11px] flex items-center justify-center transition" data-method="cash">
-                            Tunai
+                    <label class="block text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Metode Pembayaran</label>
+                    <div class="grid grid-cols-3 gap-1.5" id="paymentMethodContainer">
+                        <button type="button" class="pay-method-btn active px-1 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-2xs active:scale-95 cursor-pointer" data-method="cash" style="background-color: #0f172a; border-color: #0f172a; color: #ffffff;">
+                            <svg class="w-3.5 h-3.5 flex-shrink-0" style="color: #34d399;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            <span style="color: #ffffff;">Tunai</span>
                         </button>
-                        <button type="button" class="pay-method-btn px-1.5 py-1 rounded-md border border-slate-200 bg-white text-slate-600 font-medium text-[11px] flex items-center justify-center hover:bg-slate-50 transition" data-method="qris">
-                            QRIS
+                        <button type="button" class="pay-method-btn px-1 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition shadow-2xs active:scale-95 cursor-pointer" data-method="qris" style="background-color: #ffffff; border-color: #cbd5e1; color: #334155;">
+                            <svg class="w-3.5 h-3.5 flex-shrink-0" style="color: #94a3b8;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                            <span style="color: #334155;">QRIS</span>
                         </button>
-                        <button type="button" class="pay-method-btn px-1.5 py-1 rounded-md border border-slate-200 bg-white text-slate-600 font-medium text-[11px] flex items-center justify-center hover:bg-slate-50 transition" data-method="transfer">
-                            Transfer
+                        <button type="button" class="pay-method-btn px-1 py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition shadow-2xs active:scale-95 cursor-pointer" data-method="transfer" style="background-color: #ffffff; border-color: #cbd5e1; color: #334155;">
+                            <svg class="w-3.5 h-3.5 flex-shrink-0" style="color: #94a3b8;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                            <span style="color: #334155;">Transfer</span>
                         </button>
                     </div>
                 </div>
 
-                <!-- Cash Payment Details -->
+                <!-- 1. Cash Payment Details -->
                 <div id="cashPaymentSection" class="space-y-1 pt-0.5">
-                    <div class="flex justify-between items-center">
-                        <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Uang Diterima (Rp)</label>
-                        <button type="button" id="exactAmountBtn" class="text-[10px] font-bold text-emerald-700 hover:underline">
+                    <div class="flex items-center gap-1.5">
+                        <div class="relative flex-1">
+                            <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-slate-400">Rp</span>
+                            <input type="text" id="paidAmountInput" placeholder="0" inputmode="numeric" autocomplete="off"
+                                   class="w-full pl-8 pr-2 py-0.5 sm:py-1 text-right font-black text-xs sm:text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 focus:outline-none transition">
+                        </div>
+                        <button type="button" id="exactAmountBtn" class="px-2 py-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition border border-emerald-200 whitespace-nowrap active:scale-95 cursor-pointer">
                             Uang Pas
                         </button>
                     </div>
                     
-                    <input type="text" id="paidAmountInput" placeholder="0" inputmode="numeric" autocomplete="off"
-                           class="w-full px-2.5 py-1 text-right font-bold text-sm rounded-md border border-slate-300 focus:ring-2 focus:ring-slate-900 focus:outline-none transition">
-                    
                     <!-- Quick Nominal Denominations -->
                     <div class="grid grid-cols-4 gap-1">
-                        <button type="button" class="quick-nominal-btn py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-700 hover:bg-slate-200 transition" data-amount="10000">10k</button>
-                        <button type="button" class="quick-nominal-btn py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-700 hover:bg-slate-200 transition" data-amount="20000">20k</button>
-                        <button type="button" class="quick-nominal-btn py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-700 hover:bg-slate-200 transition" data-amount="50000">50k</button>
-                        <button type="button" class="quick-nominal-btn py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-bold text-slate-700 hover:bg-slate-200 transition" data-amount="100000">100k</button>
+                        <button type="button" class="quick-nominal-btn py-1 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[10px] font-bold text-slate-700 transition active:scale-95 cursor-pointer" data-amount="10000">10k</button>
+                        <button type="button" class="quick-nominal-btn py-1 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[10px] font-bold text-slate-700 transition active:scale-95 cursor-pointer" data-amount="20000">20k</button>
+                        <button type="button" class="quick-nominal-btn py-1 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[10px] font-bold text-slate-700 transition active:scale-95 cursor-pointer" data-amount="50000">50k</button>
+                        <button type="button" class="quick-nominal-btn py-1 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[10px] font-bold text-slate-700 transition active:scale-95 cursor-pointer" data-amount="100000">100k</button>
                     </div>
 
-                    <div class="flex justify-between items-center text-[11px] pt-1 border-t border-slate-100">
-                        <span class="font-medium text-slate-600">Kembalian:</span>
-                        <span id="changeAmountText" class="font-extrabold text-xs text-slate-900">Rp 0</span>
+                    <div class="flex justify-between items-center text-[10px] sm:text-[11px] pt-0.5 border-t border-slate-100">
+                        <span class="font-medium text-slate-500">Kembalian:</span>
+                        <span id="changeAmountText" class="font-black text-xs text-slate-900">Rp 0</span>
+                    </div>
+                </div>
+
+                <!-- 2. QRIS Payment Details -->
+                <div id="qrisPaymentSection" class="space-y-1.5 pt-0.5 hidden">
+                    <div class="p-2 rounded-xl bg-emerald-50/70 border border-emerald-200 flex items-center gap-2">
+                        <div class="w-13 h-13 sm:w-14 sm:h-14 bg-white rounded-lg border border-emerald-200 p-1 flex-shrink-0 flex items-center justify-center overflow-hidden shadow-2xs cursor-pointer group" onclick="openQrisModal()" title="Klik untuk perbesar QR Code">
+                            @if(!empty($paymentSettings['qris_image']))
+                                <img src="{{ $paymentSettings['qris_image'] }}" alt="QRIS" class="w-full h-full object-contain group-hover:scale-105 transition-transform">
+                            @else
+                                <div class="text-center">
+                                    <svg class="w-6 h-6 mx-auto text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                                    <span class="text-[7px] font-extrabold text-emerald-800 uppercase block">QRIS</span>
+                                </div>
+                            @endif
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between gap-1">
+                                <span class="text-[9px] font-extrabold text-emerald-800 uppercase tracking-wider">Scan Barcode QRIS</span>
+                                <button type="button" onclick="openQrisModal()" class="text-[9px] font-bold text-emerald-700 hover:text-emerald-900 bg-white border border-emerald-300 px-1.5 py-0.5 rounded shadow-2xs cursor-pointer flex items-center gap-0.5 active:scale-95">
+                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                                    <span>Tampilkan QR</span>
+                                </button>
+                            </div>
+                            <p class="text-[9px] text-slate-600 mt-0.5 leading-tight">Minta pembeli scan QRIS via m-banking atau e-wallet.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Bank Transfer Payment Details -->
+                <div id="transferPaymentSection" class="space-y-1.5 pt-0.5 hidden">
+                    <div class="p-2 rounded-xl bg-purple-50/70 border border-purple-200 space-y-1">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[9px] font-extrabold uppercase tracking-wider text-purple-800">Transfer Rekening Bank</span>
+                            <span class="text-[10px] font-bold text-purple-900 bg-white px-1.5 py-0.2 rounded border border-purple-200">{{ $paymentSettings['rekening_bank'] }}</span>
+                        </div>
+                        <div class="flex items-center justify-between bg-white px-2 py-1 rounded-lg border border-purple-200">
+                            <div>
+                                <div class="text-[8px] text-slate-400 font-semibold uppercase">No. Rekening</div>
+                                <div class="font-mono font-bold text-xs text-slate-900" id="bankAccountNumberText">{{ $paymentSettings['rekening_no'] }}</div>
+                            </div>
+                            <button type="button" id="copyBankNumberBtn" class="px-2 py-0.5 text-[10px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded transition shadow-2xs cursor-pointer flex items-center gap-1 active:scale-95">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                <span id="copyBtnText">Salin</span>
+                            </button>
+                        </div>
+                        <div class="text-[9px] text-slate-600">
+                            A.n. <strong class="text-slate-800">{{ $paymentSettings['rekening_atas_nama'] }}</strong>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Submit Button -->
                 <button type="button" id="checkoutBtn" disabled 
-                        class="w-full py-2 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold rounded-lg shadow-xs transition flex items-center justify-center gap-1 text-xs tracking-wide">
+                        class="w-full py-2 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed text-white font-extrabold rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 text-xs tracking-wide cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     <span>Proses Pembayaran</span>
                 </button>
             </div>
-
-            </div><!-- /Cart Scroll Area -->
         </div>
     </div>
 </div>
@@ -310,6 +397,38 @@
     </div>
 </div>
 
+<!-- QRIS Zoom Modal for Customer Display -->
+<div id="qrisModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex flex-col items-center justify-center hidden p-2 sm:p-4 select-none" onclick="closeQrisModal(event)">
+    <div class="relative flex flex-col items-center max-h-[96vh] max-w-lg w-auto" onclick="event.stopPropagation()">
+        
+        <!-- Floating Close Button Top Right -->
+        <button type="button" onclick="closeQrisModal()" title="Tutup"
+                class="absolute -top-3 -right-3 sm:-top-3.5 sm:-right-3.5 w-8 h-8 rounded-full bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center shadow-xl transition cursor-pointer z-20 border border-slate-700">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+
+        <!-- 1. GAMBAR FULL QRIS -->
+        <div class="bg-white p-1 sm:p-1.5 rounded-2xl shadow-2xl border border-slate-200 flex items-center justify-center overflow-hidden">
+            @if(!empty($paymentSettings['qris_image']))
+                <img id="qrisModalImg" src="{{ $paymentSettings['qris_image'] }}" alt="QRIS" 
+                     class="max-h-[72vh] sm:max-h-[78vh] w-auto max-w-[90vw] object-contain rounded-xl">
+            @else
+                <div class="p-6 text-center">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data={{ urlencode('https://desawisatagetas.id') }}" alt="QRIS" class="w-52 h-52 mx-auto object-contain">
+                    <span class="text-xs font-bold text-slate-700 block mt-2">QRIS Desa Wisata Getas</span>
+                </div>
+            @endif
+        </div>
+
+        <!-- 2. BAWAH: NOMINAL YANG HARUS DIBAYAR (CENTERED & CLEAN) -->
+        <div class="mt-2.5 bg-slate-900/90 backdrop-blur-md text-white py-2 px-6 rounded-full border border-slate-800 shadow-xl flex items-center justify-center gap-2">
+            <span class="text-xs text-slate-400">Total:</span>
+            <span class="font-bold text-white text-base tracking-wide" id="modalQrisAmount">Rp 0</span>
+        </div>
+
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     let cart = [];
@@ -329,6 +448,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const exactAmountBtn = document.getElementById('exactAmountBtn');
     const paymentMethodBtns = document.querySelectorAll('.pay-method-btn');
     const cashPaymentSection = document.getElementById('cashPaymentSection');
+    const qrisPaymentSection = document.getElementById('qrisPaymentSection');
+    const transferPaymentSection = document.getElementById('transferPaymentSection');
+    const copyBankNumberBtn = document.getElementById('copyBankNumberBtn');
     const quickNominalBtns = document.querySelectorAll('.quick-nominal-btn');
 
     const receiptModal = document.getElementById('receiptModal');
@@ -462,9 +584,9 @@ document.addEventListener('DOMContentLoaded', function() {
             totalPrice += subtotal;
 
             const itemEl = document.createElement('div');
-            itemEl.className = 'flex items-center justify-between p-2 rounded-lg border border-slate-200 bg-white text-xs hover:border-slate-300 transition shadow-2xs';
+            itemEl.className = 'flex items-center justify-between p-2 rounded-xl border border-slate-200 bg-white text-xs hover:border-slate-300 transition shadow-2xs gap-1.5';
             itemEl.innerHTML = `
-                <div class="flex-1 min-w-0 pr-1.5">
+                <div class="flex-1 min-w-0 pr-1">
                     <h5 class="font-bold text-slate-900 truncate text-xs">${item.name}</h5>
                     <div class="text-slate-500 text-[10px] mt-0.5">
                         ${item.isPaket ? '<span class="text-emerald-700 font-bold uppercase text-[9px]">Paket Wisata</span> ' + (item.minParticipants > 1 ? '<span class="text-slate-400 text-[9px]">(min ' + item.minParticipants + ' org)</span> ' : '') : (item.type === 'addon' ? '<span class="text-indigo-700 font-bold uppercase text-[9px]">Add-On</span> ' : '')}
@@ -472,10 +594,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
                 <div class="flex items-center gap-1 flex-shrink-0">
-                    <button type="button" class="decrease-btn w-5 h-5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center transition active:scale-95" data-index="${index}">-</button>
-                    <span class="font-bold text-slate-900 w-4 text-center text-xs">${item.quantity}</span>
-                    <button type="button" class="increase-btn w-5 h-5 rounded bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold flex items-center justify-center transition active:scale-95" data-index="${index}">+</button>
-                    <button type="button" class="remove-btn w-5 h-5 rounded bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold flex items-center justify-center ml-0.5 transition active:scale-95" data-index="${index}">✕</button>
+                    <button type="button" class="decrease-btn w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center transition active:scale-90 text-xs cursor-pointer select-none" data-index="${index}" title="Kurangi">-</button>
+                    <span class="font-bold text-slate-900 w-5 text-center text-xs">${item.quantity}</span>
+                    <button type="button" class="increase-btn w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold flex items-center justify-center transition active:scale-90 text-xs cursor-pointer select-none" data-index="${index}" title="Tambah">+</button>
+                    <button type="button" class="remove-btn w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold flex items-center justify-center ml-0.5 transition active:scale-90 text-xs cursor-pointer select-none" data-index="${index}" title="Hapus">✕</button>
                 </div>
             `;
             cartItemsList.appendChild(itemEl);
@@ -526,25 +648,69 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    function selectPaymentMethod(method) {
+        selectedPaymentMethod = method;
+
+        paymentMethodBtns.forEach(btn => {
+            const isMatch = btn.dataset.method === method;
+            const icon = btn.querySelector('svg');
+            const text = btn.querySelector('span');
+
+            if (isMatch) {
+                btn.classList.add('active');
+                btn.style.setProperty('background', '#0f172a', 'important');
+                btn.style.setProperty('border-color', '#0f172a', 'important');
+                btn.style.setProperty('color', '#ffffff', 'important');
+                if (icon) icon.style.setProperty('color', '#34d399', 'important');
+                if (text) text.style.setProperty('color', '#ffffff', 'important');
+            } else {
+                btn.classList.remove('active');
+                btn.style.setProperty('background', '#ffffff', 'important');
+                btn.style.setProperty('border-color', '#cbd5e1', 'important');
+                btn.style.setProperty('color', '#334155', 'important');
+                if (icon) icon.style.setProperty('color', '#94a3b8', 'important');
+                if (text) text.style.setProperty('color', '#334155', 'important');
+            }
+        });
+
+        cashPaymentSection.classList.add('hidden');
+        if (qrisPaymentSection) qrisPaymentSection.classList.add('hidden');
+        if (transferPaymentSection) transferPaymentSection.classList.add('hidden');
+
+        if (method === 'cash') {
+            cashPaymentSection.classList.remove('hidden');
+        } else if (method === 'qris') {
+            if (qrisPaymentSection) qrisPaymentSection.classList.remove('hidden');
+        } else if (method === 'transfer') {
+            if (transferPaymentSection) transferPaymentSection.classList.remove('hidden');
+        }
+
+        calculateChange();
+    }
+
     paymentMethodBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            paymentMethodBtns.forEach(b => {
-                b.classList.remove('border-slate-900', 'bg-slate-900', 'text-white');
-                b.classList.add('border-slate-200', 'bg-white', 'text-slate-600');
-            });
-            btn.classList.remove('border-slate-200', 'bg-white', 'text-slate-600');
-            btn.classList.add('border-slate-900', 'bg-slate-900', 'text-white');
-
-            selectedPaymentMethod = btn.dataset.method;
-
-            if (selectedPaymentMethod === 'cash') {
-                cashPaymentSection.classList.remove('hidden');
-            } else {
-                cashPaymentSection.classList.add('hidden');
-            }
-            calculateChange();
+            selectPaymentMethod(btn.dataset.method);
         });
     });
+
+    selectPaymentMethod('cash');
+
+    if (copyBankNumberBtn) {
+        copyBankNumberBtn.addEventListener('click', () => {
+            const no = document.getElementById('bankAccountNumberText')?.textContent?.trim() || '';
+            if (!no) return;
+            navigator.clipboard.writeText(no).then(() => {
+                const btnText = document.getElementById('copyBtnText');
+                if (btnText) {
+                    btnText.textContent = 'Disalin!';
+                    setTimeout(() => { btnText.textContent = 'Salin'; }, 2000);
+                }
+            }).catch(() => {
+                alert('No. Rekening: ' + no);
+            });
+        });
+    }
 
     function getTotalPrice() {
         return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -693,6 +859,28 @@ document.addEventListener('DOMContentLoaded', function() {
             checkoutBtn.innerHTML = `<span>Proses Pembayaran</span>`;
         }
     }
+
+    window.openQrisModal = function() {
+        const total = getTotalPrice();
+        const modalAmount = document.getElementById('modalQrisAmount');
+        if (modalAmount) {
+            modalAmount.textContent = 'Rp ' + formatRupiah(total);
+        }
+        document.getElementById('qrisModal')?.classList.remove('hidden');
+    };
+
+    window.closeQrisModal = function(e) {
+        if (e && e.target && e.target.id !== 'qrisModal' && !e.target.closest('#qrisModal button')) {
+            return;
+        }
+        document.getElementById('qrisModal')?.classList.add('hidden');
+    };
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.getElementById('qrisModal')?.classList.add('hidden');
+        }
+    });
 
     closeModalBtn.addEventListener('click', () => {
         receiptModal.classList.add('hidden');
